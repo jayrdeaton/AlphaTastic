@@ -36,9 +36,9 @@ export const puzzleManifest: PuzzleManifestItem[] = [
   {
     "key": "geographyCountries",
     "file": "geographyCountries.json",
-    "label": "Countries",
+    "label": "Countries & Territories",
     "group": "Geography",
-    "count": 239,
+    "count": 235,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -74,7 +74,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "geographyUSStates.json",
     "label": "US States & Cities",
     "group": "Geography",
-    "count": 132,
+    "count": 131,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -130,7 +130,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "movies.json",
     "label": "Movies",
     "group": "Media",
-    "count": 8368,
+    "count": 8208,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -278,7 +278,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "sportsNBA.json",
     "label": "Basketball Teams",
     "group": "Sports",
-    "count": 29,
+    "count": 30,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -743,9 +743,9 @@ export const puzzleManifest: PuzzleManifestItem[] = [
   {
     "key": "themeGreekRomanGods",
     "file": "themeGreekRomanGods.json",
-    "label": "Greek & Roman Gods",
+    "label": "Gods & Heroes",
     "group": "Mythology",
-    "count": 54,
+    "count": 99,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -755,7 +755,10 @@ export const puzzleManifest: PuzzleManifestItem[] = [
       "theme"
     ],
     "categories": [
-      "Greek/Roman God"
+      "Egyptian myth",
+      "Greek myth",
+      "Norse myth",
+      "Roman myth"
     ]
   },
   {
@@ -952,6 +955,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
       "theme"
     ],
     "categories": [
+      "Dwarf Planet",
       "Galaxy",
       "Moon",
       "Planet",
@@ -1071,7 +1075,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "tvShows.json",
     "label": "TV Shows",
     "group": "Media",
-    "count": 4016,
+    "count": 3966,
     "difficultyTiers": [
       "easy",
       "hard",

@@ -607,5 +607,26 @@
     "metadata": {
       "source": "https://en.wikipedia.org/wiki/List_of_National_Basketball_Association_arenas"
     }
+  },
+  {
+    "id": "420ab1ffc7b4b05bf73b347c3588f854",
+    "source": "sports",
+    "type": "title",
+    "answer": "Philadelphia Seventy Sixers",
+    "normalizedAnswer": "PHILADELPHIA SEVENTY SIXERS",
+    "category": "NBA Team",
+    "difficulty": 48,
+    "difficultyTier": "easy",
+    "wordCount": 3,
+    "letterCount": 25,
+    "uniqueLetterCount": 14,
+    "tags": [
+      "sports",
+      "nba",
+      "team"
+    ],
+    "metadata": {
+      "source": "https://en.wikipedia.org/wiki/List_of_National_Basketball_Association_arenas"
+    }
   }
 ]

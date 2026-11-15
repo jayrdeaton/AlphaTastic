@@ -1,4 +1,5 @@
 import { useAutoPaperTheme } from '@rific/auto-paper'
+import { setReloadSplash } from '@rific/updater'
 import { DarkTheme, DefaultTheme, type NativeStackNavigationOptions, Stack, ThemeProvider } from 'expo-router'
 import { JSX, useMemo } from 'react'
 import { Platform, StyleSheet, View } from 'react-native'
@@ -8,6 +9,10 @@ import { BoardBackground } from '@/components/BoardBackground'
 import { IncomingFileImport } from '@/components/IncomingFileImport'
 import { Providers } from '@/components/Providers'
 import { UpdateDialog } from '@/components/UpdateDialog'
+
+// An OTA update restarts the app behind its splash (app.json's splash image), not expo-updates' white loading
+// screen. @rific/updater takes the colors from app.json itself.
+setReloadSplash({ image: require('../../assets/images/splash-light.png') })
 
 // A resumed game (Home's cold-launch redirect, see HomeScreen.tsx) appears without the push: it's
 // where the player already was, not somewhere new.

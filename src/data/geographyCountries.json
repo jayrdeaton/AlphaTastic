@@ -3480,26 +3480,6 @@
     }
   },
   {
-    "id": "b5d388aaec17ba662dbf5dc9ddaf52af",
-    "source": "geography",
-    "type": "title",
-    "answer": "Northern Cyprus",
-    "normalizedAnswer": "NORTHERN CYPRUS",
-    "category": "Country",
-    "difficulty": 60.4,
-    "difficultyTier": "easy",
-    "wordCount": 2,
-    "letterCount": 14,
-    "uniqueLetterCount": 11,
-    "tags": [
-      "geography",
-      "country"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population"
-    }
-  },
-  {
     "id": "27d82610a1a9054d1e7629df3e58af94",
     "source": "geography",
     "type": "title",
@@ -3580,26 +3560,6 @@
     }
   },
   {
-    "id": "6c91f2ec1ee16df81bf557f9d92ffb82",
-    "source": "geography",
-    "type": "title",
-    "answer": "Transnistria",
-    "normalizedAnswer": "TRANSNISTRIA",
-    "category": "Country",
-    "difficulty": 81.2,
-    "difficultyTier": "hard",
-    "wordCount": 1,
-    "letterCount": 12,
-    "uniqueLetterCount": 6,
-    "tags": [
-      "geography",
-      "country"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population"
-    }
-  },
-  {
     "id": "644641a1e4ab691c42081b937cdfe3d3",
     "source": "geography",
     "type": "title",
@@ -3665,26 +3625,6 @@
     "type": "title",
     "answer": "Barbados",
     "normalizedAnswer": "BARBADOS",
-    "category": "Country",
-    "difficulty": 82.8,
-    "difficultyTier": "hard",
-    "wordCount": 1,
-    "letterCount": 8,
-    "uniqueLetterCount": 6,
-    "tags": [
-      "geography",
-      "country"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population"
-    }
-  },
-  {
-    "id": "cd5e8efa577c4afbb67e455fb4c38f23",
-    "source": "geography",
-    "type": "title",
-    "answer": "Abkhazia",
-    "normalizedAnswer": "ABKHAZIA",
     "category": "Country",
     "difficulty": 82.8,
     "difficultyTier": "hard",
@@ -4131,26 +4071,6 @@
     "wordCount": 1,
     "letterCount": 9,
     "uniqueLetterCount": 7,
-    "tags": [
-      "geography",
-      "country"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population"
-    }
-  },
-  {
-    "id": "c4fefba673b34fbd078cda0359dcd91f",
-    "source": "geography",
-    "type": "title",
-    "answer": "South Ossetia",
-    "normalizedAnswer": "SOUTH OSSETIA",
-    "category": "Country",
-    "difficulty": 73.2,
-    "difficultyTier": "medium",
-    "wordCount": 2,
-    "letterCount": 12,
-    "uniqueLetterCount": 8,
     "tags": [
       "geography",
       "country"

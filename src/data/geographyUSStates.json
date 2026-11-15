@@ -2598,27 +2598,6 @@
     }
   },
   {
-    "id": "c063a6c3020037701502492979156fd4",
-    "source": "geography",
-    "type": "title",
-    "answer": "Charleston",
-    "normalizedAnswer": "CHARLESTON",
-    "category": "US State Capital",
-    "difficulty": 66,
-    "difficultyTier": "medium",
-    "wordCount": 1,
-    "letterCount": 10,
-    "uniqueLetterCount": 10,
-    "tags": [
-      "geography",
-      "capital",
-      "us"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_states_and_territories_of_the_United_States"
-    }
-  },
-  {
     "id": "dfc3bd61da4b4d7e1d5d96cc19f184aa",
     "source": "geography",
     "type": "title",

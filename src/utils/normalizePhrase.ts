@@ -25,12 +25,23 @@ const foldDiacritics = (text: string): string =>
 // Face/Off as FACE OFF. Stripping it like other punctuation would fuse the two words into one long
 // run of blanks. Covers the plain hyphen, the slash and the whole Unicode dash block U+2010 to U+2015
 // (hyphen, non-breaking hyphen, figure dash, en dash, em dash, horizontal bar), so a dash pasted in
-// from elsewhere splits the same as one typed. Hangman-Scrapers' normalize() and customPackExport.ts
-// split on the same characters, and PnpWordPrompt turns them into a space as they're typed.
-export const WORD_SEPARATORS = /[-/\u2010-\u2015]/g
+// from elsewhere splits the same as one typed, plus the minus sign. The 2026-11-13 puzzle audit added
+// the other characters titles use to join two words with no space: a semicolon or colon
+// (Steins;Gate, Re:Zero), a plus (Flesh+Blood), a middle dot (WALL\u00b7E) and the single ellipsis
+// character. Hangman-Scrapers' normalize() and customPackExport.ts split on the same characters, and
+// PnpWordPrompt turns them into a space as they're typed.
+export const WORD_SEPARATORS = /[-/\u2010-\u2015\u2212;:+\u00b7\u2026]/g
+
+// Dots only sometimes join words: two or more in a row are an ellipsis (Oops!...I Did It Again plays
+// as OOPS I DID IT AGAIN, not OOPSI), and a single dot between a letter and a word of two or more
+// letters is a break too (D.Gray-man, V.Smile, Alibi.com). A dot inside initials stays, so E.T. is
+// still ET and M.A.S.H. still MASH. Same rule as Hangman-Scrapers' normalize().
+const DOT_BREAKS = /\.{2,}|([A-Za-z])\.(?=[A-Za-z]{2})/g
 
 export const normalizePhrase = (value: string): string =>
   foldDiacritics(value)
+    .replace(/\u00d7/g, 'x') // the multiplication sign reads as X: Hunter \u00d7 Hunter is HUNTER X HUNTER
+    .replace(DOT_BREAKS, (_match, letter?: string) => (letter ? `${letter} ` : ' '))
     .replace(WORD_SEPARATORS, ' ')
     .replace(/[^A-Za-z ]/g, '')
     .replace(/\s+/g, ' ')

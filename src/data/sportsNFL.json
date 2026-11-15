@@ -294,6 +294,27 @@
     }
   },
   {
+    "id": "861595b73e5615a8eb686b70e96b74c4",
+    "source": "sports",
+    "type": "title",
+    "answer": "San Francisco Forty Niners",
+    "normalizedAnswer": "SAN FRANCISCO FORTY NINERS",
+    "category": "NFL Team",
+    "difficulty": 60,
+    "difficultyTier": "easy",
+    "wordCount": 4,
+    "letterCount": 23,
+    "uniqueLetterCount": 11,
+    "tags": [
+      "sports",
+      "nfl",
+      "team"
+    ],
+    "metadata": {
+      "source": "https://en.wikipedia.org/wiki/List_of_National_Football_League_stadiums"
+    }
+  },
+  {
     "id": "055041f7f2059c7007ed567fdcb613b5",
     "source": "sports",
     "type": "title",
@@ -546,27 +567,6 @@
     }
   },
   {
-    "id": "ebc26be77acfce8ccd956539bd12266f",
-    "source": "sports",
-    "type": "title",
-    "answer": "Los Angeles Rams",
-    "normalizedAnswer": "LOS ANGELES RAMS",
-    "category": "NFL Team",
-    "difficulty": 68.4,
-    "difficultyTier": "medium",
-    "wordCount": 3,
-    "letterCount": 14,
-    "uniqueLetterCount": 9,
-    "tags": [
-      "sports",
-      "nfl",
-      "team"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_National_Football_League_stadiums"
-    }
-  },
-  {
     "id": "e7baf9fdd9edbe833907d25ee2f1603e",
     "source": "sports",
     "type": "title",
@@ -578,6 +578,27 @@
     "wordCount": 3,
     "letterCount": 18,
     "uniqueLetterCount": 10,
+    "tags": [
+      "sports",
+      "nfl",
+      "team"
+    ],
+    "metadata": {
+      "source": "https://en.wikipedia.org/wiki/List_of_National_Football_League_stadiums"
+    }
+  },
+  {
+    "id": "ebc26be77acfce8ccd956539bd12266f",
+    "source": "sports",
+    "type": "title",
+    "answer": "Los Angeles Rams",
+    "normalizedAnswer": "LOS ANGELES RAMS",
+    "category": "NFL Team",
+    "difficulty": 68.4,
+    "difficultyTier": "medium",
+    "wordCount": 3,
+    "letterCount": 14,
+    "uniqueLetterCount": 9,
     "tags": [
       "sports",
       "nfl",
@@ -640,27 +661,6 @@
     "difficultyTier": "easy",
     "wordCount": 2,
     "letterCount": 16,
-    "uniqueLetterCount": 11,
-    "tags": [
-      "sports",
-      "nfl",
-      "team"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_National_Football_League_stadiums"
-    }
-  },
-  {
-    "id": "861595b73e5615a8eb686b70e96b74c4",
-    "source": "sports",
-    "type": "title",
-    "answer": "San Francisco Forty Niners",
-    "normalizedAnswer": "SAN FRANCISCO FORTY NINERS",
-    "category": "NFL Team",
-    "difficulty": 60,
-    "difficultyTier": "easy",
-    "wordCount": 4,
-    "letterCount": 23,
     "uniqueLetterCount": 11,
     "tags": [
       "sports",

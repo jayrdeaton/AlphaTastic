@@ -71,6 +71,36 @@ describe('normalizePhrase', () => {
     for (const dash of ['\u2010', '\u2011', '\u2012', '\u2015']) expect(normalizePhrase(`Spider${dash}Man`)).toBe('SPIDER MAN')
   })
 
+  // Real answers the 2026-11-13 puzzle audit found playing as one fused word. Escaped where the
+  // character is easy to misread (middle dot, ellipsis, minus sign, multiplication sign).
+  it('treats a semicolon, colon, plus or middle dot between two words as a word break', () => {
+    expect(normalizePhrase('Steins;Gate')).toBe('STEINS GATE')
+    expect(normalizePhrase('Re:Zero − Starting Life in Another World')).toBe('RE ZERO STARTING LIFE IN ANOTHER WORLD')
+    expect(normalizePhrase('Flesh+Blood')).toBe('FLESH BLOOD')
+    expect(normalizePhrase('WALL·E')).toBe('WALL E')
+  })
+
+  it('treats an ellipsis as a word break, typed as dots or as one character', () => {
+    expect(normalizePhrase('Oops!...I Did It Again')).toBe('OOPS I DID IT AGAIN')
+    expect(normalizePhrase('Hush...Hush, Sweet Charlotte')).toBe('HUSH HUSH SWEET CHARLOTTE')
+    expect(normalizePhrase('Wait…What')).toBe('WAIT WHAT')
+    expect(normalizePhrase('If....')).toBe('IF')
+  })
+
+  it('breaks at a single dot between a letter and a word, but keeps initials together', () => {
+    expect(normalizePhrase('D.Gray-man')).toBe('D GRAY MAN')
+    expect(normalizePhrase('V.Smile')).toBe('V SMILE')
+    expect(normalizePhrase('Alibi.com')).toBe('ALIBI COM')
+    expect(normalizePhrase('E.T. the Extra-Terrestrial')).toBe('ET THE EXTRA TERRESTRIAL')
+    expect(normalizePhrase('M.A.S.H.')).toBe('MASH')
+    expect(normalizePhrase('Ms. Pac-Man')).toBe('MS PAC MAN')
+  })
+
+  it('reads the multiplication sign as an X', () => {
+    expect(normalizePhrase('Hunter × Hunter')).toBe('HUNTER X HUNTER')
+    expect(normalizePhrase('Spy × Family')).toBe('SPY X FAMILY')
+  })
+
   it('collapses a separator that already has spaces around it into a single word break', () => {
     expect(normalizePhrase('Kluane / Wrangell\u2013St. Elias')).toBe('KLUANE WRANGELL ST ELIAS')
     expect(normalizePhrase('Liverpool \u2013 Maritime Mercantile City')).toBe('LIVERPOOL MARITIME MERCANTILE CITY')
