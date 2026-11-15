@@ -1860,26 +1860,6 @@
     }
   },
   {
-    "id": "fba7b741cfe0c778f71af813b90292fb",
-    "source": "theme",
-    "type": "title",
-    "answer": "Hyksos",
-    "normalizedAnswer": "HYKSOS",
-    "category": "History",
-    "difficulty": 87.6,
-    "difficultyTier": "hard",
-    "wordCount": 1,
-    "letterCount": 6,
-    "uniqueLetterCount": 5,
-    "tags": [
-      "theme",
-      "history"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_largest_empires"
-    }
-  },
-  {
     "id": "c2d3fc7e7e94c44d5bfa634b0fac2c7a",
     "source": "theme",
     "type": "title",
@@ -2511,26 +2491,6 @@
     "wordCount": 3,
     "letterCount": 17,
     "uniqueLetterCount": 10,
-    "tags": [
-      "theme",
-      "history"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_largest_empires"
-    }
-  },
-  {
-    "id": "f8454488e4e21d4a4bda8ff2d540cb6d",
-    "source": "theme",
-    "type": "title",
-    "answer": "Sumer",
-    "normalizedAnswer": "SUMER",
-    "category": "History",
-    "difficulty": 88,
-    "difficultyTier": "hard",
-    "wordCount": 1,
-    "letterCount": 5,
-    "uniqueLetterCount": 5,
     "tags": [
       "theme",
       "history"

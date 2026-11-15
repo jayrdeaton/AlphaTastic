@@ -1,11 +1,11 @@
 [
   {
-    "id": "23c492acb2a3666e71e64282e0b4d81c",
+    "id": "183fa42a1b2326fe403d5ef4cd93ce9a",
     "source": "theme",
     "type": "title",
     "answer": "Aérospatiale-BAC Concorde",
     "normalizedAnswer": "AEROSPATIALE BAC CONCORDE",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 52,
     "difficultyTier": "easy",
     "wordCount": 3,
@@ -20,12 +20,12 @@
     }
   },
   {
-    "id": "0c9495fee504bf8668efff6a7a9a821d",
+    "id": "7aeb043c6b684b68b00205e924361841",
     "source": "theme",
     "type": "title",
     "answer": "Spirit of St. Louis",
     "normalizedAnswer": "SPIRIT OF ST LOUIS",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 68,
     "difficultyTier": "medium",
     "wordCount": 4,
@@ -40,12 +40,12 @@
     }
   },
   {
-    "id": "9c9ecfc5442e3bb01408cd61b4b38854",
+    "id": "8f135dc1530c1e5c718e7a80cbbeb812",
     "source": "theme",
     "type": "title",
     "answer": "Wright Flyer",
     "normalizedAnswer": "WRIGHT FLYER",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 65.6,
     "difficultyTier": "medium",
     "wordCount": 2,
@@ -60,12 +60,12 @@
     }
   },
   {
-    "id": "c32ab47f54f66b44f436d12543d33fed",
+    "id": "7e4314ee4a3e04e9ac995e9f972f1f7f",
     "source": "theme",
     "type": "title",
     "answer": "Enola Gay",
     "normalizedAnswer": "ENOLA GAY",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 78.8,
     "difficultyTier": "medium",
     "wordCount": 2,
@@ -80,12 +80,12 @@
     }
   },
   {
-    "id": "3fdba5bebe2094736e8321be40b2b49d",
+    "id": "3c55936209611f7c35a4008988653d43",
     "source": "theme",
     "type": "title",
     "answer": "Bockscar",
     "normalizedAnswer": "BOCKSCAR",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 78.8,
     "difficultyTier": "medium",
     "wordCount": 1,
@@ -100,12 +100,12 @@
     }
   },
   {
-    "id": "045b429d5b524969eab99413bc0bf8f7",
+    "id": "8ea9c6365068011d908b0e40ee7aebd6",
     "source": "theme",
     "type": "title",
     "answer": "Memphis Belle",
     "normalizedAnswer": "MEMPHIS BELLE",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 73.2,
     "difficultyTier": "medium",
     "wordCount": 2,
@@ -120,12 +120,12 @@
     }
   },
   {
-    "id": "7b733393ebf8af59555b14e72ed0d243",
+    "id": "c52fc288e2eb20220b97336742fe8e1d",
     "source": "theme",
     "type": "title",
     "answer": "Spruce Goose",
     "normalizedAnswer": "SPRUCE GOOSE",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 73.6,
     "difficultyTier": "medium",
     "wordCount": 2,
@@ -140,32 +140,12 @@
     }
   },
   {
-    "id": "e66248477566a0327091c5a961da1863",
-    "source": "theme",
-    "type": "title",
-    "answer": "Hindenburg",
-    "normalizedAnswer": "HINDENBURG",
-    "category": "Aircraft",
-    "difficulty": 70,
-    "difficultyTier": "medium",
-    "wordCount": 1,
-    "letterCount": 10,
-    "uniqueLetterCount": 9,
-    "tags": [
-      "theme",
-      "aircraft"
-    ],
-    "metadata": {
-      "source": "wikipedia-airliners-plus-curated"
-    }
-  },
-  {
-    "id": "894940d844e2e0d999026713493a84cc",
+    "id": "bee68d66c04e00562cd9f74d8abe663c",
     "source": "theme",
     "type": "title",
     "answer": "Glamorous Glennis",
     "normalizedAnswer": "GLAMOROUS GLENNIS",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 60,
     "difficultyTier": "easy",
     "wordCount": 2,
@@ -180,12 +160,12 @@
     }
   },
   {
-    "id": "310e11aed7d53171906934675ccd410f",
+    "id": "a5a44546527f612749ae14762cc8e676",
     "source": "theme",
     "type": "title",
     "answer": "Kitty Hawk",
     "normalizedAnswer": "KITTY HAWK",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 78.4,
     "difficultyTier": "medium",
     "wordCount": 2,
@@ -200,12 +180,12 @@
     }
   },
   {
-    "id": "f89d352d838add285bf919c0673ef3ce",
+    "id": "174736108be45df941cec95be3c95bf6",
     "source": "theme",
     "type": "title",
     "answer": "Southern Cross",
     "normalizedAnswer": "SOUTHERN CROSS",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 68.8,
     "difficultyTier": "medium",
     "wordCount": 2,
@@ -220,12 +200,12 @@
     }
   },
   {
-    "id": "19ff2a2299a65c8bbad25b2a751033cc",
+    "id": "b2cce0a7cc8c0173a59a016a650c348e",
     "source": "theme",
     "type": "title",
     "answer": "Gossamer Albatross",
     "normalizedAnswer": "GOSSAMER ALBATROSS",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 64,
     "difficultyTier": "easy",
     "wordCount": 2,
@@ -240,12 +220,12 @@
     }
   },
   {
-    "id": "2ab34d74e58a53f4e805f767261e17f6",
+    "id": "49459337d7124f451a17999fef4e9a07",
     "source": "theme",
     "type": "title",
     "answer": "China Clipper",
     "normalizedAnswer": "CHINA CLIPPER",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 69.2,
     "difficultyTier": "medium",
     "wordCount": 2,
@@ -260,12 +240,12 @@
     }
   },
   {
-    "id": "26cdce9eb7787ef068ccc861cd3869fa",
+    "id": "eeee2caa8f7eabed1808a5bc4fb0b36b",
     "source": "theme",
     "type": "title",
     "answer": "Comet",
     "normalizedAnswer": "COMET",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 88,
     "difficultyTier": "hard",
     "wordCount": 1,
@@ -280,12 +260,12 @@
     }
   },
   {
-    "id": "e7a8169168b5048c38e06746b8bf598f",
+    "id": "90dbe9eef781ef24dab23bd411f3c9e3",
     "source": "theme",
     "type": "title",
     "answer": "Stratocruiser",
     "normalizedAnswer": "STRATOCRUISER",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 68.8,
     "difficultyTier": "medium",
     "wordCount": 1,
@@ -300,12 +280,12 @@
     }
   },
   {
-    "id": "721e370626e767de00d38f47544e7cb1",
+    "id": "95d38b4d816ca34687e57e420803ef6b",
     "source": "theme",
     "type": "title",
     "answer": "Dreamliner",
     "normalizedAnswer": "DREAMLINER",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 74,
     "difficultyTier": "medium",
     "wordCount": 1,
@@ -320,12 +300,12 @@
     }
   },
   {
-    "id": "e844b9d95c5b2db248ca74df399b7e1e",
+    "id": "0c29bada610319c5501f5defda4c1f73",
     "source": "theme",
     "type": "title",
     "answer": "Jumbo Jet",
     "normalizedAnswer": "JUMBO JET",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 78.8,
     "difficultyTier": "medium",
     "wordCount": 2,
@@ -340,12 +320,12 @@
     }
   },
   {
-    "id": "cb3057b575188ce11cca36b03230d394",
+    "id": "146b17a44f85fad91194ab616e61de7c",
     "source": "theme",
     "type": "title",
     "answer": "Supermarine Spitfire",
     "normalizedAnswer": "SUPERMARINE SPITFIRE",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 60,
     "difficultyTier": "easy",
     "wordCount": 2,
@@ -360,12 +340,12 @@
     }
   },
   {
-    "id": "4f9b73dfcf81af97098b208571a00198",
+    "id": "4562695fb6d6b4ba55b666b58d3a1d01",
     "source": "theme",
     "type": "title",
     "answer": "Blackbird",
     "normalizedAnswer": "BLACKBIRD",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 74.4,
     "difficultyTier": "medium",
     "wordCount": 1,
@@ -380,12 +360,12 @@
     }
   },
   {
-    "id": "afa51211d4b915871cef7acb5a539e42",
+    "id": "ae0d8f98db2096d8285ecdcd95f14274",
     "source": "theme",
     "type": "title",
     "answer": "Mustang",
     "normalizedAnswer": "MUSTANG",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 79.2,
     "difficultyTier": "medium",
     "wordCount": 1,
@@ -400,12 +380,12 @@
     }
   },
   {
-    "id": "73c92aa6eba4fb01765059b8ef54c6cb",
+    "id": "40d076bd11a6fb6ce2713932beb6d1a3",
     "source": "theme",
     "type": "title",
     "answer": "Flying Fortress",
     "normalizedAnswer": "FLYING FORTRESS",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 60.4,
     "difficultyTier": "easy",
     "wordCount": 2,
@@ -420,12 +400,12 @@
     }
   },
   {
-    "id": "b28af0f6ab3aebe7e2643fecae26d06c",
+    "id": "1d70214f22b35bdfc3544756a104cce7",
     "source": "theme",
     "type": "title",
     "answer": "Stratofortress",
     "normalizedAnswer": "STRATOFORTRESS",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 76.4,
     "difficultyTier": "medium",
     "wordCount": 1,
@@ -440,12 +420,12 @@
     }
   },
   {
-    "id": "6ed81d535ed2971a1aca5cb586b61ed3",
+    "id": "41011eccacb965f67f3b809f7304ac0b",
     "source": "theme",
     "type": "title",
     "answer": "Fighting Falcon",
     "normalizedAnswer": "FIGHTING FALCON",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 64.4,
     "difficultyTier": "easy",
     "wordCount": 2,
@@ -460,12 +440,12 @@
     }
   },
   {
-    "id": "b991ba7771af8de2c033ca6ade7b8ad1",
+    "id": "bc8d7b2e426747368c17fc5e0afc5ff0",
     "source": "theme",
     "type": "title",
     "answer": "Raptor",
     "normalizedAnswer": "RAPTOR",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 87.6,
     "difficultyTier": "hard",
     "wordCount": 1,
@@ -480,12 +460,12 @@
     }
   },
   {
-    "id": "3de8c9665fc11e4f6cc6dadc8cea6961",
+    "id": "610df7ef968d9d2a52453f7ae1caa555",
     "source": "theme",
     "type": "title",
     "answer": "Lightning",
     "normalizedAnswer": "LIGHTNING",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 82.4,
     "difficultyTier": "hard",
     "wordCount": 1,
@@ -500,12 +480,12 @@
     }
   },
   {
-    "id": "aba44fdc2fe21a0187b65ff9a7f106f6",
+    "id": "f620fef9ab0e8d063aea4043c52cde05",
     "source": "theme",
     "type": "title",
     "answer": "Messerschmitt",
     "normalizedAnswer": "MESSERSCHMITT",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 72.8,
     "difficultyTier": "medium",
     "wordCount": 1,
@@ -520,12 +500,12 @@
     }
   },
   {
-    "id": "aa571809657e96d43a5549bc0ba5f010",
+    "id": "3fa1c7a02aa88b2a3b696f2a47b3e3fd",
     "source": "theme",
     "type": "title",
     "answer": "Mitsubishi Zero",
     "normalizedAnswer": "MITSUBISHI ZERO",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 60.4,
     "difficultyTier": "easy",
     "wordCount": 2,
@@ -540,12 +520,12 @@
     }
   },
   {
-    "id": "a361048c5ec32937f0e2f80363b35eda",
+    "id": "1fed0366d1ad1a8cfb3bd4e670864852",
     "source": "theme",
     "type": "title",
     "answer": "Avro Lancaster",
     "normalizedAnswer": "AVRO LANCASTER",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 64.8,
     "difficultyTier": "easy",
     "wordCount": 2,
@@ -560,12 +540,12 @@
     }
   },
   {
-    "id": "306385f5c6559c4389919b8ba96331f4",
+    "id": "036795eceae9c168366f0f59a808b960",
     "source": "theme",
     "type": "title",
     "answer": "Sopwith Camel",
     "normalizedAnswer": "SOPWITH CAMEL",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 57.2,
     "difficultyTier": "easy",
     "wordCount": 2,
@@ -580,32 +560,12 @@
     }
   },
   {
-    "id": "17736b9659fed8e49335123519f78ff8",
-    "source": "theme",
-    "type": "title",
-    "answer": "Apache",
-    "normalizedAnswer": "APACHE",
-    "category": "Aircraft",
-    "difficulty": 87.6,
-    "difficultyTier": "hard",
-    "wordCount": 1,
-    "letterCount": 6,
-    "uniqueLetterCount": 5,
-    "tags": [
-      "theme",
-      "aircraft"
-    ],
-    "metadata": {
-      "source": "wikipedia-airliners-plus-curated"
-    }
-  },
-  {
-    "id": "6cc43226439a4bc1f5aa882751a68c3a",
+    "id": "7faa3fe33e9cf836b795703e9f0ab0bd",
     "source": "theme",
     "type": "title",
     "answer": "Hercules",
     "normalizedAnswer": "HERCULES",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 78.8,
     "difficultyTier": "medium",
     "wordCount": 1,
@@ -620,12 +580,12 @@
     }
   },
   {
-    "id": "0a8c6a7581fdde48932efb90cc094b14",
+    "id": "dbd2735487839aae7629eba3c311aea2",
     "source": "theme",
     "type": "title",
     "answer": "Harrier Jump Jet",
     "normalizedAnswer": "HARRIER JUMP JET",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 64.4,
     "difficultyTier": "easy",
     "wordCount": 3,
@@ -640,12 +600,12 @@
     }
   },
   {
-    "id": "fcf33e6ff55f578a011c0f5866d8fda8",
+    "id": "b2bcfeff3fefc53a8a4922ee1b937255",
     "source": "theme",
     "type": "title",
     "answer": "Air Force One",
     "normalizedAnswer": "AIR FORCE ONE",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 73.6,
     "difficultyTier": "medium",
     "wordCount": 3,
@@ -660,17 +620,457 @@
     }
   },
   {
-    "id": "c2676ca22827671b60910f05aa9d4ddc",
+    "id": "90071c89d9d942792c0463a2e3500112",
     "source": "theme",
     "type": "title",
     "answer": "Eurofighter Typhoon",
     "normalizedAnswer": "EUROFIGHTER TYPHOON",
-    "category": "Aircraft",
+    "category": "Airplane",
     "difficulty": 56,
     "difficultyTier": "easy",
     "wordCount": 2,
     "letterCount": 18,
     "uniqueLetterCount": 12,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "424b5cbad77864a18bcad8ad66fe2a8d",
+    "source": "theme",
+    "type": "title",
+    "answer": "Apache",
+    "normalizedAnswer": "APACHE",
+    "category": "Helicopter",
+    "difficulty": 87.6,
+    "difficultyTier": "hard",
+    "wordCount": 1,
+    "letterCount": 6,
+    "uniqueLetterCount": 5,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "92ec711b9047e52554b1215c3fd1e80e",
+    "source": "theme",
+    "type": "title",
+    "answer": "Black Hawk",
+    "normalizedAnswer": "BLACK HAWK",
+    "category": "Helicopter",
+    "difficulty": 78.4,
+    "difficultyTier": "medium",
+    "wordCount": 2,
+    "letterCount": 9,
+    "uniqueLetterCount": 7,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "a04f9be001874aed6917ae5ac53d72b3",
+    "source": "theme",
+    "type": "title",
+    "answer": "Chinook",
+    "normalizedAnswer": "CHINOOK",
+    "category": "Helicopter",
+    "difficulty": 83.2,
+    "difficultyTier": "hard",
+    "wordCount": 1,
+    "letterCount": 7,
+    "uniqueLetterCount": 6,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "4eafaffc4a59e0488620fa20085018a8",
+    "source": "theme",
+    "type": "title",
+    "answer": "Huey",
+    "normalizedAnswer": "HUEY",
+    "category": "Helicopter",
+    "difficulty": 92.4,
+    "difficultyTier": "hard",
+    "wordCount": 1,
+    "letterCount": 4,
+    "uniqueLetterCount": 4,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "9e23643023a5c419daeefe4f08bbf6a7",
+    "source": "theme",
+    "type": "title",
+    "answer": "Cobra",
+    "normalizedAnswer": "COBRA",
+    "category": "Helicopter",
+    "difficulty": 88,
+    "difficultyTier": "hard",
+    "wordCount": 1,
+    "letterCount": 5,
+    "uniqueLetterCount": 5,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "c50dbbaf289357520e31bcdaba7b0226",
+    "source": "theme",
+    "type": "title",
+    "answer": "Little Bird",
+    "normalizedAnswer": "LITTLE BIRD",
+    "category": "Helicopter",
+    "difficulty": 78,
+    "difficultyTier": "medium",
+    "wordCount": 2,
+    "letterCount": 10,
+    "uniqueLetterCount": 7,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "453c987e5ba23e3ba57d6a18c24f353e",
+    "source": "theme",
+    "type": "title",
+    "answer": "Marine One",
+    "normalizedAnswer": "MARINE ONE",
+    "category": "Helicopter",
+    "difficulty": 78.4,
+    "difficultyTier": "medium",
+    "wordCount": 2,
+    "letterCount": 9,
+    "uniqueLetterCount": 7,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "18c1118262ffbbc57c2f4597393f6995",
+    "source": "theme",
+    "type": "title",
+    "answer": "JetRanger",
+    "normalizedAnswer": "JETRANGER",
+    "category": "Helicopter",
+    "difficulty": 78.4,
+    "difficultyTier": "medium",
+    "wordCount": 1,
+    "letterCount": 9,
+    "uniqueLetterCount": 7,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "83c27ceca8b0fdf577c8d9c8f6fbb9ea",
+    "source": "theme",
+    "type": "title",
+    "answer": "Sea Stallion",
+    "normalizedAnswer": "SEA STALLION",
+    "category": "Helicopter",
+    "difficulty": 73.6,
+    "difficultyTier": "medium",
+    "wordCount": 2,
+    "letterCount": 11,
+    "uniqueLetterCount": 8,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "a2c2563ef3c8a131281c26abdb562d11",
+    "source": "theme",
+    "type": "title",
+    "answer": "Sea King",
+    "normalizedAnswer": "SEA KING",
+    "category": "Helicopter",
+    "difficulty": 79.2,
+    "difficultyTier": "medium",
+    "wordCount": 2,
+    "letterCount": 7,
+    "uniqueLetterCount": 7,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "f14205562664c94e757b48585238d586",
+    "source": "theme",
+    "type": "title",
+    "answer": "Kiowa",
+    "normalizedAnswer": "KIOWA",
+    "category": "Helicopter",
+    "difficulty": 88,
+    "difficultyTier": "hard",
+    "wordCount": 1,
+    "letterCount": 5,
+    "uniqueLetterCount": 5,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "18e7a7c861cbf8a971ba4aa232e5d3b9",
+    "source": "theme",
+    "type": "title",
+    "answer": "Lynx",
+    "normalizedAnswer": "LYNX",
+    "category": "Helicopter",
+    "difficulty": 92.4,
+    "difficultyTier": "hard",
+    "wordCount": 1,
+    "letterCount": 4,
+    "uniqueLetterCount": 4,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "053750d25365a81ef9ac615c56447da1",
+    "source": "theme",
+    "type": "title",
+    "answer": "Skycrane",
+    "normalizedAnswer": "SKYCRANE",
+    "category": "Helicopter",
+    "difficulty": 74.8,
+    "difficultyTier": "medium",
+    "wordCount": 1,
+    "letterCount": 8,
+    "uniqueLetterCount": 8,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "2517b9a223dc69595c25ebe713feb945",
+    "source": "theme",
+    "type": "title",
+    "answer": "Puma",
+    "normalizedAnswer": "PUMA",
+    "category": "Helicopter",
+    "difficulty": 92.4,
+    "difficultyTier": "hard",
+    "wordCount": 1,
+    "letterCount": 4,
+    "uniqueLetterCount": 4,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "f676a227fce389c31264a4c9b9b196c8",
+    "source": "theme",
+    "type": "title",
+    "answer": "Hindenburg",
+    "normalizedAnswer": "HINDENBURG",
+    "category": "Airship",
+    "difficulty": 70,
+    "difficultyTier": "medium",
+    "wordCount": 1,
+    "letterCount": 10,
+    "uniqueLetterCount": 9,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "1e7884755be18618f3432cba9e8f14b1",
+    "source": "theme",
+    "type": "title",
+    "answer": "Graf Zeppelin",
+    "normalizedAnswer": "GRAF ZEPPELIN",
+    "category": "Airship",
+    "difficulty": 65.2,
+    "difficultyTier": "medium",
+    "wordCount": 2,
+    "letterCount": 12,
+    "uniqueLetterCount": 10,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "d8d921c9ffd40b815bafd1c1871c9d21",
+    "source": "theme",
+    "type": "title",
+    "answer": "Goodyear Blimp",
+    "normalizedAnswer": "GOODYEAR BLIMP",
+    "category": "Airship",
+    "difficulty": 56.8,
+    "difficultyTier": "easy",
+    "wordCount": 2,
+    "letterCount": 13,
+    "uniqueLetterCount": 12,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "402cbcf4c8d862f89da97fb76fc33ed0",
+    "source": "theme",
+    "type": "title",
+    "answer": "USS Akron",
+    "normalizedAnswer": "USS AKRON",
+    "category": "Airship",
+    "difficulty": 78.8,
+    "difficultyTier": "medium",
+    "wordCount": 2,
+    "letterCount": 8,
+    "uniqueLetterCount": 7,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "0ac77f69f0b8c5e2874b0b4b6d0e57a4",
+    "source": "theme",
+    "type": "title",
+    "answer": "USS Macon",
+    "normalizedAnswer": "USS MACON",
+    "category": "Airship",
+    "difficulty": 78.8,
+    "difficultyTier": "medium",
+    "wordCount": 2,
+    "letterCount": 8,
+    "uniqueLetterCount": 7,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "14877f80b3233e7494d95ed773fa89de",
+    "source": "theme",
+    "type": "title",
+    "answer": "USS Shenandoah",
+    "normalizedAnswer": "USS SHENANDOAH",
+    "category": "Airship",
+    "difficulty": 72.8,
+    "difficultyTier": "medium",
+    "wordCount": 2,
+    "letterCount": 13,
+    "uniqueLetterCount": 8,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "2546c8de71e7295b9a3887dc18425e73",
+    "source": "theme",
+    "type": "title",
+    "answer": "Zeppelin",
+    "normalizedAnswer": "ZEPPELIN",
+    "category": "Airship",
+    "difficulty": 82.8,
+    "difficultyTier": "hard",
+    "wordCount": 1,
+    "letterCount": 8,
+    "uniqueLetterCount": 6,
+    "tags": [
+      "theme",
+      "aircraft"
+    ],
+    "metadata": {
+      "source": "wikipedia-airliners-plus-curated"
+    }
+  },
+  {
+    "id": "eb2a8a76ff8ac49d1b6de3c78142c3ae",
+    "source": "theme",
+    "type": "title",
+    "answer": "Blimp",
+    "normalizedAnswer": "BLIMP",
+    "category": "Airship",
+    "difficulty": 88,
+    "difficultyTier": "hard",
+    "wordCount": 1,
+    "letterCount": 5,
+    "uniqueLetterCount": 5,
     "tags": [
       "theme",
       "aircraft"

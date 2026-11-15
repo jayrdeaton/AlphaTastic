@@ -2037,27 +2037,6 @@
     }
   },
   {
-    "id": "eae85a9d6de4c269acad7a32f9321e35",
-    "source": "theme",
-    "type": "title",
-    "answer": "Chinese date",
-    "normalizedAnswer": "CHINESE DATE",
-    "category": "Flora",
-    "difficulty": 69.6,
-    "difficultyTier": "medium",
-    "wordCount": 2,
-    "letterCount": 11,
-    "uniqueLetterCount": 9,
-    "tags": [
-      "theme",
-      "nature",
-      "flora"
-    ],
-    "metadata": {
-      "source": "wikipedia-state-flowers-and-culinary-fruits"
-    }
-  },
-  {
     "id": "e47824db54df8eea85f7ca1b4fe45603",
     "source": "theme",
     "type": "title",
@@ -3539,27 +3518,6 @@
     "wordCount": 1,
     "letterCount": 8,
     "uniqueLetterCount": 6,
-    "tags": [
-      "theme",
-      "nature",
-      "flora"
-    ],
-    "metadata": {
-      "source": "wikipedia-state-flowers-and-culinary-fruits"
-    }
-  },
-  {
-    "id": "64f8c20b92f026ce6efe2851cae3d83d",
-    "source": "theme",
-    "type": "title",
-    "answer": "Maypop",
-    "normalizedAnswer": "MAYPOP",
-    "category": "Flora",
-    "difficulty": 87.6,
-    "difficultyTier": "hard",
-    "wordCount": 1,
-    "letterCount": 6,
-    "uniqueLetterCount": 5,
     "tags": [
       "theme",
       "nature",

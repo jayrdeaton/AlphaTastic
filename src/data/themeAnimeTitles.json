@@ -760,26 +760,6 @@
     }
   },
   {
-    "id": "8a01f8d6bc5cf6559d56433754e5cedf",
-    "source": "theme",
-    "type": "title",
-    "answer": "Descending Stories: Showa Genroku Rakugo Shinju",
-    "normalizedAnswer": "DESCENDING STORIES SHOWA GENROKU RAKUGO SHINJU",
-    "category": "Anime",
-    "difficulty": 40,
-    "difficultyTier": "easy",
-    "wordCount": 6,
-    "letterCount": 41,
-    "uniqueLetterCount": 16,
-    "tags": [
-      "theme",
-      "anime"
-    ],
-    "metadata": {
-      "source": "wikipedia-anime-best-and-awards"
-    }
-  },
-  {
     "id": "6fed36a112687ff0f5241372c8d4022d",
     "source": "theme",
     "type": "title",

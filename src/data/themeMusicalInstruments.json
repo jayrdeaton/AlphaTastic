@@ -1491,27 +1491,6 @@
     }
   },
   {
-    "id": "6e02543742ac60f3b64b1ac1b553376f",
-    "source": "theme",
-    "type": "title",
-    "answer": "Fiddle",
-    "normalizedAnswer": "FIDDLE",
-    "category": "Musical Instrument",
-    "difficulty": 87.6,
-    "difficultyTier": "hard",
-    "wordCount": 1,
-    "letterCount": 6,
-    "uniqueLetterCount": 5,
-    "tags": [
-      "theme",
-      "music",
-      "instrument"
-    ],
-    "metadata": {
-      "source": "fallback"
-    }
-  },
-  {
     "id": "320a056a533d8592ebc455db45d71cfe",
     "source": "theme",
     "type": "title",

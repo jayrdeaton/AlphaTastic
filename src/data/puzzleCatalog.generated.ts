@@ -130,7 +130,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "movies.json",
     "label": "Movies",
     "group": "Media",
-    "count": 8208,
+    "count": 8199,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -150,14 +150,19 @@ export const puzzleManifest: PuzzleManifestItem[] = [
       "Drama",
       "Family",
       "Fantasy",
-      "History",
       "Horror",
-      "Music",
+      "Movie",
       "Musical",
       "Mystery",
       "Romance",
+      "Romantic Comedy",
       "Sci-Fi",
+      "Sitcom",
+      "Sports",
+      "Superhero",
+      "Talk Show",
       "Thriller",
+      "War",
       "Western"
     ]
   },
@@ -166,7 +171,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "phrases.json",
     "label": "Phrases",
     "group": "Language",
-    "count": 138,
+    "count": 182,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -176,12 +181,12 @@ export const puzzleManifest: PuzzleManifestItem[] = [
       "phrases"
     ],
     "categories": [
-      "food-and-drink",
-      "people",
-      "phrase",
-      "place",
-      "thing",
-      "what-are-you-doing"
+      "Activity",
+      "Expression",
+      "Food & Drink",
+      "People",
+      "Place",
+      "Thing"
     ]
   },
   {
@@ -189,7 +194,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "songs.json",
     "label": "Songs",
     "group": "Media",
-    "count": 1784,
+    "count": 1747,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -366,9 +371,9 @@ export const puzzleManifest: PuzzleManifestItem[] = [
   {
     "key": "themeAirplanes",
     "file": "themeAirplanes.json",
-    "label": "Airplanes",
+    "label": "Aircraft",
     "group": "Transportation",
-    "count": 34,
+    "count": 54,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -378,7 +383,9 @@ export const puzzleManifest: PuzzleManifestItem[] = [
       "theme"
     ],
     "categories": [
-      "Aircraft"
+      "Airplane",
+      "Airship",
+      "Helicopter"
     ]
   },
   {
@@ -386,7 +393,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "themeAnimeTitles.json",
     "label": "Anime",
     "group": "Media",
-    "count": 105,
+    "count": 104,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -709,7 +716,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "themeFlora.json",
     "label": "Flora",
     "group": "Nature",
-    "count": 267,
+    "count": 265,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -727,7 +734,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "themeFoodAndDrink.json",
     "label": "Food & Drink",
     "group": "Other",
-    "count": 355,
+    "count": 354,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -766,7 +773,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "themeHistory.json",
     "label": "Empires",
     "group": "History",
-    "count": 127,
+    "count": 125,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -820,7 +827,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "themeLiterature.json",
     "label": "Literature",
     "group": "Media",
-    "count": 239,
+    "count": 233,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -856,7 +863,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "themeMusicalInstruments.json",
     "label": "Musical Instruments",
     "group": "Media",
-    "count": 92,
+    "count": 91,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -1039,7 +1046,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "themeVideoGames.json",
     "label": "Video Games",
     "group": "Games",
-    "count": 653,
+    "count": 1316,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -1075,7 +1082,7 @@ export const puzzleManifest: PuzzleManifestItem[] = [
     "file": "tvShows.json",
     "label": "TV Shows",
     "group": "Media",
-    "count": 3966,
+    "count": 2866,
     "difficultyTiers": [
       "easy",
       "hard",
@@ -1095,13 +1102,24 @@ export const puzzleManifest: PuzzleManifestItem[] = [
       "Drama",
       "Family",
       "Fantasy",
+      "Game Show",
       "Horror",
       "Music",
+      "Musical",
       "Mystery",
+      "News",
+      "Reality",
       "Romance",
+      "Romantic Comedy",
       "Sci-Fi",
+      "Sitcom",
+      "Soap Opera",
+      "Sports",
+      "Superhero",
       "TV Show",
+      "Talk Show",
       "Thriller",
+      "War",
       "Western"
     ]
   }

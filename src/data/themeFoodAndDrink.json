@@ -5120,26 +5120,6 @@
     }
   },
   {
-    "id": "bbe320a6999286c6dbdead2365f45b79",
-    "source": "theme",
-    "type": "title",
-    "answer": "Cream pie",
-    "normalizedAnswer": "CREAM PIE",
-    "category": "Food and Drink",
-    "difficulty": 78.8,
-    "difficultyTier": "medium",
-    "wordCount": 2,
-    "letterCount": 8,
-    "uniqueLetterCount": 7,
-    "tags": [
-      "theme",
-      "food"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_foods"
-    }
-  },
-  {
     "id": "65586b1ea82f976e985e1098dca8dbbc",
     "source": "theme",
     "type": "title",

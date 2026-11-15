@@ -420,27 +420,6 @@
     }
   },
   {
-    "id": "7dcf297c7c4585f3d09b334debcba090",
-    "source": "theme",
-    "type": "title",
-    "answer": "Lolita",
-    "normalizedAnswer": "LOLITA",
-    "category": "Book Title",
-    "difficulty": 87.6,
-    "difficultyTier": "hard",
-    "wordCount": 1,
-    "letterCount": 6,
-    "uniqueLetterCount": 5,
-    "tags": [
-      "theme",
-      "literature",
-      "book"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_best-selling_books"
-    }
-  },
-  {
     "id": "a937815acdcfe2002083c113ea662cfb",
     "source": "theme",
     "type": "title",
@@ -1911,27 +1890,6 @@
     }
   },
   {
-    "id": "c6ab5576c3e7d2f8005c1d5c68ef0144",
-    "source": "theme",
-    "type": "title",
-    "answer": "Fifty Shades of Grey",
-    "normalizedAnswer": "FIFTY SHADES OF GREY",
-    "category": "Book Title",
-    "difficulty": 56,
-    "difficultyTier": "easy",
-    "wordCount": 4,
-    "letterCount": 17,
-    "uniqueLetterCount": 12,
-    "tags": [
-      "theme",
-      "literature",
-      "book"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_best-selling_books"
-    }
-  },
-  {
     "id": "14c82c9c0f1b7544890504044ea904b8",
     "source": "theme",
     "type": "title",
@@ -2552,27 +2510,6 @@
     "wordCount": 2,
     "letterCount": 11,
     "uniqueLetterCount": 10,
-    "tags": [
-      "theme",
-      "literature",
-      "book"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_best-selling_books"
-    }
-  },
-  {
-    "id": "dde7c9dde12f8909ff42c1a4ee91bd9c",
-    "source": "theme",
-    "type": "title",
-    "answer": "Fifty Shades Darker",
-    "normalizedAnswer": "FIFTY SHADES DARKER",
-    "category": "Book Title",
-    "difficulty": 60,
-    "difficultyTier": "easy",
-    "wordCount": 3,
-    "letterCount": 17,
-    "uniqueLetterCount": 11,
     "tags": [
       "theme",
       "literature",
@@ -3392,27 +3329,6 @@
     "wordCount": 2,
     "letterCount": 11,
     "uniqueLetterCount": 7,
-    "tags": [
-      "theme",
-      "literature",
-      "book"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_best-selling_books"
-    }
-  },
-  {
-    "id": "06fda45942eb4f7ad877c1fe823dcd0b",
-    "source": "theme",
-    "type": "title",
-    "answer": "Fifty Shades",
-    "normalizedAnswer": "FIFTY SHADES",
-    "category": "Book Title",
-    "difficulty": 69.6,
-    "difficultyTier": "medium",
-    "wordCount": 2,
-    "letterCount": 11,
-    "uniqueLetterCount": 9,
     "tags": [
       "theme",
       "literature",
@@ -4704,27 +4620,6 @@
     }
   },
   {
-    "id": "df0b3c5666cea7873fb9d3715aa63bca",
-    "source": "theme",
-    "type": "title",
-    "answer": "Der Regenbogenfisch",
-    "normalizedAnswer": "DER REGENBOGENFISCH",
-    "category": "Book Title",
-    "difficulty": 56,
-    "difficultyTier": "easy",
-    "wordCount": 2,
-    "letterCount": 18,
-    "uniqueLetterCount": 12,
-    "tags": [
-      "theme",
-      "literature",
-      "book"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_best-selling_books"
-    }
-  },
-  {
     "id": "a8823dd427e558104df206225db5d49e",
     "source": "theme",
     "type": "title",
@@ -4946,27 +4841,6 @@
     "wordCount": 4,
     "letterCount": 32,
     "uniqueLetterCount": 15,
-    "tags": [
-      "theme",
-      "literature",
-      "book"
-    ],
-    "metadata": {
-      "source": "https://en.wikipedia.org/wiki/List_of_best-selling_books"
-    }
-  },
-  {
-    "id": "339ca0c9a2da87ec7dcfa990feb22993",
-    "source": "theme",
-    "type": "title",
-    "answer": "Le guide Michelin France",
-    "normalizedAnswer": "LE GUIDE MICHELIN FRANCE",
-    "category": "Book Title",
-    "difficulty": 52,
-    "difficultyTier": "easy",
-    "wordCount": 4,
-    "letterCount": 21,
-    "uniqueLetterCount": 13,
     "tags": [
       "theme",
       "literature",
