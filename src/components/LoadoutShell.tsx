@@ -1,4 +1,5 @@
 import { CornerActionButtons, type PopoverHost, PressAwayOverlay, usePopoverHost } from '@tastic/hud/chrome'
+import { SettingsDialog } from '@tastic/shell'
 import { useFocusEffect, useIsFocused } from 'expo-router'
 import { createContext, JSX, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { BackHandler, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
@@ -6,11 +7,8 @@ import { Portal, useTheme } from 'react-native-paper'
 import { useReducedMotion } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { useCatalogActions } from '@/hooks/useCatalog'
 import { goHome, safeBack } from '@/utils/navigation'
 import { gameShell } from '@/utils/webLayout'
-
-import { SettingsDialog } from './SettingsDialog'
 
 // The corners' strip: 8pt in, a 40pt button with Paper's 6pt margin, 8pt out (the 56pt Home leaves
 // above its hero too). The body starts under it.
@@ -78,7 +76,6 @@ export type LoadoutShellProps = {
 export const LoadoutShell = ({ children, closeOverlay, closeAllOverlays, overlays, centerAction }: LoadoutShellProps): JSX.Element => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { refreshUnlocks } = useCatalogActions()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const covered = !useIsFocused() || settingsOpen
   // usePopoverHost hands back a new object every render; the context only changes with what's open.
@@ -153,7 +150,7 @@ export const LoadoutShell = ({ children, closeOverlay, closeAllOverlays, overlay
         ) : null}
       </View>
       {overlays}
-      <SettingsDialog visible={settingsOpen} onDismiss={() => setSettingsOpen(false)} onUnlocksChanged={refreshUnlocks} />
+      <SettingsDialog visible={settingsOpen} onDismiss={() => setSettingsOpen(false)} />
     </Portal.Host>
   )
 }

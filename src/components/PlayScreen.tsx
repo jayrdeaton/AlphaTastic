@@ -2,7 +2,6 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { JSX, useEffect, useRef } from 'react'
 import { Portal } from 'react-native-paper'
 
-import { useActiveGame } from '@/hooks/useActiveGame'
 import { useActivePlayer } from '@/hooks/useActivePlayer'
 import { useProfilesActions } from '@/hooks/useProfiles'
 import { useStartSolo } from '@/hooks/useStartSolo'
@@ -22,7 +21,6 @@ import { resolvePuzzle } from '@/utils/puzzlePicker'
 export const PlayScreen = (): JSX.Element => {
   const params = useLocalSearchParams<{ phrase?: string; hint?: string; mode?: string }>()
   const { requestStart, abandonDialog } = useStartSolo()
-  const { cancelResume } = useActiveGame()
   const { seatId } = useActivePlayer()
   const { selectPlayer } = useProfilesActions()
   const handledRef = useRef(false)
@@ -35,7 +33,6 @@ export const PlayScreen = (): JSX.Element => {
       return
     }
     handledRef.current = true
-    cancelResume()
     const config = parseSharedPuzzleParams(params)
     const result = config ? resolvePuzzle(config, []) : null
     if (!result?.ok) {
@@ -43,7 +40,7 @@ export const PlayScreen = (): JSX.Element => {
       return
     }
     requestStart(result.payload, { onStarted: () => router.dismissTo(gameHref('solo')), onCancelled: safeBack })
-  }, [params, requestStart, cancelResume, seatId, selectPlayer])
+  }, [params, requestStart, seatId, selectPlayer])
 
   return <Portal.Host>{abandonDialog}</Portal.Host>
 }

@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { configureStore } from '@reduxjs/toolkit'
 import { defaultColors } from '@rific/auto-paper'
-import type { Profile } from '@tastic/profile'
+import { type Profile, profilesReducer } from '@tastic/profile'
+import { profileSelectionReducer, ProfilesProvider as ShellProfilesProvider, useProfiles as useShellProfiles } from '@tastic/shell'
 import { act, render } from '@testing-library/react-native'
 import { useEffect } from 'react'
 import { AppState, Text } from 'react-native'
@@ -10,13 +11,12 @@ import { combineReducers } from 'redux'
 
 import { CatalogProvider } from '@/hooks/useCatalog'
 import { GameStatsProvider } from '@/hooks/useGameStats'
-import { type ProfilesActions, ProfilesProvider, SHARED_PROFILES_GROUP_ID, useProfilesActions } from '@/hooks/useProfiles'
+import { PlayerRoster, type ProfilesActions, useProfilesActions } from '@/hooks/useProfiles'
 import { DEFAULT_MODE } from '@/modes/registry'
 import achievements, { achievementsActions } from '@/redux/achievementsSlice'
 import activePlayer, { activePlayerActions } from '@/redux/activePlayerSlice'
 import playerSettings, { playerSettingsActions } from '@/redux/playerSettingsSlice'
 import playerTheme, { DEFAULT_HARMONY, playerThemeActions } from '@/redux/playerThemeSlice'
-import profiles from '@/redux/profilesSlice'
 import round, { initialRoundState, roundActions, type RoundState } from '@/redux/roundSlice'
 import { GUEST_PLAYER_KEY, guestSeatKey } from '@/utils/players'
 import { createDefaultProfileStats, createDefaultStats } from '@/utils/statsValidation'
@@ -44,7 +44,7 @@ jest.mock('expo-modules-core', () => {
 })
 const { mockAppGroup: appGroup } = jest.requireMock('expo-modules-core') as { mockAppGroup: FakeAppGroup }
 
-const SHARED_KEY = `${SHARED_PROFILES_GROUP_ID}:sharedProfiles`
+const SHARED_KEY = 'group.com.infinitetoken.tastic:sharedProfiles'
 const shareRoster = (roster: Profile[]) => appGroup.data.set(SHARED_KEY, JSON.stringify(roster))
 const sharedRoster = (): Profile[] => JSON.parse(appGroup.data.get(SHARED_KEY) ?? '[]')
 
@@ -58,7 +58,7 @@ const makeStore = ({ roster = [], seatedId = null }: { roster?: Profile[]; seate
   const { session } = initialRoundState.pnp
   const players = session.players.map((player, index) => (index === 1 ? { ...player, profileId: seatedId } : player))
   const roundState: RoundState = { ...initialRoundState, pnp: { ...initialRoundState.pnp, session: { ...session, players } } }
-  return configureStore({ reducer: combineReducers({ achievements, activePlayer, playerSettings, playerTheme, profiles, round }), preloadedState: { profiles: roster, round: roundState } })
+  return configureStore({ reducer: combineReducers({ achievements, activePlayer, playerSettings, playerTheme, profiles: profilesReducer, profileSelection: profileSelectionReducer, round }), preloadedState: { profiles: roster, round: roundState } })
 }
 type TestStore = ReturnType<typeof makeStore>
 
@@ -86,26 +86,31 @@ const ALICE_FORGOTTEN = { settings: undefined, theme: undefined, round: undefine
 const seatProfiles = (store: TestStore) => store.getState().round.pnp.session.players.map((player) => player.profileId)
 
 let actions: ProfilesActions | null = null
+let shell: ReturnType<typeof useShellProfiles> | null = null
 const Probe = () => {
   const value = useProfilesActions()
+  const shellProfiles = useShellProfiles()
   useEffect(() => {
     actions = value
-  }, [value])
-  return <Text>ready</Text>
+    shell = shellProfiles
+  }, [value, shellProfiles])
+  return <Text>{shellProfiles.loaded ? 'ready' : 'waiting'}</Text>
 }
 
-// ProfilesProvider where Providers.tsx has it: inside the catalog counters and GameStatsProvider,
-// which forgetting a player clears the unlocked puzzles and stats through.
+// As at the root: the shell's ProfilesProvider, then the pack's providers, with PlayerRoster inside the
+// catalog counters and GameStatsProvider, which forgetting a player clears the unlocked puzzles and
+// stats through.
 const renderProvider = (store: TestStore) =>
   render(
     <ReduxProvider store={store}>
-      <CatalogProvider>
-        <GameStatsProvider>
-          <ProfilesProvider>
+      <ShellProfilesProvider>
+        <CatalogProvider>
+          <GameStatsProvider>
+            <PlayerRoster />
             <Probe />
-          </ProfilesProvider>
-        </GameStatsProvider>
-      </CatalogProvider>
+          </GameStatsProvider>
+        </CatalogProvider>
+      </ShellProfilesProvider>
     </ReduxProvider>
   )
 
@@ -121,45 +126,19 @@ const returnToForeground = async () => {
   })
 }
 
-describe('ProfilesProvider', () => {
+describe('PlayerRoster and useProfilesActions', () => {
   let removeItem: jest.SpyInstance
   beforeEach(() => {
     jest.clearAllMocks()
     appGroup.data.clear()
     appGroup.failReads = false
     actions = null
+    shell = null
     removeItem = jest.spyOn(AsyncStorage, 'removeItem')
   })
   afterEach(() => removeItem.mockRestore())
 
   describe('at launch', () => {
-    it('holds every screen back until the roster is reconciled with the shared one', async () => {
-      let resolveRead: (json: string | null) => void = () => {}
-      appGroup.getSharedJSON.mockImplementationOnce(() => new Promise((resolve) => (resolveRead = resolve)))
-      const screen = await renderProvider(makeStore())
-      expect(screen.queryByText('ready')).toBeNull()
-
-      await act(async () => resolveRead(null))
-
-      expect(screen.getByText('ready')).toBeTruthy()
-    })
-
-    it("takes the shared roster over this device's copy once there is one", async () => {
-      const store = makeStore({ roster: [ALICE] })
-      shareRoster([ALICE, BOB])
-      await renderProvider(store)
-
-      expect(store.getState().profiles).toEqual([ALICE, BOB])
-    })
-
-    it("seeds an empty shared roster from this device's copy", async () => {
-      const store = makeStore({ roster: [ALICE] })
-      await renderProvider(store)
-
-      expect(store.getState().profiles).toEqual([ALICE])
-      expect(sharedRoster()).toEqual([ALICE])
-    })
-
     // Deleted in another game: Hangman lets go of everything it kept for them.
     it('forgets a profile the shared roster no longer has: the guest plays, their seat stays as a guest, and nothing of theirs is left', async () => {
       const store = makeStore({ roster: [ALICE, BOB], seatedId: ALICE.id })
@@ -214,22 +193,6 @@ describe('ProfilesProvider', () => {
   })
 
   describe('changes here', () => {
-    it("adds, renames and recolors a profile, mirroring the roster out to every game's", async () => {
-      const store = makeStore()
-      await renderProvider(store)
-
-      let created: Profile | null = null
-      await act(async () => {
-        created = actions!.createProfile({ name: 'Cat', color: '#ff9800', tag: 'C' })
-      })
-      expect(store.getState().profiles).toEqual([created])
-      expect(sharedRoster()).toEqual([created])
-
-      await act(async () => actions!.updateProfile(created!.id, { name: 'Kit', color: '#009688', tag: 'K' }))
-      expect(store.getState().profiles[0]).toMatchObject({ id: created!.id, name: 'Kit', color: '#009688', tag: 'K' })
-      expect(sharedRoster()[0]).toMatchObject({ name: 'Kit', color: '#009688', tag: 'K' })
-    })
-
     it('deletes a profile everywhere and forgets everything Hangman kept for them', async () => {
       const store = makeStore({ roster: [ALICE, BOB], seatedId: ALICE.id })
       shareRoster([ALICE, BOB])
@@ -237,7 +200,7 @@ describe('ProfilesProvider', () => {
       store.dispatch(activePlayerActions.setActivePlayer(ALICE.id))
       await renderProvider(store)
 
-      await act(async () => actions!.deleteProfile(ALICE.id))
+      await act(async () => shell!.deleteProfile(ALICE.id))
 
       expect(store.getState().profiles).toEqual([BOB])
       expect(sharedRoster()).toEqual([BOB])
@@ -305,11 +268,11 @@ describe('ProfilesProvider', () => {
       const before = store.getState().profiles
 
       await returnToForeground()
-      expect(store.getState().profiles).toBe(before)
+      expect(store.getState().profiles).toEqual(before)
+      expect(store.getState().activePlayer.profileId).toBeNull()
 
       appGroup.failReads = true
       await returnToForeground()
-      expect(store.getState().profiles).toBe(before)
       expect(store.getState().profiles).toEqual([ALICE])
     })
   })

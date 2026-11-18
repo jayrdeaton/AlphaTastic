@@ -3,11 +3,11 @@ import { FeedbackPressProvider } from '@rific/feedback-press'
 import { type Profile, profilesActions } from '@tastic/profile'
 import { act, fireEvent, render as rtlRender, waitFor } from '@testing-library/react-native'
 import { type ReactElement, type ReactNode, useEffect } from 'react'
-import { BackHandler, StyleSheet, View } from 'react-native'
+import { Pressable } from 'react-native'
 import * as RNPaper from 'react-native-paper'
 import { Provider as ReduxProvider } from 'react-redux'
 
-import { StatsScreen, type StatsScreenProps } from '@/components/StatsScreen'
+import { HangmanAchievementList, HangmanStatsSections, statsReset } from '@/components/HangmanStats'
 import { ACHIEVEMENT_CATALOG, VISIBLE_MODE_COUNT } from '@/constants/achievements'
 import { type CatalogActions, CatalogProvider, useCatalogActions } from '@/hooks/useCatalog'
 import { GameStatsProvider } from '@/hooks/useGameStats'
@@ -65,11 +65,22 @@ const Wrapper = ({ children }: { children: ReactNode }) => (
 )
 const render = (ui: ReactElement) => rtlRender(ui, { wrapper: Wrapper })
 
-const insets = { top: 0, left: 0, bottom: 0, right: 0 }
 // The packs the screen counts: the catalog's own manifest, as the loadout's rows read it.
 const MANIFEST = getPuzzleManifest().filter((item) => item.count > 0)
 const TOTAL = MANIFEST.reduce((sum, item) => sum + item.count, 0)
-const renderScreen = (props: Partial<StatsScreenProps> = {}) => render(<StatsScreen onBack={jest.fn()} insets={insets} {...props} />)
+// What the shell's stats screen shows for the player its picker is on (null is Everyone), and its Reset.
+const ResetButton = ({ profileId }: { profileId: string | null }) => {
+  const reset = statsReset.useReset()
+  return <Pressable testID='reset' onPress={() => reset(profileId)} />
+}
+const renderScreen = ({ profileId = null }: { profileId?: string | null } = {}) =>
+  render(
+    <>
+      <HangmanStatsSections profileId={profileId} />
+      <HangmanAchievementList profileId={profileId} />
+      <ResetButton profileId={profileId} />
+    </>
+  )
 const seedStats = (patch: Partial<StatsState>, unlocked: UnlockedAchievementsState = {}) => store.dispatch(achievementsActions.update({ stats: { ...createDefaultStats(), ...patch }, unlocked }))
 // Every player's unlocked puzzles together, what Everyone counts.
 const storeUnlocks = (map: PuzzleUnlockMap) => mockGetDeviceUnlockMap.mockResolvedValue(map)
@@ -79,7 +90,7 @@ type Screen = Awaited<ReturnType<typeof renderScreen>>
 const rowValue = (screen: Screen, label: string): unknown => (screen.getByText(label).parent!.children[1] as unknown as { props: { children: unknown } }).props.children
 const n = (value: number) => value.toLocaleString('en-US')
 
-describe('StatsScreen', () => {
+describe('HangmanStats', () => {
   beforeEach(async () => {
     jest.clearAllMocks()
     mockGetDeviceUnlockMap.mockImplementation(realGetDeviceUnlockMap)
@@ -91,10 +102,9 @@ describe('StatsScreen', () => {
     catalog = null
   })
 
-  it("is the fleet's stats screen, titled Stats & Achievements, with Progress, Solo, Pass & Play, Activity and every achievement", async () => {
+  it('shows Progress, Solo, Pass & Play, Activity and every achievement', async () => {
     const screen = await renderScreen()
 
-    expect(screen.getByText('Stats & Achievements')).toBeTruthy()
     for (const label of ['PROGRESS', 'SOLO', 'PASS & PLAY', 'ACTIVITY', 'ALL ACHIEVEMENTS']) expect(screen.getByText(label)).toBeTruthy()
     for (const achievement of ACHIEVEMENT_CATALOG) expect(screen.getAllByText(achievement.title).length).toBeGreaterThan(0)
   })
@@ -198,63 +208,9 @@ describe('StatsScreen', () => {
     expect(screen.getAllByText('Unlocked today')).toHaveLength(1)
   })
 
-  it('goes back from the header arrow and from the accessibility escape gesture', async () => {
-    const onBack = jest.fn()
-    const screen = await renderScreen({ onBack })
-
-    await fireEvent.press(screen.getByLabelText('Back'))
-    expect(onBack).toHaveBeenCalledTimes(1)
-
-    await fireEvent(screen.getByTestId('stats-screen'), 'accessibilityEscape')
-    expect(onBack).toHaveBeenCalledTimes(2)
-  })
-
-  // A route page now: the stack pops it on Android back, so a listener of its own would take back
-  // away from the navigator.
-  it('leaves Android back to the navigator', async () => {
-    const addEventListener = jest.spyOn(BackHandler, 'addEventListener')
-    await renderScreen()
-
-    expect(addEventListener.mock.calls.filter(([event]) => event === 'hardwareBackPress')).toHaveLength(0)
-    addEventListener.mockRestore()
-  })
-
-  // The route's page under the app's one board (see BoardBackground): no full-screen layer of its own,
-  // and nothing between the board and the rows paints over it.
-  it('fills its page with no layer or background of its own, so the board shows through', async () => {
-    const screen = await renderScreen()
-    const root = screen.getByTestId('stats-screen')
-    const rootStyle = StyleSheet.flatten(root.props.style)
-
-    expect(rootStyle).toMatchObject({ flex: 1 })
-    expect(rootStyle.position).toBeUndefined()
-    expect(rootStyle.zIndex).toBeUndefined()
-    expect(root.props.accessibilityViewIsModal).toBeFalsy()
-
-    const backgrounds: unknown[] = []
-    for (let node = screen.getByText('Stats & Achievements').parent; node && node !== root.parent; node = node.parent) {
-      const background = StyleSheet.flatten(node.props.style)?.backgroundColor
-      if (background !== undefined) backgrounds.push(background)
-    }
-    expect(backgrounds.length).toBeGreaterThan(0)
-    expect(backgrounds.every((background) => background === 'transparent')).toBe(true)
-  })
-
-  it('keeps everything when the reset confirm is canceled', async () => {
-    seedStats({ solo: { played: 2, wins: 2, losses: 0, draws: 0 } })
-    const screen = await renderScreen()
-    await waitFor(() => expect(mockGetDeviceUnlockMap).toHaveBeenCalledTimes(1))
-
-    await fireEvent.press(screen.getByText('Reset All Stats'))
-    expect(screen.getByText('Reset Everything?')).toBeTruthy()
-    expect(screen.getByText(/every stat, achievement and unlocked puzzle/)).toBeTruthy()
-    await fireEvent.press(screen.getByText('Cancel'))
-
-    expect(screen.queryByText('Reset Everything?')).toBeNull()
-    expect(mockClearAllPuzzleUnlocks).not.toHaveBeenCalled()
-    expect(store.getState().achievements.stats.solo.wins).toBe(2)
-    // No refreshUnlocks, so nothing re-reads the unlocked puzzles.
-    expect(mockGetDeviceUnlockMap).toHaveBeenCalledTimes(1)
+  it('names what each reset erases', () => {
+    expect(statsReset.labels(null)).toEqual({ label: 'Reset All Stats', title: 'Reset Everything?', body: expect.stringContaining('every stat, achievement and unlocked puzzle') })
+    expect(statsReset.labels('Alice')).toEqual({ label: "Reset Alice's Stats", title: 'Reset Alice?', body: expect.stringContaining('The totals under Everyone stay') })
   })
 
   it("clears every stat, achievement and every player's unlocked puzzles once the reset is confirmed, then has every screen re-read the unlocks", async () => {
@@ -266,8 +222,7 @@ describe('StatsScreen', () => {
 
     // What the storage holds once clearAllPuzzleUnlocks has run.
     storeUnlocks({})
-    await fireEvent.press(screen.getByText('Reset All Stats'))
-    await fireEvent.press(screen.getByText('Reset'))
+    await fireEvent.press(screen.getByTestId('reset'))
 
     // refreshUnlocks bumps unlockVersion, which is what re-reads the map here (and on every other
     // screen counting unlocks).
@@ -280,55 +235,18 @@ describe('StatsScreen', () => {
     expect(rowValue(screen, 'Won')).toBe('0')
   })
 
-  // The picker at the top picks whose numbers show: Everyone (the device's) on every visit, or one
-  // profile's own, where everything on the page is that profile's: their bucket, their unlocked puzzles
-  // and their achievements. The reset follows it.
-  describe('the profile picker', () => {
+  describe("a profile's own numbers", () => {
     const PROFILE = 'profile-a'
     const ALICE: Profile = { id: PROFILE, name: 'Alice', color: '#2196f3', tag: 'A', createdAt: 1, updatedAt: 1 }
     const BOB: Profile = { id: 'profile-b', name: 'Bob', color: '#4caf50', tag: 'B', createdAt: 2, updatedAt: 2 }
     const record = (played: number, wins: number) => ({ played, wins, losses: played - wins, draws: 0 })
-    // The picker's popover only shows once hud's useAutoAlign has measured its trigger, and the jest
-    // preset's View never answers measureInWindow: this one does, from a spot near the top left.
-    let measureInWindow: jest.SpyInstance
     beforeEach(() => {
       store.dispatch(profilesActions.setAll([ALICE, BOB]))
-      measureInWindow = jest.spyOn(View.prototype as unknown as { measureInWindow: (callback: (x: number, y: number, width: number, height: number) => void) => void }, 'measureInWindow').mockImplementation((callback) => callback(16, 120, 140, 28))
-    })
-    afterEach(() => {
-      measureInWindow.mockRestore()
-    })
-    const pick = async (screen: Screen, trigger: string, name: string) => {
-      await fireEvent.press(screen.getByLabelText(trigger))
-      await fireEvent.press(screen.getByText(name))
-    }
-
-    it('is hidden while there are no profiles', async () => {
-      store.dispatch(profilesActions.setAll([]))
-      const screen = await renderScreen()
-
-      expect(screen.queryByLabelText('EVERYONE')).toBeNull()
-    })
-
-    it("opens on Everyone, the device's numbers, and shows a profile's own once picked, and the device's again from Everyone", async () => {
-      seedStats({ solo: record(10, 8), profiles: { [PROFILE]: { ...createDefaultProfileStats(), solo: record(4, 1) } } })
-      const screen = await renderScreen()
-      expect(screen.getByLabelText('EVERYONE')).toBeTruthy()
-      expect(rowValue(screen, 'Played')).toBe('10')
-
-      await pick(screen, 'EVERYONE', 'Alice')
-      expect(screen.getByLabelText('ALICE')).toBeTruthy()
-      expect(rowValue(screen, 'Played')).toBe('4')
-      expect(screen.getByText("Reset Alice's Stats")).toBeTruthy()
-
-      await pick(screen, 'ALICE', 'Everyone')
-      expect(rowValue(screen, 'Played')).toBe('10')
-      expect(screen.getByText('Reset All Stats')).toBeTruthy()
     })
 
     it("shows the profile's own numbers, with the device's left out", async () => {
       seedStats({ solo: record(10, 8), customPacksCreated: 3, profiles: { [PROFILE]: { ...createDefaultProfileStats(), solo: record(4, 1), customPacksCreated: 1 } } })
-      const screen = await renderScreen({ initialProfileId: PROFILE })
+      const screen = await renderScreen({ profileId: PROFILE })
 
       expect(rowValue(screen, 'Played')).toBe('4')
       expect(rowValue(screen, 'Won')).toBe('1')
@@ -338,7 +256,7 @@ describe('StatsScreen', () => {
 
     it("starts from nothing for a profile that hasn't finished a round", async () => {
       seedStats({ solo: record(10, 8) })
-      const screen = await renderScreen({ initialProfileId: PROFILE })
+      const screen = await renderScreen({ profileId: PROFILE })
 
       expect(rowValue(screen, 'Played')).toBe('0')
       expect(rowValue(screen, 'Win Rate')).toBe('-')
@@ -349,7 +267,7 @@ describe('StatsScreen', () => {
       seedStats({ profiles: { [PROFILE]: createDefaultProfileStats() } }, { first_game_played: 1, first_ever_win: 2, [`${PROFILE}:first_game_played`]: 3 })
       storeUnlocks({ [full.key]: ['some-puzzle', 'another'] })
       mockGetPuzzleUnlockMap.mockResolvedValue({ [full.key]: getPuzzlesForCategory(full.key).map((puzzle) => puzzle.id) })
-      const screen = await renderScreen({ initialProfileId: PROFILE })
+      const screen = await renderScreen({ profileId: PROFILE })
 
       await waitFor(() => expect(rowValue(screen, 'Packs Completed')).toBe(`1 / ${MANIFEST.length}`))
       expect(mockGetPuzzleUnlockMap).toHaveBeenCalledWith(PROFILE)
@@ -358,28 +276,11 @@ describe('StatsScreen', () => {
       expect(rowValue(screen, 'Achievements Earned')).toBe(`1 / ${ACHIEVEMENT_CATALOG.length}`)
     })
 
-    it('goes back to Everyone if the profile shown is deleted while the screen is open', async () => {
-      seedStats({ solo: record(10, 8), profiles: { [PROFILE]: { ...createDefaultProfileStats(), solo: record(4, 1) } } })
-      const screen = await renderScreen({ initialProfileId: PROFILE })
-      expect(rowValue(screen, 'Played')).toBe('4')
-
-      await act(async () => {
-        store.dispatch(profilesActions.remove(PROFILE))
-      })
-
-      expect(screen.getByLabelText('EVERYONE')).toBeTruthy()
-      expect(rowValue(screen, 'Played')).toBe('10')
-    })
-
     it("resets only the profile shown: their stats, achievements and unlocked puzzles, keeping the totals under Everyone and everyone else's", async () => {
       seedStats({ solo: record(10, 8), profiles: { [PROFILE]: { ...createDefaultProfileStats(), solo: record(4, 1) }, [BOB.id]: { ...createDefaultProfileStats(), solo: record(2, 2) } } }, { first_game_played: 1, [`${PROFILE}:first_game_played`]: 2, [`${BOB.id}:first_game_played`]: 3 })
-      const screen = await renderScreen({ initialProfileId: PROFILE })
+      const screen = await renderScreen({ profileId: PROFILE })
 
-      await fireEvent.press(screen.getByText("Reset Alice's Stats"))
-      expect(screen.getByText('Reset Alice?')).toBeTruthy()
-      expect(screen.getByText(/erases Alice's stats, achievements and unlocked puzzles/)).toBeTruthy()
-      expect(screen.getByText(/The totals under Everyone stay/)).toBeTruthy()
-      await fireEvent.press(screen.getByText('Reset'))
+      await fireEvent.press(screen.getByTestId('reset'))
 
       await waitFor(() => expect(mockClearPuzzleUnlocks).toHaveBeenCalledWith(PROFILE))
       expect(mockClearAllPuzzleUnlocks).not.toHaveBeenCalled()

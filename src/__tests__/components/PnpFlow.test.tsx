@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { defaultColors } from '@rific/auto-paper'
 import { localDateString, previousDateString } from '@tastic/achievements'
-import { type Profile, profilesActions } from '@tastic/profile'
+import { type Profile, profilesActions, profilesReducer } from '@tastic/profile'
 import { act, fireEvent, render } from '@testing-library/react-native'
 import { router, useIsFocused } from 'expo-router'
 import { BackHandler, Keyboard, Text } from 'react-native'
@@ -10,15 +10,15 @@ import { Provider as ReduxProvider } from 'react-redux'
 import { WIN_DIALOG_DELAY_MS } from '@/components/Game'
 import { GameScreen } from '@/components/GameScreen'
 import { LoadoutScreen } from '@/components/LoadoutScreen'
-import { Providers } from '@/components/Providers'
 import { useAutoSaveCustom } from '@/hooks/useAutoSaveCustom'
 import { DEFAULT_MODE } from '@/modes/registry'
 import { achievementsActions } from '@/redux/achievementsSlice'
 import activePlayerReducer, { activePlayerActions } from '@/redux/activePlayerSlice'
 import { playerSettingsActions } from '@/redux/playerSettingsSlice'
-import { playerThemeActions } from '@/redux/playerThemeSlice'
+import playerThemeReducer, { playerThemeActions } from '@/redux/playerThemeSlice'
 import roundReducer, { initialRoundState, type PnpPhase, roundActions, type SavedPuzzle, selectSoloRound } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
+import { Providers } from '@/testUtils/Providers'
 import { alert } from '@/utils/alert'
 import { addCustomPuzzle } from '@/utils/customPacks'
 import { GUEST_PLAYER_KEY, guestSeatKey } from '@/utils/players'
@@ -56,8 +56,8 @@ const mockUseIsFocused = jest.mocked(useIsFocused)
 const stats = () => store.getState().achievements.stats
 const pnpRound = () => store.getState().round.pnp
 
-const PNP_LOADOUT = { pathname: '/loadout', params: { mode: 'pnp' } }
-const PNP_GAME = { pathname: '/game', params: { mode: 'pnp' } }
+const PNP_LOADOUT = { pathname: '/loadout/[game]', params: { game: 'hangman' } }
+const PNP_GAME = { pathname: '/play/[game]', params: { game: 'hangman', mode: 'pnp' } }
 
 // CAT as the real resolver saves it: the player's current art (the default, Classic), and 'hard',
 // since three distinct letters leave most of the alphabet as misses (see scoreDifficulty).
@@ -1000,7 +1000,7 @@ describe('GameScreen - pass and play', () => {
       const blob: unknown = JSON.parse(JSON.stringify(store.getState().round))
       await first.unmount()
 
-      const roundStore = configureStore({ reducer: { round: roundReducer, activePlayer: activePlayerReducer }, preloadedState: { round: sanitizeRoundState(blob) } })
+      const roundStore = configureStore({ reducer: { round: roundReducer, activePlayer: activePlayerReducer, playerTheme: playerThemeReducer, profiles: profilesReducer }, preloadedState: { round: sanitizeRoundState(blob) } })
       const { getByLabelText, getByTestId } = await render(
         <Providers>
           <ReduxProvider store={roundStore}>
@@ -1030,7 +1030,7 @@ describe('GameScreen - pass and play', () => {
     // the screen reads its round from a store built from that blob, under the app's own Providers.
     it('starts a new prompt for a saved hand-off whose word went missing', async () => {
       const blob = { solo: initialRoundState.solo, pnp: { id: 4, puzzle: null, guessedLetters: [], hintRevealed: false, phase: 'handoff' }, activeMode: 'pnp' }
-      const roundStore = configureStore({ reducer: { round: roundReducer, activePlayer: activePlayerReducer }, preloadedState: { round: sanitizeRoundState(blob) } })
+      const roundStore = configureStore({ reducer: { round: roundReducer, activePlayer: activePlayerReducer, playerTheme: playerThemeReducer, profiles: profilesReducer }, preloadedState: { round: sanitizeRoundState(blob) } })
       expect(roundStore.getState().round.pnp).toMatchObject({ phase: 'handoff', puzzle: null })
 
       const { getByTestId, queryByText } = await render(

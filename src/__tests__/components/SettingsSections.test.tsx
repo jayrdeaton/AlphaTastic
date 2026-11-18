@@ -1,15 +1,17 @@
 import { type AutoPaperTheme, Provider, type ThemeSettings, useAutoPaperTheme, useThemeSettings } from '@rific/auto-paper'
 import { FeedbackPressProvider } from '@rific/feedback-press'
 import { ToastProvider } from '@rific/toaster'
+import { PackProvider, SettingsDialog } from '@tastic/shell'
 import { act, fireEvent, render as rtlRender, waitFor } from '@testing-library/react-native'
 import { type ReactElement, type ReactNode, useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 import * as RNPaper from 'react-native-paper'
+import { Portal } from 'react-native-paper'
 import { Provider as ReduxProvider } from 'react-redux'
 
 import { PuzzleDefaultsProvider } from '@/components/PuzzleDefaultsProvider'
-import { SettingsDialog } from '@/components/SettingsDialog'
 import { release } from '@/constants/release'
+import { pack } from '@/games/pack'
 import { KeyboardLayoutContext } from '@/hooks/useKeyboardLayout'
 import { candleMode, classicMode, DEFAULT_MODE, robotMode, VISIBLE_MODES } from '@/modes/registry'
 import { fullyDrawnMistakes } from '@/modes/shared/fullyDrawnMistakes'
@@ -49,6 +51,8 @@ jest.mock('@/components/GameVisual', () => {
     }
   }
 })
+const mockRefreshUnlocks = jest.fn()
+jest.mock('@/hooks/useCatalog', () => ({ ...jest.requireActual('@/hooks/useCatalog'), useCatalogActions: () => ({ refreshUnlocks: mockRefreshUnlocks, refreshCustomPacks: jest.fn() }) }))
 const mockPickHangmanFile = jest.mocked(pickHangmanFile)
 const mockShareProgressBackupFile = jest.mocked(shareProgressBackupFile)
 const mockAlert = jest.mocked(alert)
@@ -67,25 +71,28 @@ const ThemeCapture = () => {
   return null
 }
 
-// The app's nesting (see Providers.tsx): the store (the backup and the art are the active player's),
+// The app's nesting: the pack, whose sections the shell's sheet shows, the store (the backup and the art are the active player's),
 // FeedbackPressProvider outside auto-paper's Provider (its Portal.Host and theme), a ToastProvider for
 // the update-error toast, and the player's puzzle defaults for the art.
 const mockSetLayout = jest.fn()
 const Wrapper = ({ children }: { children: ReactNode }) => (
-  <ReduxProvider store={store}>
-    <FeedbackPressProvider paper={RNPaper}>
-      <Provider statusBar={false} initialValue={{ appearance: 'light' }}>
-        <ToastProvider>
-          <KeyboardLayoutContext.Provider value={{ layout: 'qwerty', setLayout: mockSetLayout }}>
-            <PuzzleDefaultsProvider>
-              <ThemeCapture />
-              {children}
-            </PuzzleDefaultsProvider>
-          </KeyboardLayoutContext.Provider>
-        </ToastProvider>
-      </Provider>
-    </FeedbackPressProvider>
-  </ReduxProvider>
+  <PackProvider pack={pack}>
+    <ReduxProvider store={store}>
+      <FeedbackPressProvider paper={RNPaper}>
+        <Provider statusBar={false} initialValue={{ appearance: 'light' }}>
+          <ToastProvider>
+            <KeyboardLayoutContext.Provider value={{ layout: 'qwerty', setLayout: mockSetLayout }}>
+              <PuzzleDefaultsProvider>
+                <ThemeCapture />
+                {/* As every route has: the sheet is a Portal, and its sections read these providers. */}
+                <Portal.Host>{children}</Portal.Host>
+              </PuzzleDefaultsProvider>
+            </KeyboardLayoutContext.Provider>
+          </ToastProvider>
+        </Provider>
+      </FeedbackPressProvider>
+    </ReduxProvider>
+  </PackProvider>
 )
 const render = (ui: ReactElement) => rtlRender(ui, { wrapper: Wrapper })
 type Screen = Awaited<ReturnType<typeof render>>
@@ -100,13 +107,14 @@ const seedSoloRound = (playerKey = GUEST_PLAYER_KEY) => {
   store.dispatch(roundActions.saveSoloProgress({ playerKey, guessedLetters: ['D', 'Q'], hintRevealed: false }))
 }
 
-describe('SettingsDialog', () => {
+describe("SettingsSections, in the shell's Settings sheet", () => {
   beforeEach(() => {
     store.dispatch(activePlayerActions.setActivePlayer(null))
     store.dispatch(playerSettingsActions.reset())
     store.dispatch(roundActions.reset())
     mockArtRenders.length = 0
     mockSetLayout.mockClear()
+    mockRefreshUnlocks.mockClear()
     mockPickHangmanFile.mockReset()
     mockShareProgressBackupFile.mockReset()
     mockAlert.mockClear()
@@ -359,28 +367,26 @@ describe('SettingsDialog', () => {
 
     it('does nothing when the file picker is canceled', async () => {
       mockPickHangmanFile.mockResolvedValue(null)
-      const onUnlocksChanged = jest.fn()
-      const { getByText } = await render(<SettingsDialog visible onDismiss={jest.fn()} onUnlocksChanged={onUnlocksChanged} />)
+      const { getByText } = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
 
       await fireEvent.press(getByText('Import'))
 
       await waitFor(() => expect(mockPickHangmanFile).toHaveBeenCalled())
       expect(mockMergePuzzleUnlocks).not.toHaveBeenCalled()
-      expect(onUnlocksChanged).not.toHaveBeenCalled()
+      expect(mockRefreshUnlocks).not.toHaveBeenCalled()
     })
 
     it('merges a picked backup, tells its screen, and reports the counts', async () => {
       const payload = JSON.stringify({ unlocks: { animals: ['lion'] } })
       mockPickHangmanFile.mockResolvedValue(payload)
       mockMergePuzzleUnlocks.mockResolvedValue({ importedCount: 3, addedCount: 2 })
-      const onUnlocksChanged = jest.fn()
-      const { getByText } = await render(<SettingsDialog visible onDismiss={jest.fn()} onUnlocksChanged={onUnlocksChanged} />)
+      const { getByText } = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
 
       await fireEvent.press(getByText('Import'))
 
       await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('Import Complete', 'Merged 3 entries. Added 2 new unlocks.'))
       expect(mockMergePuzzleUnlocks).toHaveBeenCalledWith(GUEST_PLAYER_KEY, payload)
-      expect(onUnlocksChanged).toHaveBeenCalledTimes(1)
+      expect(mockRefreshUnlocks).toHaveBeenCalledTimes(1)
     })
 
     // parseProgressBackup (the real one) is what catches both: a custom pack export has a `pack` key,
@@ -390,14 +396,13 @@ describe('SettingsDialog', () => {
       ['a custom pack, not a backup', JSON.stringify({ pack: { key: 'custom:abc', label: 'My Pack', puzzles: [] } })]
     ])('rejects a picked file that is %s, without merging', async (_kind, raw) => {
       mockPickHangmanFile.mockResolvedValue(raw)
-      const onUnlocksChanged = jest.fn()
-      const { getByText } = await render(<SettingsDialog visible onDismiss={jest.fn()} onUnlocksChanged={onUnlocksChanged} />)
+      const { getByText } = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
 
       await fireEvent.press(getByText('Import'))
 
       await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('Invalid Backup', expect.any(String)))
       expect(mockMergePuzzleUnlocks).not.toHaveBeenCalled()
-      expect(onUnlocksChanged).not.toHaveBeenCalled()
+      expect(mockRefreshUnlocks).not.toHaveBeenCalled()
     })
   })
 })

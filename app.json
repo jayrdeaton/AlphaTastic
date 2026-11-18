@@ -9,6 +9,7 @@
     "icon": "./assets/images/icon-dark.png",
     "ios": {
       "supportsTablet": true,
+      "requireFullScreen": true,
       "bundleIdentifier": "com.infinitetoken.Hangman",
       "entitlements": {
         "com.apple.security.application-groups": [
@@ -17,6 +18,8 @@
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
+        "UIViewControllerBasedStatusBarAppearance": true,
+        "UISupportedInterfaceOrientations~ipad": ["UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown"],
         "UTExportedTypeDeclarations": [
           {
             "UTTypeIdentifier": "com.infinitetoken.hangman.pack",
@@ -104,12 +107,6 @@
       "expo-font",
       "expo-asset",
       "expo-sharing",
-      [
-        "@tastic/core",
-        {
-          "drawsRotation": false
-        }
-      ],
       [
         "expo-router",
         {

@@ -7,9 +7,11 @@
       "@/components/*": ["./src/components/*"],
       "@/constants/*": ["./src/constants/*"],
       "@/effects/*": ["./src/effects/*"],
+      "@/games/*": ["./src/games/*"],
       "@/hooks/*": ["./src/hooks/*"],
       "@/modes/*": ["./src/modes/*"],
       "@/redux/*": ["./src/redux/*"],
+      "@/testUtils/*": ["./src/testUtils/*"],
       "@/types/*": ["./src/types/*"],
       "@/utils/*": ["./src/utils/*"]
     }

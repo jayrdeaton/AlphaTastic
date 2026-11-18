@@ -8,7 +8,6 @@ import { BackHandler, Dimensions, View } from 'react-native'
 import { useReducedMotion } from 'react-native-reanimated'
 
 import { LoadoutScreen } from '@/components/LoadoutScreen'
-import { Providers } from '@/components/Providers'
 import { DEFAULT_MODE } from '@/modes/registry'
 import { achievementsActions } from '@/redux/achievementsSlice'
 import { activePlayerActions } from '@/redux/activePlayerSlice'
@@ -16,6 +15,7 @@ import { playerSettingsActions } from '@/redux/playerSettingsSlice'
 import { DEFAULT_HARMONY, playerThemeActions } from '@/redux/playerThemeSlice'
 import { roundActions, type SavedPuzzle, selectSoloRound } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
+import { Providers } from '@/testUtils/Providers'
 import { GUEST_PLAYER_KEY, guestSeatKey } from '@/utils/players'
 import { getPuzzleManifest } from '@/utils/puzzleCatalog'
 
@@ -195,7 +195,7 @@ describe('the Pass & Play page', () => {
       await fireEvent.press(pill(screen, 'Alice'))
 
       expect(screen.getByText('Manage')).toBeTruthy()
-      expect(screen.getByLabelText('Color, Hangman only')).toBeTruthy()
+      expect(screen.getByLabelText('Color, AlphaTastic only')).toBeTruthy()
     })
 
     // Whoever a game (Pass & Play hands the device around) or Single Player left playing.
@@ -813,7 +813,7 @@ describe('the Pass & Play page', () => {
       await fireEvent.press(screen.getByText('Write-In'))
       expect(ready(screen).props.accessibilityHint).toBe('Continues the session')
       await fireEvent.press(ready(screen))
-      expect(router.push).toHaveBeenLastCalledWith({ pathname: '/game', params: { mode: 'pnp' } })
+      expect(router.push).toHaveBeenLastCalledWith({ pathname: '/play/[game]', params: { game: 'hangman', mode: 'pnp' } })
       expect({ ...store.getState().round.pnp, session: undefined }).toEqual({ ...written, session: undefined })
     })
   })
@@ -821,7 +821,7 @@ describe('the Pass & Play page', () => {
   // The table on the packs takes turns (utils/packTurns.ts): Ready plays the turn under way or starts
   // the next, whose board is the game screen's (PackTurns.test.tsx).
   describe('Ready on the packs', () => {
-    const SOLO_FROM_PNP = { pathname: '/game', params: { mode: 'solo', door: 'pnp' } }
+    const SOLO_FROM_PNP = { pathname: '/play/[game]', params: { game: 'hangman', mode: 'solo', door: 'pnp' } }
 
     beforeEach(() => {
       store.dispatch(roundActions.setPnpSource('packs'))

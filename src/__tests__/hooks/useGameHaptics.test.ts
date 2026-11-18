@@ -7,6 +7,7 @@ import { useGameHaptics } from '@/hooks/useGameHaptics'
 jest.mock('@rific/feedback-press', () => ({ ...jest.requireActual('@rific/feedback-press'), useHapticSettings: jest.fn() }))
 
 jest.mock('expo-haptics', () => ({
+  AndroidHaptics: { Clock_Tick: 'clock-tick', Confirm: 'confirm', Context_Click: 'context-click', Gesture_End: 'gesture-end', Gesture_Start: 'gesture-start', Keyboard_Press: 'keyboard-press', Keyboard_Release: 'keyboard-release', Keyboard_Tap: 'keyboard-tap', Long_Press: 'long-press', Reject: 'reject', Segment_Frequent_Tick: 'segment-frequent-tick', Segment_Tick: 'segment-tick', Text_Handle_Move: 'text-handle-move', Toggle_Off: 'toggle-off', Toggle_On: 'toggle-on', Virtual_Key: 'virtual-key', Virtual_Key_Release: 'virtual-key-release' },
   impactAsync: jest.fn(),
   notificationAsync: jest.fn(),
   ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },

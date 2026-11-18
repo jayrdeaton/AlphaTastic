@@ -1,7 +1,7 @@
 import { FadingScrollView } from '@rific/auto-paper'
 import { Button, Card, IconButton, SegmentedButtons, Switch } from '@rific/feedback-press'
 import { ConfirmDialog, WELL_SHADOW } from '@tastic/hud/chrome'
-import { type Profile } from '@tastic/profile'
+import { OptionPicker, type OptionPickerOption, type Profile } from '@tastic/profile'
 import { router, useFocusEffect, useIsFocused } from 'expo-router'
 import { JSX, memo, type ReactNode, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AccessibilityInfo, type LayoutChangeEvent, Platform, StyleSheet, useWindowDimensions, View, type ViewStyle } from 'react-native'
@@ -10,6 +10,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming } fro
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 
+import { type GameId, HANGMAN_GAME_ID, WORD_SEARCH_GAME_ID } from '@/constants/games'
 import { REFLOW_EASING, REFLOW_MS, SOURCE_FADE_MS } from '@/constants/loadoutMotion'
 import { useActivePlayer } from '@/hooks/useActivePlayer'
 import { useAutoSaveCustom } from '@/hooks/useAutoSaveCustom'
@@ -30,7 +31,7 @@ import type { GameStartPayload } from '@/types/gameSession'
 import { alert } from '@/utils/alert'
 import { commaString } from '@/utils/commaString'
 import { isCustomPackKey } from '@/utils/customPacks'
-import { gameHref } from '@/utils/navigation'
+import { gameHref, wordSearchHref } from '@/utils/navigation'
 import { packGroupColors, packGroupIcon, packGroupLabel } from '@/utils/packGroupStyle'
 import { packNamesBudget, summarizePackNames } from '@/utils/packSummary'
 import { getPackTurnPlan, getSeatPlayer, getSeatPlayerKey } from '@/utils/packTurns'
@@ -47,6 +48,7 @@ import { PacksScreen, type PacksScreenHandle } from './PacksScreen'
 import { DifficultyPicker } from './PillPicker'
 import { PLAYER_PICKER_ID_PREFIX, PlayerPicker } from './PlayerPicker'
 import { isSeatPickerOpen, SeatsRow } from './SeatsRow'
+import { WordSearchArt } from './WordSearchGrid'
 
 // The Difficulty picker's popover id on the page's popover host, beside the players' pickers.
 export const DIFFICULTY_PICKER_ID = 'loadout-difficulty'
@@ -208,6 +210,26 @@ const PlayerRow = memo((): JSX.Element => {
   )
 })
 PlayerRow.displayName = 'PlayerRow'
+
+// Word Search's sample grid (WordSearchArt), rows and columns.
+const SAMPLE_GRID_SIZE = 9
+
+export const PLAY_MODE_PICKER_ID = 'loadout-play-mode'
+const PLAY_MODE_OPTIONS: OptionPickerOption<PlayMode>[] = [
+  { value: 'solo', label: '1 Player', icon: 'account' },
+  { value: 'pnp', label: 'Pass & Play', icon: 'account-multiple' }
+]
+
+// How this game is played, inside the game as in the fleet's other packs (their opponent button): in
+// the corners' strip, so it costs the page no height.
+const PlayModePicker = memo(({ value, onChange }: { value: PlayMode; onChange: (value: PlayMode) => void }): JSX.Element => {
+  const theme = useTheme()
+  const host = useLoadoutPopoverHost()
+  const pillStyle = useMemo(() => [styles.modePill, { backgroundColor: theme.colors.surface }], [theme.colors.surface])
+  const icon = PLAY_MODE_OPTIONS.find((option) => option.value === value)?.icon ?? 'account'
+  return <OptionPicker id={PLAY_MODE_PICKER_ID} host={host} options={PLAY_MODE_OPTIONS} value={value} onChange={onChange} color={theme.colors.primary} dark={theme.dark} icon={icon} align='center' triggerStyle={pillStyle} />
+})
+PlayModePicker.displayName = 'PlayModePicker'
 
 // Add player, for the Pass & Play table (Jay, 2026-10-18): in the corners' strip, centered between Home
 // and the cog, in their plain-glyph look (the same ink, size and slop), so it stays under the same
@@ -438,8 +460,12 @@ const newSessionMessage = (standings: boolean, word: boolean): string => [standi
 type PendingSwitch = { id: string; profile: Profile | null; title: string; message: string }
 
 export type LoadoutScreenProps = {
-  // Which of Home's two doors this is (see roundSlice's PlayMode).
+  // Whose setup page this is, from its card on Home.
+  game?: GameId
+  // How it's being played (see roundSlice's PlayMode).
   mode: PlayMode
+  // Changes it, from the picker in the corners' strip. Left out by a game with one mode.
+  onModeChange?: (mode: PlayMode) => void
 }
 
 // The /loadout route (Jay, 2026-10-18): one page behind both of Home's doors, laid out the same way.
@@ -461,7 +487,11 @@ export type LoadoutScreenProps = {
 // played, a word handed off or half typed) or starts one, the first seat writing. The page fits a
 // 375x667 phone whole with up to four seats: the art takes whatever room the rest of the page leaves
 // it, down to a floor, and only past that does the page scroll.
-export const LoadoutScreen = ({ mode: door }: LoadoutScreenProps): JSX.Element => {
+//
+// Word Search shares the page for one player: the player, their difficulty and packs and Ready, with a
+// sample grid where Hangman has its art (nothing to pick there, and no round waiting yet).
+export const LoadoutScreen = ({ game = HANGMAN_GAME_ID, mode: door, onModeChange }: LoadoutScreenProps): JSX.Element => {
+  const wordSearch = game === WORD_SEARCH_GAME_ID
   const dispatch = useDispatch()
   const store = useStore<RootState>()
   const { height: windowHeight, width: windowWidth } = useWindowDimensions()
@@ -489,7 +519,7 @@ export const LoadoutScreen = ({ mode: door }: LoadoutScreenProps): JSX.Element =
   const { refreshCustomPacks } = useCatalogActions()
   const { requestStart, abandonDialog, asking } = useStartSolo()
   const { autoSave, setAutoSave } = useAutoSaveCustom()
-  const resumable = useSelector((state: RootState) => isRoundPlayable(selectSoloRound(state.round, playerKey)))
+  const resumable = useSelector((state: RootState) => !wordSearch && isRoundPlayable(selectSoloRound(state.round, playerKey)))
   // A word waiting to come back to at the table: half typed, handed off, or mid-guess.
   const wordWaiting = useSelector((state: RootState) => {
     const { pnp } = state.round
@@ -522,7 +552,7 @@ export const LoadoutScreen = ({ mode: door }: LoadoutScreenProps): JSX.Element =
   // or at the table the turn's player's while the page is theirs (anyone else's turn shows their page
   // instead, see playTurn).
   const readyDisabled = source === 'packs' && (!table || turnSeatId === focusedSeat.id) && selectedPacks.length === 0 && !resumable
-  const atDefaults = mode.id === DEFAULT_MODE.id && difficulty === 'any' && selectedPacks.length === manifest.length
+  const atDefaults = (wordSearch || mode.id === DEFAULT_MODE.id) && difficulty === 'any' && selectedPacks.length === manifest.length
 
   const [packsScreenVisible, setPacksScreenVisible] = useState(false)
   const [resetVisible, setResetVisible] = useState(false)
@@ -703,6 +733,10 @@ export const LoadoutScreen = ({ mode: door }: LoadoutScreenProps): JSX.Element =
 
   // Ready, for whatever the page is set to play.
   const handleReady = useCallback(() => {
+    if (wordSearch) {
+      router.push(wordSearchHref())
+      return
+    }
     // The players write: back to the session under way, or a new one, the first seat writing for the
     // fair pick.
     if (source === 'write') {
@@ -712,7 +746,7 @@ export const LoadoutScreen = ({ mode: door }: LoadoutScreenProps): JSX.Element =
     }
     if (table) playTurn()
     else playOwnRound()
-  }, [source, sessionUnderWay, dispatch, table, playTurn, playOwnRound])
+  }, [wordSearch, source, sessionUnderWay, dispatch, table, playTurn, playOwnRound])
   // Whose turn Ready plays, by the name the page shows them by.
   const turnName = turnSeatId ? getSeatIdentity(players, turnSeatId, profiles).name : ''
   const packsHint = table ? (turnContinues ? `Continues ${turnName}'s turn` : `Starts with ${turnName}`) : resumable ? 'Continues your puzzle' : 'Starts a new puzzle'
@@ -736,11 +770,11 @@ export const LoadoutScreen = ({ mode: door }: LoadoutScreenProps): JSX.Element =
   // pack.
   const openReset = useCallback(() => setResetVisible(true), [])
   const handleResetConfirm = useCallback(() => {
-    selectArt(DEFAULT_MODE)
+    if (!wordSearch) selectArt(DEFAULT_MODE)
     setDifficulty('any')
     setSelectedPackKeys(manifest.map((item) => item.key))
     setResetVisible(false)
-  }, [selectArt, setDifficulty, setSelectedPackKeys, manifest])
+  }, [wordSearch, selectArt, setDifficulty, setSelectedPackKeys, manifest])
   const handleResetCancel = useCallback(() => setResetVisible(false), [])
 
   // Read through a ref by closeOverlay, so the shell's back listener needs nothing new each time.
@@ -793,7 +827,9 @@ export const LoadoutScreen = ({ mode: door }: LoadoutScreenProps): JSX.Element =
   const swapMeasured = swapHeights.packs > 0 && swapHeights.write > 0
   const swapSlack = table && swapMeasured ? Math.max(swapHeights.packs, swapHeights.write) - (source === 'packs' ? swapHeights.packs : swapHeights.write) : 0
   const measured = viewportHeight > 0 && aboveHeight > 0 && belowHeight > 0 && (!table || swapMeasured)
-  const artHeight = measured ? clampArt(viewportHeight - insets.top - insets.bottom - CORNER_BAND_HEIGHT - aboveHeight - belowHeight - BLOCK_GAP - ART_CAROUSEL_CHROME_HEIGHT - ART_SLACK + swapSlack, artMaxHeight) : estimate
+  // Word Search's sample grid has no name or pips under it.
+  const artChrome = wordSearch ? 0 : ART_CAROUSEL_CHROME_HEIGHT
+  const artHeight = measured ? clampArt(viewportHeight - insets.top - insets.bottom - CORNER_BAND_HEIGHT - aboveHeight - belowHeight - BLOCK_GAP - artChrome - ART_SLACK + swapSlack, artMaxHeight) : estimate
   const handleViewportLayout = useCallback((event: LayoutChangeEvent) => setViewportHeight(Math.round(event.nativeEvent.layout.height)), [])
   const viewportRef = useRef<View>(null)
   useHeightBeforePaint(viewportRef, setViewportHeight)
@@ -812,13 +848,20 @@ export const LoadoutScreen = ({ mode: door }: LoadoutScreenProps): JSX.Element =
     <LoadoutShell
       closeOverlay={closeOverlay}
       closeAllOverlays={closeAllOverlays}
-      centerAction={table ? <AddPlayerButton disabled={players.length >= MAX_PNP_PLAYERS} onAdd={handleAdd} /> : undefined}
+      centerAction={
+        onModeChange || table ? (
+          <View style={styles.centerActions} pointerEvents='box-none'>
+            {onModeChange ? <PlayModePicker value={door} onChange={onModeChange} /> : null}
+            {table ? <AddPlayerButton disabled={players.length >= MAX_PNP_PLAYERS} onAdd={handleAdd} /> : null}
+          </View>
+        ) : undefined
+      }
       overlays={
         <>
           {/* At the table the packs are only browsed: every puzzle comes by turns, from each player's own
               selection. */}
-          <PacksScreen ref={packsScreenRef} visible={packsScreenVisible} onDismiss={closePacksScreen} selectedKeys={selectedPackKeys} onChangeSelectedKeys={setSelectedPackKeys} packsVersion={packsVersion} onPacksChanged={refreshCustomPacks} mode={mode} difficulty={difficulty} onConfirm={table ? undefined : startFromPacksScreen} />
-          <ConfirmDialog visible={resetVisible} icon='restore' title='Reset Settings?' message={`The art goes back to ${DEFAULT_MODE.label}, the difficulty to Any, and every pack is selected again.`} confirmLabel='Reset' cancelLabel='Cancel' onConfirm={handleResetConfirm} onCancel={handleResetCancel} />
+          <PacksScreen ref={packsScreenRef} visible={packsScreenVisible} onDismiss={closePacksScreen} selectedKeys={selectedPackKeys} onChangeSelectedKeys={setSelectedPackKeys} packsVersion={packsVersion} onPacksChanged={refreshCustomPacks} mode={mode} difficulty={difficulty} onConfirm={table || wordSearch ? undefined : startFromPacksScreen} />
+          <ConfirmDialog visible={resetVisible} icon='restore' title='Reset Settings?' message={wordSearch ? 'The difficulty goes back to Any, and every pack is selected again.' : `The art goes back to ${DEFAULT_MODE.label}, the difficulty to Any, and every pack is selected again.`} confirmLabel='Reset' cancelLabel='Cancel' onConfirm={handleResetConfirm} onCancel={handleResetCancel} />
           <ConfirmDialog visible={removing !== null} icon='account-remove-outline' title={`Remove ${removing ? getSeatIdentity(players, removing.id, profiles).name : ''}?`} message={removing?.message ?? ''} confirmLabel='Remove' cancelLabel='Cancel' onConfirm={handleRemoveConfirm} onCancel={handleRemoveCancel} destructive />
           <ConfirmDialog visible={switching !== null} icon='account-switch-outline' title={switching?.title ?? ''} message={switching?.message ?? ''} confirmLabel='Switch' cancelLabel='Cancel' onConfirm={handleSwitchConfirm} onCancel={handleSwitchCancel} />
           <ConfirmDialog visible={clearing !== null} icon='restore' title='New Session?' message={clearing ?? ''} confirmLabel='New Session' cancelLabel='Cancel' onConfirm={handleNewSessionConfirm} onCancel={handleNewSessionCancel} />
@@ -836,7 +879,13 @@ export const LoadoutScreen = ({ mode: door }: LoadoutScreenProps): JSX.Element =
           <PageGroup testID='loadout-above-art' lift={isPlayerPickerOpen} onHeight={setAboveHeight}>
             {table ? <SeatsRow players={players} focusedId={focusedSeat.id} standings={standings} showStandings={sessionStarted} onFocus={handleFocus} onPick={handlePick} onRemove={handleRemove} onReorder={handleReorder} removingId={removing?.id ?? null} onNewSession={sessionUnderWay ? openNewSession : undefined} /> : <PlayerRow />}
           </PageGroup>
-          <PageArtCarousel coveredOnPage={coveredOnPage} artHeight={artHeight} measured={measured} />
+          {wordSearch ? (
+            <View style={styles.sampleGrid}>
+              <WordSearchArt cellSize={Math.floor(artHeight / SAMPLE_GRID_SIZE)} />
+            </View>
+          ) : (
+            <PageArtCarousel coveredOnPage={coveredOnPage} artHeight={artHeight} measured={measured} />
+          )}
           <PageGroup testID='loadout-below-art' lift={isDifficultyOpen} onHeight={setBelowHeight} shrink={swapSlack} measured={measured} end>
             {table ? <SourceSwap source={source} choice={<SourceChoice value={source} onChange={handleSource} />} packs={packsOptions} write={<KeepWordsCard value={autoSave} onChange={setAutoSave} />} heights={swapHeights} onPacksHeight={handlePacksHeight} onWriteHeight={handleWriteHeight} slack={swapSlack} measured={measured} /> : packsOptions}
             {/* Off, rather than an alert after the tap, while there's nothing to draw from (the packs card
@@ -860,6 +909,7 @@ const styles = StyleSheet.create({
   cardText: { flex: 1 },
   cardTitle: { fontWeight: '700' },
   carousel: { alignSelf: 'stretch', marginTop: BLOCK_GAP },
+  centerActions: { alignItems: 'center', flexDirection: 'row', gap: 4 },
   flex: { flex: 1 },
   group: { alignItems: 'center', alignSelf: 'stretch' },
   // The group's own box, whose height eases (its content keeps its own, see PageGroup).
@@ -868,6 +918,7 @@ const styles = StyleSheet.create({
   groupBoxEnd: { justifyContent: 'flex-end' },
   // A group over the press away catcher (and everything after it) while its popover is open.
   lifted: { zIndex: 2 },
+  modePill: { borderRadius: 999, boxShadow: WELL_SHADOW },
   // One group, centered in the room under the corners, inside the gutters the rest of the app keeps.
   // The art grows to fill the room (up to its width), so the group fills it too and keeps together;
   // only past the art's width is there room left, split above and below the whole group. (Spreading
@@ -886,6 +937,7 @@ const styles = StyleSheet.create({
   readyLabel: { fontSize: 16, letterSpacing: 1 },
   // Paper's 6pt margin off, so the button ends at the gutter, in line with the card's edge.
   resetButton: { margin: 0 },
+  sampleGrid: { alignItems: 'center', alignSelf: 'stretch', marginTop: BLOCK_GAP },
   // Difficulty at the left edge, the reset at the right.
   settingsRow: { alignItems: 'center', alignSelf: 'stretch', flexDirection: 'row', gap: 8, justifyContent: 'space-between', marginTop: BLOCK_GAP },
   settingsRowOpen: { zIndex: 1 },

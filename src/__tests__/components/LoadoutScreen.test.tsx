@@ -9,7 +9,6 @@ import { BackHandler, StyleSheet, View } from 'react-native'
 import { Avatar, Icon } from 'react-native-paper'
 
 import { LoadoutScreen } from '@/components/LoadoutScreen'
-import { Providers } from '@/components/Providers'
 import { DEFAULT_MODE, lettersMode, robotMode } from '@/modes/registry'
 import { achievementsActions } from '@/redux/achievementsSlice'
 import { activePlayerActions } from '@/redux/activePlayerSlice'
@@ -17,6 +16,7 @@ import { playerSettingsActions } from '@/redux/playerSettingsSlice'
 import { DEFAULT_HARMONY, playerThemeActions } from '@/redux/playerThemeSlice'
 import { roundActions, selectSoloRound } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
+import { Providers } from '@/testUtils/Providers'
 import { alert } from '@/utils/alert'
 import { commaString } from '@/utils/commaString'
 import { buildCustomPuzzle, loadCustomPacksCache } from '@/utils/customPacks'
@@ -72,7 +72,7 @@ const mockUseIsFocused = jest.mocked(useIsFocused)
 // test), and these are the first two Choose Packs lists.
 const MANIFEST = getPuzzleManifest().filter((item) => item.count > 0)
 const [PACK_A, PACK_B] = MANIFEST
-const GAME_HREF = { pathname: '/game', params: { mode: 'solo' } }
+const GAME_HREF = { pathname: '/play/[game]', params: { game: 'hangman', mode: 'solo' } }
 
 // The real store: the round slice is what the loadout starts and continues, and the stats are what an
 // abandon records. Everything is the guest's unless a test says otherwise.
@@ -906,12 +906,12 @@ describe('LoadoutScreen (Single Player)', () => {
       expect(store.getState().playerTheme[GUEST_PLAYER_KEY]).toMatchObject({ color: '#009688' })
     })
 
-    it("captions a profile's Color row Hangman only, and files their pick against the profile's own color", async () => {
+    it("captions a profile's Color row AlphaTastic only, and files their pick against the profile's own color", async () => {
       store.dispatch(activePlayerActions.setActivePlayer(ALICE.id))
       const screen = await renderLoadout()
 
       await open(screen, 'ALICE')
-      await fireEvent.press(screen.getByLabelText('Color, Hangman only'))
+      await fireEvent.press(screen.getByLabelText('Color, AlphaTastic only'))
       await fireEvent.press(screen.getByLabelText('Teal'))
 
       expect(live().color).toBe('#009688')

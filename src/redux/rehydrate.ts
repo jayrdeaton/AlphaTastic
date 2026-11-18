@@ -1,7 +1,8 @@
-import type { UnknownAction } from '@reduxjs/toolkit'
+import { createAction, type UnknownAction } from '@reduxjs/toolkit'
+import { isValidProfile, type Profile } from '@tastic/profile'
 import { REHYDRATE } from 'redux-persist'
 
-import { guestSeatKey, isGuestSeatKey, type PlayerKey, type PlayerRef } from '@/utils/players'
+import { guestSeatKey, isGuestSeatKey, isProfileId, type PlayerKey, type PlayerRef } from '@/utils/players'
 
 // redux-persist's REHYDRATE for the root blob (store.ts's persistConfig, key 'root'), carrying every
 // whitelisted slice's stored state by slice name. The round slice rehydrates under its own key, with
@@ -47,4 +48,22 @@ export const pruneLeftGuestSeats = <S extends GuestSeatHolder>(state: S): S => {
   const seatLeft = seatId !== null && !players.some((player) => player.id === seatId)
   if (playerSettings === state.playerSettings && playerTheme === state.playerTheme && !seatLeft) return state
   return { ...state, playerSettings, playerTheme, activePlayer: seatLeft ? { profileId: null, seatId: null } : state.activePlayer }
+}
+
+// What pruneLeftGuestSeats leaves, for the store's middleware to put back (see store.ts): the shell
+// builds the root reducer, so these three keys are replaced by an action rather than from above.
+export const guestSeatsPruned = createAction<{ activePlayer: PlayerRef; playerSettings: Record<PlayerKey, unknown>; playerTheme: Record<PlayerKey, unknown> }>('hangman/guestSeatsPruned')
+
+// The stored roster, each valid profile once. An id that could be a guest's key would make that profile
+// and the guest one player, so it never comes back.
+export const sanitizeProfiles = (value: unknown): Profile[] => {
+  if (!Array.isArray(value)) return []
+  const seen = new Set<string>()
+  const next: Profile[] = []
+  for (const item of value) {
+    if (!isValidProfile(item) || !isProfileId(item.id) || seen.has(item.id)) continue
+    seen.add(item.id)
+    next.push({ id: item.id, name: item.name, color: item.color, tag: item.tag, createdAt: item.createdAt, updatedAt: item.updatedAt })
+  }
+  return next
 }

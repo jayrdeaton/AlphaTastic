@@ -7,7 +7,6 @@ import { Alert, BackHandler, Keyboard, Platform } from 'react-native'
 
 import { WIN_DIALOG_DELAY_MS } from '@/components/Game'
 import { GameScreen } from '@/components/GameScreen'
-import { Providers } from '@/components/Providers'
 import { type PackSelectionContextType, usePackSelection } from '@/hooks/usePackSelection'
 import { type PuzzleDefaultsContextType, usePuzzleDefaults } from '@/hooks/usePuzzleDefaults'
 import { DEFAULT_MODE } from '@/modes/registry'
@@ -16,6 +15,7 @@ import { activePlayerActions } from '@/redux/activePlayerSlice'
 import { type DifficultyFilter, playerSettingsActions } from '@/redux/playerSettingsSlice'
 import { roundActions, type RoundProgress, type SavedPuzzle, selectSoloRound } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
+import { Providers } from '@/testUtils/Providers'
 import type { GameStartPayload } from '@/types/gameSession'
 import { GUEST_PLAYER_KEY, type PlayerKey } from '@/utils/players'
 import { findMode } from '@/utils/puzzleLink'
@@ -331,7 +331,7 @@ describe('GameScreen (solo)', () => {
       mockResolvePuzzle.mockReturnValue({ ok: false, error: 'No puzzles available for the selected packs and difficulty.' })
       await renderScreen()
 
-      await waitFor(() => expect(router.dismissTo).toHaveBeenCalledWith({ pathname: '/loadout', params: { mode: 'solo' } }))
+      await waitFor(() => expect(router.dismissTo).toHaveBeenCalledWith({ pathname: '/loadout/[game]', params: { game: 'hangman' } }))
       expect(alertSpy).toHaveBeenCalledWith('No Puzzles Available', 'No puzzles available for the selected packs and difficulty.', expect.anything())
       expect(solo().puzzle).toBeNull()
     })
@@ -453,7 +453,7 @@ describe('GameScreen (solo)', () => {
 
       expect(mockResolvePuzzle).not.toHaveBeenCalled()
       expect(solo().puzzle).toBeNull()
-      expect(router.dismissTo).toHaveBeenCalledWith({ pathname: '/loadout', params: { mode: 'solo' } })
+      expect(router.dismissTo).toHaveBeenCalledWith({ pathname: '/loadout/[game]', params: { game: 'hangman' } })
       expect(store.getState().round.activeMode).toBeNull()
     })
   })
@@ -738,7 +738,7 @@ describe('GameScreen (solo)', () => {
 
       expect(store.getState().round.activeMode).toBeNull()
       expect(router.dismissTo).toHaveBeenCalledTimes(1)
-      expect(router.dismissTo).toHaveBeenCalledWith({ pathname: '/loadout', params: { mode: 'solo' } })
+      expect(router.dismissTo).toHaveBeenCalledWith({ pathname: '/loadout/[game]', params: { game: 'hangman' } })
 
       jest.mocked(router.dismissTo).mockClear()
       await screen.unmount()
@@ -846,7 +846,7 @@ describe('GameScreen (solo)', () => {
         // The card's own back handling (Next) went with it, so this is the screen's again.
         expect(await pressBack()).toBe(true)
         expect(router.dismissTo).toHaveBeenCalledTimes(1)
-        expect(router.dismissTo).toHaveBeenCalledWith({ pathname: '/loadout', params: { mode: 'solo' } })
+        expect(router.dismissTo).toHaveBeenCalledWith({ pathname: '/loadout/[game]', params: { game: 'hangman' } })
         expect(store.getState().round.activeMode).toBeNull()
       })
 
@@ -867,7 +867,7 @@ describe('GameScreen (solo)', () => {
         expect(mockResolvePuzzle).not.toHaveBeenCalled()
         expect(solo().puzzle).toBeNull()
         expect(router.dismissTo).toHaveBeenCalledTimes(1)
-        expect(router.dismissTo).toHaveBeenCalledWith({ pathname: '/loadout', params: { mode: 'solo' } })
+        expect(router.dismissTo).toHaveBeenCalledWith({ pathname: '/loadout/[game]', params: { game: 'hangman' } })
         expect(store.getState().round.activeMode).toBeNull()
       })
     })

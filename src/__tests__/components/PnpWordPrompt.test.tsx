@@ -3,7 +3,7 @@ import { act, fireEvent, render } from '@testing-library/react-native'
 import { BackHandler, Keyboard, Platform, StyleSheet } from 'react-native'
 
 import { PnpWordPrompt, type PnpWordPromptProps } from '@/components/PnpWordPrompt'
-import { Providers } from '@/components/Providers'
+import { Providers } from '@/testUtils/Providers'
 
 // Records the style the card is given: the app's expo-blur mock renders only its children, so the
 // card's height cap never reaches the rendered tree.

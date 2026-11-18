@@ -1,16 +1,14 @@
 import { profilesActions } from '@tastic/profile'
 import { fireEvent, render } from '@testing-library/react-native'
 import { router, useLocalSearchParams } from 'expo-router'
-import { useEffect } from 'react'
 
 import { PlayScreen } from '@/components/PlayScreen'
-import { Providers } from '@/components/Providers'
-import { type ActiveGame, useActiveGame } from '@/hooks/useActiveGame'
 import { classicMode, DEFAULT_MODE, robotMode } from '@/modes/registry'
 import { achievementsActions } from '@/redux/achievementsSlice'
 import { activePlayerActions } from '@/redux/activePlayerSlice'
 import { roundActions, type SavedPuzzle, selectSoloRound } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
+import { Providers } from '@/testUtils/Providers'
 import { GUEST_PLAYER_KEY, guestSeatKey } from '@/utils/players'
 
 // /play is where a share link lands (hangman://play?phrase=...&hint=...&mode=...). It draws nothing
@@ -20,7 +18,7 @@ import { GUEST_PLAYER_KEY, guestSeatKey } from '@/utils/players'
 // handed too.
 
 const mockParams = jest.mocked(useLocalSearchParams)
-const GAME_HREF = { pathname: '/game', params: { mode: 'solo' } }
+const GAME_HREF = { pathname: '/play/[game]', params: { game: 'hangman', mode: 'solo' } }
 const VALID_LINK = { phrase: 'Hello, World', hint: 'A friendly greeting', mode: robotMode.id }
 
 // The real round and stats slices: what a link started, or an abandon recorded, is read straight
@@ -236,60 +234,6 @@ describe('PlayScreen', () => {
       expect(soloRound().puzzle?.phrase).toBe('HELLO WORLD')
       expect(soloRecord().losses).toBe(0)
       expect(router.dismissTo).toHaveBeenCalledWith(GAME_HREF)
-    })
-  })
-
-  // A link opened cold is where the player meant to go: the game the app was last closed on must not
-  // take over Home once they leave the link's game.
-  describe('the launch resume', () => {
-    let activeGame: ActiveGame | null = null
-    const ActiveGameProbe = () => {
-      const value = useActiveGame()
-      useEffect(() => {
-        activeGame = value
-      }, [value])
-      return null
-    }
-
-    beforeEach(() => {
-      activeGame = null
-      store.dispatch(roundActions.setActiveMode('pnp'))
-    })
-
-    it('would resume the last game on a launch without a link', async () => {
-      mockParams.mockReturnValue({})
-      await render(
-        <Providers>
-          <ActiveGameProbe />
-        </Providers>
-      )
-
-      expect(activeGame?.consumeResume()).toEqual({ mode: 'pnp', door: 'pnp' })
-    })
-
-    it('is cancelled by a link, which leaves the saved game itself alone', async () => {
-      mockParams.mockReturnValue(VALID_LINK)
-      await render(
-        <Providers>
-          <PlayScreen />
-          <ActiveGameProbe />
-        </Providers>
-      )
-
-      expect(activeGame?.consumeResume()).toBeNull()
-      expect(store.getState().round.activeMode).toBe('pnp')
-    })
-
-    it('is cancelled by an invalid link too', async () => {
-      mockParams.mockReturnValue({ phrase: '12345' })
-      await render(
-        <Providers>
-          <PlayScreen />
-          <ActiveGameProbe />
-        </Providers>
-      )
-
-      expect(activeGame?.consumeResume()).toBeNull()
     })
   })
 })

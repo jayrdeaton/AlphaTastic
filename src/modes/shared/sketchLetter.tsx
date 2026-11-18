@@ -21,7 +21,7 @@ export const glyphWidth = (letter: string, height: number): number => {
 // (not an approximation that drifts from the digitized shape, just a smoothed interpolation
 // between its own data). This is the only place letterformsHershey.ts data ever becomes an SVG
 // path, so every SketchLetter draw benefits without any caller doing anything differently.
-function catmullRomPath(points: Point[]): { d: string; length: number } {
+export function catmullRomPath(points: Point[]): { d: string; length: number } {
   // A 2-point stroke has no curvature to speak of, and Catmull-Rom over exactly 2 points reduces
   // to the same straight line anyway. This is a shortcut, not a different visual result.
   if (points.length < 3) {

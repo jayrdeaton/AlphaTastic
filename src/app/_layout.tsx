@@ -1,69 +1,15 @@
-import { useAutoPaperTheme } from '@rific/auto-paper'
 import { setReloadSplash } from '@rific/updater'
-import { DarkTheme, DefaultTheme, type NativeStackNavigationOptions, Stack, ThemeProvider } from 'expo-router'
-import { JSX, useMemo } from 'react'
-import { Platform, StyleSheet, View } from 'react-native'
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { RootLayout } from '@tastic/shell'
+import { JSX } from 'react'
 
-import { BoardBackground } from '@/components/BoardBackground'
-import { IncomingFileImport } from '@/components/IncomingFileImport'
-import { Providers } from '@/components/Providers'
-import { UpdateDialog } from '@/components/UpdateDialog'
+import { pack } from '@/games/pack'
+import { packStore, persistor } from '@/redux/store'
 
 // An OTA update restarts the app behind its splash (app.json's splash image), not expo-updates' white loading
 // screen. @rific/updater takes the colors from app.json itself.
 setReloadSplash({ image: require('../../assets/images/splash-light.png') })
 
-// A resumed game (Home's cold-launch redirect, see HomeScreen.tsx) appears without the push: it's
-// where the player already was, not somewhere new.
-const gameOptions = ({ route }: { route: { params?: object } }): NativeStackNavigationOptions => ((route.params as { resume?: string } | undefined)?.resume ? { animation: 'none' } : {})
+// The root is @tastic/shell's, handed the pack (pack.ts) and its store (redux/store.ts).
+const Layout = (): JSX.Element => <RootLayout pack={pack} store={packStore} persistor={persistor} />
 
-// Every screen is transparent over the one board (BoardBackground), Solitaire's felt pattern: the
-// navigation theme's background too, or React Navigation paints its own color around each screen.
-// Android crossfades instead of sliding, or the screen underneath would show through a push. iOS's
-// swipe-back is off: it would run along the left edge, over the keyboard's Q, A and Z keys, and every
-// screen has its own back. The status bar's ink follows the in-app theme, not the system appearance
-// (react-native-screens sets it per screen; a mounted StatusBar can't, see CLAUDE.md's Status bar).
-const RootStack = (): JSX.Element => {
-  const { dark } = useAutoPaperTheme()
-  const navigationTheme = useMemo(() => {
-    const base = dark ? DarkTheme : DefaultTheme
-    return { ...base, colors: { ...base.colors, background: 'transparent' } }
-  }, [dark])
-  const screenOptions = useMemo((): NativeStackNavigationOptions => ({ headerShown: false, gestureEnabled: false, contentStyle: { backgroundColor: 'transparent' }, statusBarStyle: dark ? 'light' : 'dark', ...(Platform.OS === 'android' ? { animation: 'fade' } : {}) }), [dark])
-
-  return (
-    <View style={styles.flex}>
-      <BoardBackground />
-      <ThemeProvider value={navigationTheme}>
-        <Stack screenOptions={screenOptions}>
-          <Stack.Screen name='index' />
-          <Stack.Screen name='loadout' />
-          <Stack.Screen name='game' options={gameOptions} />
-          <Stack.Screen name='achievements' />
-          <Stack.Screen name='profiles' />
-          {/* Draws nothing of its own (see PlayScreen), so there's nothing to animate in. */}
-          <Stack.Screen name='play' options={{ animation: 'none' }} />
-        </Stack>
-      </ThemeProvider>
-    </View>
-  )
-}
-
-const RootLayout = (): JSX.Element => (
-  <GestureHandlerRootView style={styles.flex}>
-    <Providers>
-      <RootStack />
-      {/* Both render through the root Portal host, over whichever screen is showing. UpdateDialog is
-          the app's one automatic update check; its card only mounts once an update is found. */}
-      <IncomingFileImport />
-      <UpdateDialog />
-    </Providers>
-  </GestureHandlerRootView>
-)
-
-export default RootLayout
-
-const styles = StyleSheet.create({
-  flex: { flex: 1 }
-})
+export default Layout

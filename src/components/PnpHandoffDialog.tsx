@@ -33,7 +33,7 @@ type ProfileHandoffCardProps = { visible: boolean; title: string; message: strin
 const ProfileHandoffCard = ({ visible, title, message, profile, onReady }: ProfileHandoffCardProps): JSX.Element | null => {
   const theme = useTheme()
   const { fg } = useOverlayCardColors()
-  const { compact, onLayout } = useCompactDialog(0)
+  const { compact, onLayout } = useCompactDialog()
 
   useEffect(() => {
     if (!visible) return

@@ -1,22 +1,22 @@
 import '@tastic/core'
 
-import { type ThemeSettings, useAutoPaperTheme, useThemeSettings } from '@rific/auto-paper'
+import { Provider as AutoPaperProvider, themeActions, type ThemeSettings, useAutoPaperTheme, useThemeSettings } from '@rific/auto-paper'
 import { type Profile, profilesActions } from '@tastic/profile'
-import { act, render, waitFor } from '@testing-library/react-native'
+import { act, render, renderHook, waitFor } from '@testing-library/react-native'
 import { setBackgroundColorAsync } from 'expo-system-ui'
-import { useEffect } from 'react'
-import { Provider as ReduxProvider } from 'react-redux'
+import { type ReactNode, useCallback, useEffect } from 'react'
+import { Provider as ReduxProvider, shallowEqual, useDispatch, useSelector } from 'react-redux'
 
 import { boardColor } from '@/components/BoardBackground'
-import { CARD_BLUR_TINT, DARK_BACKDROP, Theme } from '@/components/Theme'
+import { CARD_BLUR_TINT, DARK_BACKDROP, PackTheme, toastStackFrame, useScreenOptions } from '@/components/PackRoot'
 import { activePlayerActions } from '@/redux/activePlayerSlice'
 import { DEFAULT_HARMONY, playerThemeActions } from '@/redux/playerThemeSlice'
-import { store } from '@/redux/store'
+import { type RootState, store } from '@/redux/store'
+import { getLiveTheme } from '@/utils/liveTheme'
 import { GUEST_PLAYER_KEY } from '@/utils/players'
 
 // Stubbed so the calls can be read back. The bare '@tastic/core' import above stands in for the app
-// loading it through @tastic/hud/chrome: that import alone runs core's module-scope
-// setBackgroundColorAsync('#000000') (its useThemedRootBackground.ts) before anything renders.
+// loading it through the shell.
 jest.mock('expo-system-ui', () => ({
   setBackgroundColorAsync: jest.fn().mockResolvedValue(undefined)
 }))
@@ -41,19 +41,35 @@ const ThemeProbe = () => {
   return null
 }
 
+// The shell's Theme, as far as these need it: auto-paper's Provider over the store's theme.
+const StoreTheme = ({ children }: { children: ReactNode }) => {
+  const settings = useSelector((state: RootState) => state.theme, shallowEqual)
+  const dispatch = useDispatch()
+  const onChange = useCallback((next: ThemeSettings) => dispatch(themeActions.initialize(next)), [dispatch])
+  return (
+    <AutoPaperProvider initialValue={settings} onChange={onChange} statusBar={false}>
+      {children}
+    </AutoPaperProvider>
+  )
+}
+
+const Wrapper = ({ children }: { children: ReactNode }) => (
+  <ReduxProvider store={store}>
+    <StoreTheme>{children}</StoreTheme>
+  </ReduxProvider>
+)
+
 const renderTheme = () =>
   render(
-    <ReduxProvider store={store}>
-      <Theme>
+    <Wrapper>
+      <PackTheme>
         <ThemeProbe />
-      </Theme>
-    </ReduxProvider>
+      </PackTheme>
+    </Wrapper>
   )
 
-describe('Theme', () => {
-  it("repaints the root with the board's color after @tastic/core's import-time black", async () => {
-    expect(mockSetBackgroundColorAsync).toHaveBeenCalledWith('#000000')
-
+describe('PackTheme', () => {
+  it("paints the OS window with the board's color", async () => {
     await renderTheme()
     await waitFor(() => expect(paintedBoard).not.toBeNull())
 
@@ -101,7 +117,7 @@ describe('Theme', () => {
 })
 
 // Each player's colors (the palette and its harmony): the live theme always holds the active player's.
-describe("Theme's per-player colors", () => {
+describe("PackTheme's per-player colors", () => {
   const OTHER = 'profile-a'
   const live = () => ({ color: liveSettings?.color, harmony: liveSettings?.harmony })
   const saved = (playerKey = GUEST_PLAYER_KEY) => store.getState().playerTheme[playerKey]
@@ -122,6 +138,19 @@ describe("Theme's per-player colors", () => {
     await waitFor(() => expect(liveSettings).not.toBeNull())
 
     expect(saved()).toEqual(live())
+  })
+
+  // The shell's Home keeps the theme on its seat colors, through the pack's seatTheme, which answers with
+  // this: so Home always finds the theme already right.
+  it('keeps the colors on screen where the pack can read them', async () => {
+    await renderTheme()
+    await waitFor(() => expect(setThemeSettings).not.toBeNull())
+
+    await act(async () => {
+      setThemeSettings?.({ color: '#2196f3', harmony: 'triadic' })
+    })
+
+    expect(getLiveTheme()).toEqual({ color: '#2196f3', harmony: 'triadic' })
   })
 
   it("saves a palette change as the active player's", async () => {
@@ -178,7 +207,7 @@ describe("Theme's per-player colors", () => {
 
 // A profile's colors: their Hangman pick while the profile keeps the color it was picked against, else
 // the profile's own color (with the harmony they picked, or the default).
-describe("Theme's profile colors", () => {
+describe("PackTheme's profile colors", () => {
   const ALICE: Profile = { id: 'profile-a', name: 'Alice', color: '#9c27b0', tag: 'A', createdAt: 1, updatedAt: 1 }
   const live = () => ({ color: liveSettings?.color, harmony: liveSettings?.harmony })
   const saved = (playerKey: string = ALICE.id) => store.getState().playerTheme[playerKey]
@@ -267,5 +296,25 @@ describe("Theme's profile colors", () => {
     await act$(() => store.dispatch(activePlayerActions.setActivePlayer(null)))
 
     expect(live()).toEqual({ color: '#4caf50', harmony: 'analogous' })
+  })
+})
+
+describe('useScreenOptions', () => {
+  // The shell keeps the ink light over any backdrop; this board is a whiteboard in light appearance.
+  it.each([
+    ['light', 'dark'],
+    ['dark', 'light']
+  ] as const)('writes the status bar for a %s board in %s ink', async (appearance, ink) => {
+    store.dispatch(themeActions.initialize({ ...store.getState().theme, appearance }))
+    const { result } = await renderHook(() => useScreenOptions(), { wrapper: Wrapper })
+
+    await waitFor(() => expect(result.current).toEqual({ statusBarStyle: ink }))
+  })
+})
+
+describe('toastStackFrame', () => {
+  it('sits between the corner buttons, at most 360 wide', () => {
+    expect(toastStackFrame(375, { left: 0, right: 0 })).toEqual({ left: 60, right: 60, marginTop: 14 })
+    expect(toastStackFrame(1000, { left: 0, right: 0 })).toEqual({ left: 320, right: 320, marginTop: 14 })
   })
 })

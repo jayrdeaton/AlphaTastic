@@ -1,13 +1,11 @@
 import { HarmonyPicker, useAutoPaperTheme, useThemeSettings } from '@rific/auto-paper'
 import { Button, SegmentedButtons } from '@rific/feedback-press'
-import { useUpdateErrorToast } from '@rific/toaster'
-import { BaseSettingsDialog } from '@tastic/hud/chrome'
 import { JSX } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { Text } from 'react-native-paper'
 
-import { release } from '@/constants/release'
 import { useActivePlayer } from '@/hooks/useActivePlayer'
+import { useCatalogActions } from '@/hooks/useCatalog'
 import { useKeyboardLayout } from '@/hooks/useKeyboardLayout'
 import { usePuzzleDefaults } from '@/hooks/usePuzzleDefaults'
 import { useSelectArt } from '@/hooks/useSelectArt'
@@ -18,40 +16,21 @@ import { mergePuzzleUnlocks, parseProgressBackup } from '@/utils/unlocks'
 import { ArtPicker } from './ArtPicker'
 import { SettingsSection } from './SettingsSection'
 
-export type SettingsDialogProps = {
-  visible: boolean
-  onDismiss: () => void
-  // Called after a backup is imported, so every screen re-reads the unlocked puzzles.
-  onUnlocksChanged?: () => void
-}
-
 const KEYBOARD_BUTTONS = [
   { value: 'qwerty', label: 'QWERTY' },
   { value: 'abc', label: 'ABC' }
 ]
 
-// The fleet's shared Settings sheet (the cog on Home, both loadouts and the game screen), the same
-// @tastic/hud BaseSettingsDialog every @tastic game wraps. It brings Sound, Haptics, Appearance and the
-// version with Check for Updates; Hangman adds the player's art and harmony, its keyboard layout and
-// the progress backup below Appearance. Not passed: Lock Orientation and Edge Guard (Hangman is
-// portrait-locked by the OS and has no edge-swipe controls) or How to Play (no guide yet), so those
-// rows stay hidden. rotation is 0 because Hangman never draws a rotation of its own. The player's color
-// isn't here: it's the player picker's color page, on the loadout (PlayerPicker).
-//
-// Must render inside Providers, like UpdateDialog: the update-error toast needs the ToastProvider and
-// the sheet's Portal needs the Portal.Host auto-paper's Provider mounts inside Theme.
-export const SettingsDialog = ({ visible, onDismiss, onUnlocksChanged = () => {} }: SettingsDialogProps): JSX.Element => {
+// The pack's own rows in the shell's Settings sheet (PackDefinition.SettingsSections), under Sound,
+// Haptics and Appearance. The sheet renders through a Portal, so every screen that opens it sits in a
+// Portal.Host of its own, inside the pack's providers these read.
+export const SettingsSections = (): JSX.Element => {
   const { colors } = useAutoPaperTheme()
-  const onUpdateError = useUpdateErrorToast('Update Failed')
   const { layout, setLayout } = useKeyboardLayout()
-  // Read here, not inside the sections: the sheet's rows render through a Paper Portal, at the nearest
-  // Portal.Host, so a context read in them comes from wherever that host sits. Every screen mounts its
-  // own host inside Providers today, but read here they can't land outside PuzzleDefaultsProvider.
   const { mode } = usePuzzleDefaults()
   const selectArt = useSelectArt()
-  // The backup is the active player's: Export saves their unlocked puzzles, Import adds to them.
   const { key: playerKey } = useActivePlayer()
-  // The live theme's harmony is the active player's (Theme's PlayerThemeSync files a change under them).
+  const { refreshUnlocks } = useCatalogActions()
   const { settings: themeSettings, set: setThemeSettings } = useThemeSettings()
 
   const handleExport = async () => {
@@ -63,11 +42,6 @@ export const SettingsDialog = ({ visible, onDismiss, onUnlocksChanged = () => {}
     }
   }
 
-  // Reads a file straight off the device (a real "pick a .hangman file" flow) rather than a
-  // paste-text box - see hangmanFile.ts's own doc comments for why. parseProgressBackup validates
-  // the shape first so picking a custom pack file by mistake surfaces as "Invalid backup" instead
-  // of silently merging zero entries (mergePuzzleUnlocks alone is lenient about bare-map shapes and
-  // wouldn't otherwise catch that).
   const handleImport = async () => {
     const raw = await pickHangmanFile()
     if (!raw) return
@@ -75,7 +49,7 @@ export const SettingsDialog = ({ visible, onDismiss, onUnlocksChanged = () => {}
     try {
       parseProgressBackup(raw)
       const result = await mergePuzzleUnlocks(playerKey, raw)
-      onUnlocksChanged()
+      refreshUnlocks()
       void alert('Import Complete', `Merged ${result.importedCount} entries. Added ${result.addedCount} new unlocks.`)
     } catch {
       void alert('Invalid Backup', 'Could not read that as a Hangman progress backup file.')
@@ -83,14 +57,14 @@ export const SettingsDialog = ({ visible, onDismiss, onUnlocksChanged = () => {}
   }
 
   return (
-    <BaseSettingsDialog visible={visible} onDismiss={onDismiss} rotation={0} version={release.otaVersion} onUpdateError={onUpdateError}>
-      {/* The active player's, like the backup below; next to Appearance, the other look. Picked
-          mid-round, it redraws the board behind the sheet (see useSelectArt). */}
+    <>
+      {/* The active player's, like the backup below. Picked mid-round, it redraws the board behind the
+          sheet (see useSelectArt). */}
       <SettingsSection label='ART'>
         <ArtPicker selected={mode} onSelect={selectArt} />
       </SettingsSection>
-      {/* How the player's two other colors are drawn from their color (the picker's color page has
-          no harmony control): icons only, since six labels don't fit the sheet. */}
+      {/* How the player's two other colors are drawn from their color (the picker's color page has no
+          harmony control): icons only, since six labels don't fit the sheet. */}
       <SettingsSection label='HARMONY'>
         <HarmonyPicker value={themeSettings.harmony} onChange={(harmony) => setThemeSettings({ harmony })} showLabels={false} />
       </SettingsSection>
@@ -112,7 +86,7 @@ export const SettingsDialog = ({ visible, onDismiss, onUnlocksChanged = () => {}
           Saves your unlocked puzzles to a file. Importing one adds its puzzles to yours.
         </Text>
       </SettingsSection>
-    </BaseSettingsDialog>
+    </>
   )
 }
 

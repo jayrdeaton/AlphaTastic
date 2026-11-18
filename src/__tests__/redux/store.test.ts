@@ -69,12 +69,16 @@ describe('store', () => {
   // Without these entries the stats, achievements, the roster (the only copy on a device with no shared
   // one) and every player's picks reset on every launch, and nothing else would fail.
   it('persists the settings, the achievements slice, the profile roster and the per-player slices with the root', () => {
-    expect(persistConfig('root').whitelist).toEqual(expect.arrayContaining(['theme', 'haptic', 'sound', 'achievements', 'profiles', 'activePlayer', 'playerSettings', 'playerTheme']))
+    const { blacklist } = persistConfig('root')
+    for (const key of ['theme', 'haptic', 'sound', 'achievements', 'profiles', 'activePlayer', 'playerSettings', 'playerTheme', 'opponent']) {
+      expect(store.getState()).toHaveProperty(key)
+      expect(blacklist).not.toContain(key)
+    }
   })
 
   // The round is saved on every guess, and rewriting the stats and achievements with it would be wasteful.
   it('keeps the round slice out of the root blob', () => {
-    expect(persistConfig('root').whitelist).not.toContain('round')
+    expect(persistConfig('root').blacklist).toContain('round')
   })
 
   // Version 2 is the per-player solo rounds (a version 1 blob's single solo round is dropped), 3 the

@@ -39,7 +39,7 @@ const handleManage = () => router.push('/profiles')
 // (and their tag), their name and a chevron; its popover has the Color row (a page of swatches, each
 // drawn as the palette it would give this player), then Guest and every profile (any seated elsewhere at
 // the table disabled), then Manage, which opens the Profiles screen. The seat is the active player's
-// (the loadout's focused seat, see LoadoutScreen), so a color picked here is theirs, in Hangman only
+// (the loadout's focused seat, see LoadoutScreen), so a color picked here is theirs, in this app only
 // (the caption says so for a profile; the guest has no other games), filed by Theme's PlayerThemeSync
 // like any palette change, and a profile's lapses if the profile is given a new color. Their harmony is
 // Settings' HARMONY row, since the color page has none.
@@ -53,7 +53,7 @@ export const PlayerPicker = memo(({ host, idPrefix = PLAYER_PICKER_ID_PREFIX, se
   const seed = resolveSeedColor(colors ? colors.color : settings.color)
   const setColor = useCallback((hex: string) => set({ color: hex }), [set])
   const hasProfile = selectedId !== null
-  const colorSection = useMemo((): ProfilePickerColorSection => ({ value: seed, onChange: setColor, label: 'Color', caption: hasProfile ? 'Hangman only' : undefined }), [seed, setColor, hasProfile])
+  const colorSection = useMemo((): ProfilePickerColorSection => ({ value: seed, onChange: setColor, label: 'Color', caption: hasProfile ? 'AlphaTastic only' : undefined }), [seed, setColor, hasProfile])
   // The board's surface behind the pill, the color the page's cards are drawn on, so the name reads on
   // the chalkboard and the whiteboard alike, raised off the board by the fleet's well shadow (on the
   // whiteboard the surface is the board's own color).

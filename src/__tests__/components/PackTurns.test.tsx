@@ -6,13 +6,13 @@ import { BackHandler } from 'react-native'
 
 import { WIN_DIALOG_DELAY_MS } from '@/components/Game'
 import { GameScreen } from '@/components/GameScreen'
-import { Providers } from '@/components/Providers'
 import { achievementsActions } from '@/redux/achievementsSlice'
 import { activePlayerActions } from '@/redux/activePlayerSlice'
 import { type DifficultyFilter, playerSettingsActions } from '@/redux/playerSettingsSlice'
 import { DEFAULT_HARMONY, playerThemeActions } from '@/redux/playerThemeSlice'
 import { roundActions, type SavedPuzzle, selectSoloRound } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
+import { Providers } from '@/testUtils/Providers'
 import { GUEST_PLAYER_KEY, guestSeatKey, type PlayerKey } from '@/utils/players'
 import * as puzzlePicker from '@/utils/puzzlePicker'
 import * as unlocks from '@/utils/unlocks'
@@ -55,7 +55,7 @@ const mockUseIsFocused = jest.mocked(useIsFocused)
 
 const ALICE: Profile = { id: 'profile-a', name: 'Alice', color: '#9c27b0', tag: 'AL', createdAt: 1, updatedAt: 1 }
 const BOB: Profile = { id: 'profile-b', name: 'Bob', color: '#4caf50', tag: 'BO', createdAt: 2, updatedAt: 2 }
-const PNP_LOADOUT = { pathname: '/loadout', params: { mode: 'pnp' } }
+const PNP_LOADOUT = { pathname: '/loadout/[game]', params: { game: 'hangman' } }
 
 const WORDS: Record<string, string> = { 'pack-a': 'CAT', 'pack-b': 'DOG' }
 const drawByPack: typeof puzzlePicker.resolvePuzzle = (config, packKeys) => ({ ok: true, payload: { phrase: WORDS[packKeys[0]] ?? 'FISH', mode: config.mode, sourceMode: 'random', packKey: packKeys[0], difficultyTier: 'easy', packScope: 'selection' } })

@@ -3,13 +3,13 @@ import { act, fireEvent, render } from '@testing-library/react-native'
 import { FlatList } from 'react-native'
 
 import { ArtCarousel } from '@/components/ArtCarousel'
-import { Providers } from '@/components/Providers'
 import { useArtDemoLoop } from '@/hooks/useArtDemoLoop'
 import { DEFAULT_MODE, robotMode, VISIBLE_MODES } from '@/modes/registry'
 import { activePlayerActions } from '@/redux/activePlayerSlice'
 import { playerSettingsActions } from '@/redux/playerSettingsSlice'
 import { roundActions, selectSoloRound } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
+import { Providers } from '@/testUtils/Providers'
 import { GUEST_PLAYER_KEY } from '@/utils/players'
 
 // The loop itself has its own suite (useArtDemoLoop.test.ts). Here it only records what each card asked

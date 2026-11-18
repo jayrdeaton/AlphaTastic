@@ -1,4 +1,5 @@
 import { CornerActionButtons } from '@tastic/hud/chrome'
+import { SettingsDialog } from '@tastic/shell'
 import { router, useFocusEffect, useIsFocused } from 'expo-router'
 import { type ComponentProps, JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BackHandler, Keyboard, StyleSheet, View } from 'react-native'
@@ -39,7 +40,6 @@ import { Game, type LossDetails, type SolveDetails } from './Game'
 import { PnpHandoffDialog } from './PnpHandoffDialog'
 import { PnpWordPrompt } from './PnpWordPrompt'
 import { type CategoryProgress, type PnpRoundSummary } from './RoundEndDialog'
-import { SettingsDialog } from './SettingsDialog'
 
 const randomConfig = (mode: GameMode, difficulty: PuzzleConfig['difficulty']): PuzzleConfig => ({ sourceMode: 'random', difficulty, mode, customPhrase: '', customHint: '' })
 
@@ -553,7 +553,6 @@ export const GameScreen = ({ mode, door = mode }: GameScreenProps): JSX.Element 
   const focused = useIsFocused()
   const store = useStore<RootState>()
   const { markActive, clearActive } = useActiveGame()
-  const { refreshUnlocks } = useCatalogActions()
   const [settingsOpen, setSettingsOpen] = useState(false)
   // See RoundProps' onRoundEnding. A ref: it only gates leaving, nothing renders off it.
   const roundEndingRef = useRef(false)
@@ -580,7 +579,7 @@ export const GameScreen = ({ mode, door = mode }: GameScreenProps): JSX.Element 
   )
   // A step back to the door's loadout: Android's back button, the prompt's close glyph, a shared
   // puzzle's Next.
-  const leave = useCallback(() => leaveFor(loadoutHref(door)), [leaveFor, door])
+  const leave = useCallback(() => leaveFor(loadoutHref()), [leaveFor])
   // The corner is Home, as in Solitaire, not a back arrow: a launch can open straight into this screen,
   // with nothing the player came from to go back to.
   const goHome = useCallback(() => leaveFor('/'), [leaveFor])
@@ -644,7 +643,7 @@ export const GameScreen = ({ mode, door = mode }: GameScreenProps): JSX.Element 
           <CornerActionButtons backIcon='home' backLabel='Home' onBack={goHome} onSettings={handleOpenSettings} fg={theme.colors.onSurface} insets={insets} hitSlop={4} />
         </View>
 
-        <SettingsDialog visible={settingsOpen} onDismiss={handleDismissSettings} onUnlocksChanged={refreshUnlocks} />
+        <SettingsDialog visible={settingsOpen} onDismiss={handleDismissSettings} />
       </View>
     </Portal.Host>
   )
