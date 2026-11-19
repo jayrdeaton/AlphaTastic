@@ -4,7 +4,7 @@ import * as Gestures from '@rific/gestures'
 import { type Profile, profilesActions } from '@tastic/profile'
 import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native'
 import { router, useIsFocused } from 'expo-router'
-import { BackHandler, Dimensions, View } from 'react-native'
+import { BackHandler, View } from 'react-native'
 import { useReducedMotion } from 'react-native-reanimated'
 
 import { LoadoutScreen } from '@/components/LoadoutScreen'
@@ -16,21 +16,14 @@ import { DEFAULT_HARMONY, playerThemeActions } from '@/redux/playerThemeSlice'
 import { roundActions, type SavedPuzzle, selectSoloRound } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
 import { Providers } from '@/testUtils/Providers'
+import { seatTwoWriting } from '@/testUtils/table'
 import { GUEST_PLAYER_KEY, guestSeatKey } from '@/utils/players'
 import { getPuzzleManifest } from '@/utils/puzzleCatalog'
 
 // The Pass & Play page (Jay, 2026-10-18): the Single Player page's layout, with the table in place of
 // the one player (seats with focus, Add player, remove, standings badges, New session) and the word
-// source under the art, and its Ready on the packs (pack turns). Ready while the players write, and New
+// source, and its Ready on the packs (pack turns). Ready while the players write, and New
 // session, are PnpFlow.test.tsx's.
-
-// The art carousel has its own suite (ArtCarousel.test.tsx), and runs no demo loop here. It shows the
-// height the page gave it and whether it may ease to a new one.
-jest.mock('@/components/ArtCarousel', () => {
-  const { createElement } = jest.requireActual('react')
-  const { Text } = jest.requireActual('react-native')
-  return { ART_CAROUSEL_CHROME_HEIGHT: 52, ArtCarousel: ({ paused, artHeight, animated }: { paused: boolean; artHeight: number; animated?: boolean }) => createElement(Text, { testID: 'art-carousel', accessibilityHint: String(artHeight), animated }, paused ? 'paused' : 'playing') }
-})
 
 const session = () => store.getState().round.pnp.session
 const names = () => session().players.map((player) => player.name)
@@ -72,6 +65,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   store.dispatch(achievementsActions.reset())
   store.dispatch(roundActions.reset())
+  seatTwoWriting()
   store.dispatch(activePlayerActions.setActivePlayer(null))
   store.dispatch(playerSettingsActions.reset())
   store.dispatch(playerThemeActions.reset())
@@ -93,10 +87,10 @@ afterEach(() => {
   measure.mockRestore()
 })
 
-const renderLoadout = (mode: 'pnp' | 'solo' = 'pnp') =>
+const renderLoadout = () =>
   render(
     <Providers>
-      <LoadoutScreen mode={mode} />
+      <LoadoutScreen />
     </Providers>
   )
 type Screen = Awaited<ReturnType<typeof renderLoadout>>
@@ -106,23 +100,44 @@ const pill = (screen: Screen, name: string) => screen.getByLabelText(name.toUppe
 const ready = (screen: Screen) => screen.getByRole('button', { name: 'Ready' })
 
 describe('the Pass & Play page', () => {
-  it('seats two guests to start, the first shown, with room to add more and nothing to remove', async () => {
+  // One page for any number of players (Jay, 2026-11-19): a fresh table is one guest on the packs,
+  // what 1 Player was.
+  it('starts a fresh table as one guest on the packs, with room to add more and nothing to remove or switch', async () => {
+    store.dispatch(roundActions.reset())
     const screen = await renderLoadout()
 
-    expect(pill(screen, 'Player 1')).toBeTruthy()
-    expect(pill(screen, 'Player 2')).toBeTruthy()
-    expect(session().focusedId).toBe('p1')
+    expect(names()).toEqual(['Player 1'])
+    expect(session()).toMatchObject({ focusedId: 'p1', source: 'packs' })
     expect(screen.getByLabelText('Add player')).toBeTruthy()
     expect(screen.queryByLabelText(/^Remove /)).toBeNull()
+    expect(screen.queryByText('Write-In')).toBeNull()
     // Nothing decided yet: no standings, and no session to clear.
     expect(screen.queryByLabelText(/solved$/)).toBeNull()
     expect(screen.queryByLabelText('New session')).toBeNull()
   })
 
-  it("has the Single Player page's layout: the art, then where the words come from, then Ready", async () => {
+  // Writing takes two: Packs | Write-In comes with a second player and goes with them, back to the packs.
+  it('offers Write-In once there are two, and goes back to the packs at one', async () => {
+    store.dispatch(roundActions.reset())
     const screen = await renderLoadout()
 
-    expect(screen.getByTestId('art-carousel')).toBeTruthy()
+    await fireEvent.press(screen.getByLabelText('Add player'))
+    await fireEvent.press(screen.getByText('Write-In'))
+    expect(session().source).toBe('write')
+
+    await fireEvent.press(pill(screen, 'Player 2'))
+    await fireEvent.press(screen.getByLabelText('Remove Player 2'))
+
+    expect(names()).toEqual(['Player 1'])
+    expect(session().source).toBe('packs')
+    expect(screen.queryByText('Write-In')).toBeNull()
+    expect(screen.getByTestId('packs-card')).toBeTruthy()
+  })
+
+  it("has the Single Player page's layout: where the words come from, the art row, then Ready", async () => {
+    const screen = await renderLoadout()
+
+    expect(screen.getByLabelText('Classic art')).toBeTruthy()
     expect(screen.getByText('Packs')).toBeTruthy()
     expect(screen.getByText('Write-In')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Ready' })).toBeTruthy()
@@ -155,15 +170,11 @@ describe('the Pass & Play page', () => {
 
     // Jay, 2026-10-18: at the end of the seats it moved with every seat added, which made adding
     // several in a row harder. In the corners' strip it never moves.
-    it("keeps Add player in the corners' strip, out of the seats' row, and on this page alone", async () => {
+    it("keeps Add player in the corners' strip, out of the seats' row", async () => {
       const screen = await renderLoadout()
 
       expect(screen.getByLabelText('Add player')).toBeTruthy()
-      expect(within(screen.getByTestId('loadout-above-art')).queryByLabelText('Add player')).toBeNull()
-      await screen.unmount()
-
-      const solo = await renderLoadout('solo')
-      expect(solo.queryByLabelText('Add player')).toBeNull()
+      expect(within(screen.getByTestId('loadout-players')).queryByLabelText('Add player')).toBeNull()
     })
 
     it("closes an open seat's picker as it adds, so none is left over the new seat", async () => {
@@ -210,17 +221,24 @@ describe('the Pass & Play page', () => {
       expect(active()).toBe(BOB.id)
     })
 
-    it('leaves the active player alone on the Single Player page', async () => {
+    // A table of one is whoever is playing: a profile picked on another game's setup page takes the
+    // seat, as 1 Player's page showed them, and a guest picked there hands it back to its guest.
+    it('seats whoever is playing at a table of one, rather than taking the page back', async () => {
+      store.dispatch(roundActions.reset())
       store.dispatch(profilesActions.setAll([ALICE, BOB]))
       seat('p1', BOB)
       store.dispatch(activePlayerActions.setActivePlayer(ALICE.id))
 
-      const screen = await renderLoadout('solo')
+      const screen = await renderLoadout()
 
       expect(active()).toBe(ALICE.id)
+      expect(session().players.map((player) => player.profileId)).toEqual([ALICE.id])
       expect(pill(screen, 'Alice')).toBeTruthy()
-      expect(screen.queryByLabelText('Add player')).toBeNull()
-      expect(screen.queryByText('Write-In')).toBeNull()
+      await screen.unmount()
+
+      store.dispatch(activePlayerActions.setActivePlayer(null))
+      await renderLoadout()
+      expect(session().players.map((player) => player.profileId)).toEqual([null])
     })
 
     it("removes the focused seat with others to spare straight away when it'd take nothing, the guests after it moving up and the focus with them", async () => {
@@ -240,7 +258,7 @@ describe('the Pass & Play page', () => {
       expect(session().focusedId).toBe('p3')
     })
 
-    it('offers to remove only the focused seat, and none at two', async () => {
+    it('offers to remove only the focused seat, down to one', async () => {
       store.dispatch(roundActions.addPnpPlayer())
       const screen = await renderLoadout()
       expect(screen.getAllByLabelText(/^Remove /).map((button) => button.props.accessibilityLabel)).toEqual(['Remove Player 1'])
@@ -250,6 +268,10 @@ describe('the Pass & Play page', () => {
       expect(screen.getAllByLabelText(/^Remove /).map((button) => button.props.accessibilityLabel)).toEqual(['Remove Player 2'])
       await fireEvent.press(screen.getByLabelText('Remove Player 2'))
       expect(names()).toEqual(['Player 1', 'Player 2'])
+      expect(screen.getAllByLabelText(/^Remove /).map((button) => button.props.accessibilityLabel)).toEqual(['Remove Player 2'])
+
+      await fireEvent.press(screen.getByLabelText('Remove Player 2'))
+      expect(names()).toEqual(['Player 1'])
       expect(screen.queryByLabelText(/^Remove /)).toBeNull()
     })
 
@@ -371,13 +393,14 @@ describe('the Pass & Play page', () => {
         restored().length = 0
       })
 
-      it('lets any seat be swiped away once there are more than two, and none at two', async () => {
+      it('lets any seat be swiped away once there are two, and none at one', async () => {
+        store.dispatch(roundActions.reset())
         const screen = await renderLoadout()
-        expect(['p1', 'p2'].map((id) => screen.getByTestId(`seat-${id}`).props.onDismiss)).toEqual([undefined, undefined])
+        expect(screen.getByTestId('seat-p1').props.onDismiss).toBeUndefined()
 
         await fireEvent.press(screen.getByLabelText('Add player'))
 
-        for (const id of ['p1', 'p2', 'p3']) expect(screen.getByTestId(`seat-${id}`).props.onDismiss).toEqual(expect.any(Function))
+        for (const id of ['p1', 'p2']) expect(screen.getByTestId(`seat-${id}`).props.onDismiss).toEqual(expect.any(Function))
       })
 
       it("removes a seat that isn't the focused one straight away when it'd take nothing, the focus staying put", async () => {
@@ -611,48 +634,16 @@ describe('the Pass & Play page', () => {
     })
 
     // Single Player's guest is never seat 2's guest or later's (seat 1's is theirs).
-    it("hands a guest seat left playing to Single Player's own guest on the Single Player page", async () => {
+    // Seat 1's guest is the device's guest, whichever way the table was left.
+    it("hands a table of one back to seat 1's guest from a guest seat that has left", async () => {
+      store.dispatch(roundActions.reset())
       store.dispatch(playerSettingsActions.setDifficulty({ playerKey: guestSeatKey('p2'), difficulty: 'hard' }))
       store.dispatch(activePlayerActions.setActivePlayer(null, 'p2'))
-      const screen = await renderLoadout('solo')
+      const screen = await renderLoadout()
 
       expect(activePlayer()).toEqual({ profileId: null, seatId: null })
       expect(pill(screen, 'Player 1')).toBeTruthy()
       expect(screen.getByLabelText('ANY')).toBeTruthy()
-    })
-  })
-
-  // The page fits a 375x667 phone whole with up to three seats: the art takes the room the rest leaves.
-  describe("the art's height", () => {
-    const layout = (screen: Screen, testID: string, height: number) => fireEvent(screen.getByTestId(testID, { includeHiddenElements: true }), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 343, height } } })
-    const artHeight = (screen: Screen) => Number(screen.getByTestId('art-carousel').props.accessibilityHint)
-    // A 375x667 phone: the page runs the screen's full height, under the corners (their 56 come off the
-    // room, as the page's top padding). The word sources' options alike, so neither leaves room (see
-    // 'how the page moves').
-    const laidOut = async (above: number, below: number, page = 667) => {
-      const screen = await renderLoadout()
-      await layout(screen, 'loadout-page', page)
-      await layout(screen, 'loadout-above-art', above)
-      await layout(screen, 'loadout-below-art', below)
-      await layout(screen, 'loadout-packs-content', 100)
-      await layout(screen, 'loadout-write-content', 100)
-      return screen
-    }
-
-    // The room under the corners, less the page above and below the art, the gap above the carousel,
-    // its name and pips, and the page's breathing room.
-    it('is whatever room the rest of the page leaves it', async () => {
-      const screen = await laidOut(116, 236)
-
-      expect(artHeight(screen)).toBe(667 - 56 - 116 - 236 - 20 - 52 - 16)
-    })
-
-    // Every art is a square scene, so drawn taller than wide it's no bigger: it stops at the page's
-    // width less the gutters, and a tall window's room past that goes around the whole page.
-    it('stops at its floor, past which the page scrolls, and at its own width', async () => {
-      expect(artHeight(await laidOut(180, 400))).toBe(72)
-      expect(artHeight(await laidOut(44, 100))).toBe(667 - 56 - 44 - 100 - 20 - 52 - 16)
-      expect(artHeight(await laidOut(44, 100, 3000))).toBe(Dimensions.get('window').width - 32)
     })
   })
 
@@ -661,17 +652,13 @@ describe('the Pass & Play page', () => {
   // what the page asks for: which views animate, and when not.
   describe('how the page moves', () => {
     const layout = (screen: Screen, testID: string, height: number) => fireEvent(screen.getByTestId(testID, { includeHiddenElements: true }), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 343, height } } })
-    const carousel = (screen: Screen) => screen.getByTestId('art-carousel')
-    // The packs' options (the settings row and the packs card) taller than Keep Each Word, as they are.
-    const PACKS_OPTIONS = 162
-    const WRITE_OPTIONS = 78
     const laidOut = async () => {
       const screen = await renderLoadout()
-      await layout(screen, 'loadout-page', 667)
-      await layout(screen, 'loadout-above-art', 116)
-      await layout(screen, 'loadout-below-art', 290)
-      await layout(screen, 'loadout-packs-content', PACKS_OPTIONS)
-      await layout(screen, 'loadout-write-content', WRITE_OPTIONS)
+      await layout(screen, 'loadout-players', 116)
+      await layout(screen, 'loadout-options', 290)
+      // The packs card taller than Keep Each Word, as it is.
+      await layout(screen, 'loadout-packs-content', 118)
+      await layout(screen, 'loadout-write-content', 98)
       return screen
     }
     // react-native-sortables lays the seats out and glides them itself (src/__mocks__/react-native-sortables.ts
@@ -692,28 +679,12 @@ describe('the Pass & Play page', () => {
       expect(seatMotion(screen)).toEqual({ itemEntering: expect.anything(), itemExiting: expect.anything() })
     })
 
-    it('eases the art to a new height once the page has been measured, and not before (the first one lands as is)', async () => {
-      const screen = await renderLoadout()
-      expect(carousel(screen).props.animated).toBe(false)
-
-      await layout(screen, 'loadout-page', 667)
-      await layout(screen, 'loadout-above-art', 116)
-      await layout(screen, 'loadout-below-art', 290)
-      // Nor before the word sources' options are, since one of them leaves the art room.
-      expect(carousel(screen).props.animated).toBe(false)
-      await layout(screen, 'loadout-packs-content', PACKS_OPTIONS)
-      await layout(screen, 'loadout-write-content', WRITE_OPTIONS)
-
-      expect(carousel(screen).props.animated).toBe(true)
-    })
-
     it("animates nothing with the system's Reduce Motion on", async () => {
       jest.mocked(useReducedMotion).mockReturnValue(true)
       putWordInPlay()
       const screen = await laidOut()
 
       expect(seatMotion(screen)).toEqual({ itemEntering: null, itemExiting: null })
-      expect(carousel(screen).props.animated).toBe(false)
     })
 
     // It stays mounted under the game (see Hidden screens): nothing may move there.
@@ -722,28 +693,23 @@ describe('the Pass & Play page', () => {
       const screen = await laidOut()
 
       expect(seatMotion(screen)).toEqual({ itemEntering: null, itemExiting: null })
-      expect(carousel(screen).props.animated).toBe(false)
     })
 
-    // Both sources' options sit in one cell as tall as the taller, cross-fading in place, and the room
-    // the shorter leaves goes to the art (Jay, 2026-10-19: writing left the Difficulty row's room empty).
-    it("keeps both word sources' options laid out together, the one not chosen hidden and untouchable, and gives the art the room the shorter leaves", async () => {
+    // Both sources' cards sit in one cell as tall as the taller, cross-fading in place.
+    it("keeps both word sources' cards laid out together, the one not chosen hidden and untouchable", async () => {
       const screen = await laidOut()
-      const writing = Number(carousel(screen).props.accessibilityHint)
       const options = (testID: string) => screen.getByTestId(testID, { includeHiddenElements: true }).props
-      const below = within(screen.getByTestId('loadout-below-art'))
+      const below = within(screen.getByTestId('loadout-options'))
 
       expect(options('loadout-write-options')).toMatchObject({ pointerEvents: 'auto', 'aria-hidden': false })
       expect(options('loadout-packs-options')).toMatchObject({ pointerEvents: 'none', 'aria-hidden': true })
       expect(below.getByTestId('packs-card', { includeHiddenElements: true })).toBeTruthy()
-      expect(writing).toBe(667 - 56 - 116 - 290 - 20 - 52 - 16 + PACKS_OPTIONS - WRITE_OPTIONS)
 
       await fireEvent.press(screen.getByText('Packs'))
 
       expect(options('loadout-packs-options')).toMatchObject({ pointerEvents: 'auto', 'aria-hidden': false })
       expect(options('loadout-write-options')).toMatchObject({ pointerEvents: 'none', 'aria-hidden': true })
       expect(below.getByTestId('keep-words-card', { includeHiddenElements: true })).toBeTruthy()
-      expect(Number(carousel(screen).props.accessibilityHint)).toBe(writing - (PACKS_OPTIONS - WRITE_OPTIONS))
     })
   })
 
@@ -770,10 +736,12 @@ describe('the Pass & Play page', () => {
   })
 
   describe('where the words come from', () => {
-    it('starts on the players writing, with Keep Each Word and no packs or difficulty', async () => {
+    // Written words are drawn in art too, so the art row stays when the difficulty's pill goes.
+    it('starts on the players writing, with the art row and Keep Each Word, and no packs or difficulty', async () => {
       const screen = await renderLoadout()
 
       expect(session().source).toBe('write')
+      expect(screen.getByLabelText('Classic art')).toBeTruthy()
       expect(screen.getByText('Keep Each Word')).toBeTruthy()
       expect(screen.queryByTestId('packs-card')).toBeNull()
       expect(screen.queryByLabelText('ANY')).toBeNull()

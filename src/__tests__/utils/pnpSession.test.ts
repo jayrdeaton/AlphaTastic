@@ -6,17 +6,15 @@ const player = (id: string, name = `Name ${id}`): PnpPlayer => ({ id, name, prof
 const table = (...ids: string[]): PnpPlayer[] => ids.map((id) => player(id))
 
 describe('createDefaultPnpSession', () => {
-  it('seats two guests, Player 1 writing for Player 2, with nothing played, the players writing, the first seat shown and no pack turn yet', () => {
+  // One page for any number of players (Jay, 2026-11-19): a fresh table is one guest on the packs.
+  it('seats one guest on the packs, with nothing played, the seat shown and no pack turn yet', () => {
     expect(createDefaultPnpSession()).toEqual({
-      players: [
-        { id: 'p1', name: 'Player 1', profileId: null },
-        { id: 'p2', name: 'Player 2', profileId: null }
-      ],
+      players: [{ id: 'p1', name: 'Player 1', profileId: null }],
       standings: {},
       writerId: 'p1',
-      guesserId: 'p2',
+      guesserId: 'p1',
       recordedRoundId: null,
-      source: 'write',
+      source: 'packs',
       focusedId: 'p1',
       turnId: null,
       recordedTurnRound: null
@@ -168,7 +166,7 @@ describe('names', () => {
 
 describe('createPlayer', () => {
   it('adds the next guest seat, named for its seat', () => {
-    expect(createPlayer(createDefaultPnpSession().players)).toEqual({ id: 'p3', name: 'Player 3', profileId: null })
+    expect(createPlayer(createDefaultPnpSession().players)).toEqual({ id: 'p2', name: 'Player 2', profileId: null })
   })
 
   // A new id is never one a seat at the table has.
@@ -240,7 +238,7 @@ describe('sanitizePnpSession', () => {
     ['a string', 'session'],
     ['a list', [valid()]],
     ['no players', { ...valid(), players: undefined }],
-    ['one player', { ...valid(), players: [player('p1', 'Player 1')] }],
+    ['an empty table', { ...valid(), players: [] }],
     ['nine players', { ...valid(), players: table('p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9') }],
     ['a seat with no id', { ...valid(), players: [player('p1'), { name: 'Bo', profileId: null }] }],
     ['a seat id with a colon', { ...valid(), players: [player('p1'), player('p:2')] }],
@@ -282,8 +280,14 @@ describe('sanitizePnpSession', () => {
   it.each([
     ['missing', undefined],
     ['not one', 'turns']
-  ])('has the players writing for a word source %s', (_label, source) => {
-    expect(sanitizePnpSession({ ...valid(), source }, ROUND).source).toBe('write')
+  ])('plays from the packs for a word source %s', (_label, source) => {
+    expect(sanitizePnpSession({ ...valid(), source }, ROUND).source).toBe('packs')
+  })
+
+  // Writing takes two.
+  it('keeps a table of one, on the packs', () => {
+    const one = sanitizePnpSession({ ...valid(), players: [player('p1')], writerId: 'p1', guesserId: 'p2', focusedId: 'p1', source: 'write' }, ROUND)
+    expect(one).toMatchObject({ players: [{ id: 'p1', name: 'Player 1', profileId: null }], writerId: 'p1', guesserId: 'p1', source: 'packs' })
   })
 
   it('shows the first seat for a focus not at the table', () => {

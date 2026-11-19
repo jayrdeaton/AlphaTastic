@@ -1,5 +1,5 @@
 import { getPuzzleManifest } from '@/utils/puzzleCatalog'
-import { buildWordSearch, drawWordSearch, findSelectedWord, type GridCell, snapWordSearchSelection, WORD_SEARCH_RULES, wordSearchCellAt, wordSearchEntries, type WordSearchGrid, wordSearchLines, wordSearchRulesFor } from '@/utils/wordSearch'
+import { buildWordSearch, describeWordSearch, drawWordSearch, findSelectedWord, type GridCell, snapWordSearchSelection, wordSearchCellAt, wordSearchEntries, type WordSearchGrid, wordSearchLines, wordSearchRulesFor } from '@/utils/wordSearch'
 
 // A small seeded generator, so a failure names the seed that caused it.
 const seeded = (seed: number) => () => {
@@ -7,6 +7,13 @@ const seeded = (seed: number) => () => {
   let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
   t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+}
+
+const RULES = {
+  easy: wordSearchRulesFor({ grid: 'small', directions: 'straight' }),
+  medium: wordSearchRulesFor({ grid: 'medium', directions: 'diagonal' }),
+  hard: wordSearchRulesFor({ grid: 'medium', directions: 'backward' }),
+  large: wordSearchRulesFor({ grid: 'large', directions: 'backward' })
 }
 
 const ANSWERS = ['Bruins', 'Canadiens', 'Flames', 'Oilers', 'Red Wings', 'Maple Leafs', 'Rangers', 'Penguins', 'Blackhawks', 'Sharks', 'Kings', 'Ducks', 'Stars', 'Blues', 'Jets', 'Wild']
@@ -40,7 +47,7 @@ describe('wordSearchEntries', () => {
 })
 
 describe('buildWordSearch', () => {
-  it.each(Object.entries(WORD_SEARCH_RULES))('hides every word along a straight line on %s', (_name, rules) => {
+  it.each(Object.entries(RULES).filter(([name]) => name !== 'large'))('hides every word along a straight line on %s', (_name, rules) => {
     for (let seed = 0; seed < 40; seed++) {
       const board = buildWordSearch(
         entries.filter((entry) => entry.letters.length <= rules.size),
@@ -64,20 +71,20 @@ describe('buildWordSearch', () => {
       12
     )
     for (let seed = 0; seed < 20; seed++) {
-      const board = buildWordSearch(nested, { ...WORD_SEARCH_RULES.medium, wordCount: 4 }, seeded(seed))
+      const board = buildWordSearch(nested, { ...RULES.medium, wordCount: 4 }, seeded(seed))
       const hidden = board!.words.map((word) => word.letters)
       expect(hidden.includes('IRON') && hidden.includes('IRONMAN')).toBe(false)
     }
   })
 
   it('gives up when there are too few answers to fill the grid', () => {
-    expect(buildWordSearch(entries.slice(0, 3), WORD_SEARCH_RULES.medium, seeded(1))).toBeNull()
+    expect(buildWordSearch(entries.slice(0, 3), RULES.medium, seeded(1))).toBeNull()
   })
 
   it('keeps blocked words out of the filler in every direction', () => {
     const blocked = /FUCK|SHIT|CUNT|COCK|DICK|PUSSY|BITCH|ASS|SEX|KCUF|TIHS|TNUC|KCOC|KCID|YSSUP|HCTIB|SSA|XES/
     for (let seed = 0; seed < 150; seed++) {
-      const board = buildWordSearch(entries, WORD_SEARCH_RULES.hard, seeded(seed))!
+      const board = buildWordSearch(entries, RULES.hard, seeded(seed))!
       const hidden = new Set(board.words.flatMap((word) => cellsOf(word.start, word.end).map(({ row, col }) => `${row},${col}`)))
       for (const line of wordSearchLines(board.size)) {
         const text = line.map(({ row, col }) => board.grid[row][col]).join('')
@@ -100,17 +107,19 @@ describe('drawWordSearch', () => {
   const big = getPuzzleManifest().sort((a, b) => b.count - a.count)[0]
 
   it('draws a themed grid from a selected pack', () => {
-    const board = drawWordSearch([big.key], 'hard', seeded(3))
+    const board = drawWordSearch([big.key], { grid: 'medium', directions: 'backward' }, seeded(3))
     expect(board).toMatchObject({ packKey: big.key, packLabel: big.label, size: 12 })
-    expect(board!.words).toHaveLength(12)
+    expect(board!.words).toHaveLength(10)
   })
 
-  it('reads Any as Medium', () => {
-    expect(wordSearchRulesFor('any')).toBe(WORD_SEARCH_RULES.medium)
+  it('sizes the grid and its word list from the settings', () => {
+    expect(RULES.easy).toMatchObject({ size: 10, wordCount: 8 })
+    expect(RULES.large).toMatchObject({ size: 14, wordCount: 14 })
+    expect(describeWordSearch({ grid: 'small', directions: 'straight' })).toBe('8 words on a 10 by 10 grid, across and down')
   })
 
   it('has nothing to draw with no pack selected', () => {
-    expect(drawWordSearch([], 'any', seeded(1))).toBeNull()
+    expect(drawWordSearch([], { grid: 'medium', directions: 'diagonal' }, seeded(1))).toBeNull()
   })
 })
 

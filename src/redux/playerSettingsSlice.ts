@@ -1,8 +1,10 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
+import type { PuzzleGameId } from '@/constants/games'
 import { DEFAULT_MODE } from '@/modes/registry'
 import { isPlayerKey, type PlayerKey } from '@/utils/players'
 import type { PuzzleDifficultyTier } from '@/utils/puzzleCatalog'
+import { type PlayerPuzzleOptions, sanitizePuzzleOptions } from '@/utils/puzzleOptions'
 
 import { isRootRehydrate } from './rehydrate'
 
@@ -16,6 +18,8 @@ export type PlayerSettings = {
   modeId: string
   difficulty: DifficultyFilter
   packKeys: string[] | null
+  // Their settings for the puzzle games (see usePuzzleOptions), only once they've changed one.
+  puzzles?: PlayerPuzzleOptions
 }
 
 // By player key (utils/players.ts). A player with nothing picked yet has no entry and plays with the
@@ -38,7 +42,9 @@ export const sanitizePlayerSettings = (value: unknown): PlayerSettingsState => {
   if (!isRecord(value)) return next
   for (const [key, entry] of Object.entries(value)) {
     if (!isPlayerKey(key) || !isRecord(entry)) continue
+    const puzzles = sanitizePuzzleOptions(entry.puzzles)
     next[key] = {
+      ...(puzzles ? { puzzles } : {}),
       modeId: typeof entry.modeId === 'string' && entry.modeId.length > 0 ? entry.modeId : DEFAULT_PLAYER_SETTINGS.modeId,
       difficulty: isDifficulty(entry.difficulty) ? entry.difficulty : DEFAULT_PLAYER_SETTINGS.difficulty,
       packKeys: isKeyList(entry.packKeys) ? [...entry.packKeys] : null
@@ -66,6 +72,15 @@ const playerSettingsSlice = createSlice({
     },
     setPackKeys: (state, action: PlayerPayload<{ packKeys: string[] | null }>) => {
       entryFor(state, action.payload.playerKey).packKeys = action.payload.packKeys
+    },
+    setPuzzleOption: (state, action: PlayerPayload<{ game: PuzzleGameId; key: string; value: string }>) => {
+      const { playerKey, game, key, value } = action.payload
+      const entry = entryFor(state, playerKey)
+      entry.puzzles = { ...entry.puzzles, [game]: { ...entry.puzzles?.[game], [key]: value } }
+    },
+    resetPuzzleOptions: (state, action: PlayerPayload<{ game: PuzzleGameId }>) => {
+      const entry = state[action.payload.playerKey]
+      if (entry?.puzzles) delete entry.puzzles[action.payload.game]
     },
     // A forgotten profile's picks (see usePlayerData's forgetPlayer).
     removePlayer: (state, action: PayloadAction<PlayerKey>) => {

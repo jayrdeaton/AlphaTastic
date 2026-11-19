@@ -9,7 +9,7 @@ import { BackHandler, StyleSheet, View } from 'react-native'
 import { Avatar, Icon } from 'react-native-paper'
 
 import { LoadoutScreen } from '@/components/LoadoutScreen'
-import { DEFAULT_MODE, lettersMode, robotMode } from '@/modes/registry'
+import { DEFAULT_MODE, lettersMode, robotMode, VISIBLE_MODES } from '@/modes/registry'
 import { achievementsActions } from '@/redux/achievementsSlice'
 import { activePlayerActions } from '@/redux/activePlayerSlice'
 import { playerSettingsActions } from '@/redux/playerSettingsSlice'
@@ -17,6 +17,7 @@ import { DEFAULT_HARMONY, playerThemeActions } from '@/redux/playerThemeSlice'
 import { roundActions, selectSoloRound } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
 import { Providers } from '@/testUtils/Providers'
+import { seatTwoWriting } from '@/testUtils/table'
 import { alert } from '@/utils/alert'
 import { commaString } from '@/utils/commaString'
 import { buildCustomPuzzle, loadCustomPacksCache } from '@/utils/customPacks'
@@ -52,14 +53,6 @@ jest.mock('react-native-paper', () => {
   return { ...actual, Icon: jest.fn(actual.Icon), Avatar: { ...actual.Avatar, Icon: jest.fn(actual.Avatar.Icon) } }
 })
 
-// The art carousel has its own suite (ArtCarousel.test.tsx). Here it only shows whether the page
-// asked it to pause, and runs no demo loop.
-jest.mock('@/components/ArtCarousel', () => {
-  const { createElement } = jest.requireActual('react')
-  const { Text } = jest.requireActual('react-native')
-  return { ART_CAROUSEL_CHROME_HEIGHT: 108, ArtCarousel: ({ paused }: { paused: boolean }) => createElement(Text, { testID: 'art-carousel' }, paused ? 'paused' : 'playing') }
-})
-
 const mockIcon = jest.mocked(Icon)
 const mockAvatarIcon = jest.mocked(Avatar.Icon)
 const mockAlert = jest.mocked(alert)
@@ -91,7 +84,7 @@ const seedSoloRound = (guessedLetters: string[] = [], playerKey = GUEST_PLAYER_K
 const renderLoadout = () =>
   render(
     <Providers>
-      <LoadoutScreen mode='solo' />
+      <LoadoutScreen />
     </Providers>
   )
 
@@ -111,7 +104,7 @@ const renderLoadoutWithTheme = async () => {
   const utils = await render(
     <Providers>
       <ThemeCapture />
-      <LoadoutScreen mode='solo' />
+      <LoadoutScreen />
     </Providers>
   )
   return { ...utils, theme: capturedTheme! }
@@ -147,12 +140,9 @@ const BOB: Profile = { id: 'profile-b', name: 'Bob', color: '#4caf50', tag: 'B',
 
 const panelHidden = (screen: Screen, testID: string) => screen.getByTestId(testID, { includeHiddenElements: true }).props.accessibilityElementsHidden
 
-// Art is picked in the Settings sheet (the header's cog), from its ART grid (see ArtPicker): a tap
-// picks it, and Done closes the sheet.
+// Art is picked from the page's art row (ArtRow), a tap on its tile.
 const pickLettersArt = async (screen: Screen) => {
-  await fireEvent.press(screen.getByLabelText('Settings'))
   await fireEvent.press(screen.getByRole('button', { name: `${lettersMode.label} art` }))
-  await fireEvent.press(screen.getByText('Done'))
 }
 
 // Android's back button, as React Native's BackHandler runs it (BackHandler.android.js): listeners in
@@ -193,7 +183,7 @@ const setFocused = async (screen: Screen, focused: boolean) => {
   mockUseIsFocused.mockReturnValue(focused)
   await screen.rerender(
     <Providers>
-      <LoadoutScreen mode='solo' />
+      <LoadoutScreen />
     </Providers>
   )
 }
@@ -236,10 +226,10 @@ describe('LoadoutScreen (Single Player)', () => {
   })
 
   // Condensed like the other games' loadouts (Jay, 2026-10-18).
-  it('is the player picker and Difficulty with the reset, the art carousel, the packs card and Ready, and nothing of the old page', async () => {
+  it('is the player picker, the art row, Difficulty with the reset, the packs card and Ready, and nothing of the old page', async () => {
     const screen = await renderLoadout()
 
-    expect(screen.getByTestId('art-carousel')).toBeTruthy()
+    expect(screen.getByLabelText(`${DEFAULT_MODE.label} art`)).toBeTruthy()
     expect(screen.getByLabelText('ANY')).toBeTruthy()
     expect(screen.getByLabelText('Reset settings')).toBeTruthy()
     expect(screen.getByText(`All ${N} packs`)).toBeTruthy()
@@ -249,60 +239,34 @@ describe('LoadoutScreen (Single Player)', () => {
     expect(screen.queryByTestId('pack-progress-drawer-panel', { includeHiddenElements: true })).toBeNull()
   })
 
-  // Back on the page (Jay, 2026-10-18), and never animating out of sight.
-  describe('the art carousel', () => {
-    const carouselState = (screen: Screen) => screen.getByTestId('art-carousel').props.children
+  // A row of art tiles, after HexFleet's arena picker (Jay, 2026-11-19: "the art should be visible").
+  describe('the art row', () => {
+    const tile = (screen: Screen, label: string) => screen.getByLabelText(`${label} art`)
 
-    it('plays while the page is in view', async () => {
+    it('shows every art as a tile, the picked one selected', async () => {
       const screen = await renderLoadout()
 
-      expect(carouselState(screen)).toBe('playing')
+      for (const mode of VISIBLE_MODES) expect(tile(screen, mode.label)).toBeTruthy()
+      expect(tile(screen, DEFAULT_MODE.label).props.accessibilityState).toMatchObject({ selected: true })
+      expect(tile(screen, 'Robot').props.accessibilityState).toMatchObject({ selected: false })
     })
 
-    it.each([
-      ['the Settings sheet is open', (screen: Screen) => fireEvent.press(screen.getByLabelText('Settings'))],
-      ['Choose Packs is open', (screen: Screen) => fireEvent.press(packsCard(screen))],
-      ["the player picker's popover is open", (screen: Screen) => fireEvent.press(screen.getByLabelText('PLAYER 1'))],
-      ["Difficulty's popover is open", (screen: Screen) => fireEvent.press(screen.getByLabelText('ANY'))],
-      [
-        'the reset confirm is up',
-        async (screen: Screen) => {
-          await act(async () => {
-            store.dispatch(playerSettingsActions.setDifficulty({ playerKey: GUEST_PLAYER_KEY, difficulty: 'hard' }))
-          })
-          await fireEvent.press(screen.getByLabelText('Reset settings'))
-        }
-      ],
-      [
-        'the abandon confirm is up',
-        async (screen: Screen) => {
-          await act(async () => {
-            seedSoloRound(['Q'])
-          })
-          await openPackBrowser(screen, PACK_A.label)
-          await fireEvent.press(packBrowser(screen).getByText('Play This Pack'))
-        }
-      ],
-      ['the page is out of sight', (screen: Screen) => setFocused(screen, false)]
-    ])('pauses while %s', async (_cover, cover) => {
-      const measure = answerMeasureInWindow()
+    it("makes a tapped art the player's art and redraws the round waiting for them", async () => {
+      seedSoloRound(['Q'])
       const screen = await renderLoadout()
 
-      await cover(screen)
+      await fireEvent.press(tile(screen, 'Robot'))
 
-      expect(carouselState(screen)).toBe('paused')
-      measure.mockRestore()
-      mockUseIsFocused.mockReturnValue(true)
+      expect(tile(screen, 'Robot').props.accessibilityState).toMatchObject({ selected: true })
+      expect(store.getState().playerSettings[GUEST_PLAYER_KEY].modeId).toBe('robot')
+      expect(soloRound().puzzle?.modeId).toBe('robot')
     })
 
-    it('plays again once what covered it goes', async () => {
+    it('keeps listing an art since taken out of the picker for a player who still has it', async () => {
+      store.dispatch(playerSettingsActions.setMode({ playerKey: GUEST_PLAYER_KEY, modeId: 'kite' }))
       const screen = await renderLoadout()
 
-      await fireEvent.press(packsCard(screen))
-      expect(carouselState(screen)).toBe('paused')
-      await fireEvent.press(choosePacks(screen).getByLabelText('Close'))
-
-      expect(carouselState(screen)).toBe('playing')
+      expect(tile(screen, 'Kite').props.accessibilityState).toMatchObject({ selected: true })
     })
   })
 
@@ -818,7 +782,7 @@ describe('LoadoutScreen (Single Player)', () => {
       expect(screen.queryByTestId('mode-picker-panel', { includeHiddenElements: true })).toBeNull()
     })
 
-    it('sets the default art from the Settings sheet and applies it to the round waiting on the board, guesses and all', async () => {
+    it('sets the default art from the art row and applies it to the round waiting on the board, guesses and all', async () => {
       seedSoloRound(['D', 'Q'])
       const screen = await renderLoadout()
 
@@ -1351,7 +1315,7 @@ describe('LoadoutScreen (Pass & Play)', () => {
   const renderPnpLoadout = () =>
     render(
       <Providers>
-        <LoadoutScreen mode='pnp' />
+        <LoadoutScreen />
       </Providers>
     )
 
@@ -1359,15 +1323,16 @@ describe('LoadoutScreen (Pass & Play)', () => {
     jest.clearAllMocks()
     store.dispatch(achievementsActions.reset())
     store.dispatch(roundActions.reset())
+    seatTwoWriting()
     store.dispatch(activePlayerActions.setActivePlayer(null))
     store.dispatch(playerSettingsActions.reset())
   })
 
-  // The focused seat's colors are its picker's, and its art the carousel's, as on Single Player.
-  it('has the art carousel and a picker per seat, and no Colors row, Art row or art drawer of its own', async () => {
+  // The focused seat's colors are its picker's, and its art the art row's, as on Single Player.
+  it('has the art row and a picker per seat, and no Colors row or art drawer of its own', async () => {
     const screen = await renderPnpLoadout()
 
-    expect(screen.getByTestId('art-carousel')).toBeTruthy()
+    expect(screen.getByLabelText(`${DEFAULT_MODE.label} art`)).toBeTruthy()
     expect(screen.getByLabelText('PLAYER 1')).toBeTruthy()
     expect(screen.queryByText('Colors')).toBeNull()
     expect(screen.queryByText('Art')).toBeNull()
@@ -1375,14 +1340,13 @@ describe('LoadoutScreen (Pass & Play)', () => {
     expect(screen.queryByTestId('mode-picker-panel', { includeHiddenElements: true })).toBeNull()
   })
 
-  // The same sheet and grid as everywhere else, so the pick reaches the Pass & Play round too: the word
+  // The same art row as Single Player's, so the pick reaches the Pass & Play round too: the word
   // waiting for the second seat, picked while the page is theirs (each guest seat its own player).
-  it("picks the player's art from the Settings sheet, redrawing the word waiting to be guessed", async () => {
+  it("picks the player's art from the art row, redrawing the word waiting to be guessed", async () => {
     store.dispatch(roundActions.setPnpWord({ phrase: 'CAT', modeId: DEFAULT_MODE.id, sourceMode: 'custom' }))
     store.dispatch(roundActions.focusPnpSeat('p2'))
     const screen = await renderPnpLoadout()
 
-    await fireEvent.press(screen.getByLabelText('Settings'))
     await fireEvent.press(screen.getByRole('button', { name: `${robotMode.label} art` }))
 
     expect(store.getState().playerSettings[guestSeatKey('p2')]?.modeId).toBe(robotMode.id)

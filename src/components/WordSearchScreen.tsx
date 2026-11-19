@@ -1,74 +1,56 @@
-import { Button, IconButton } from '@rific/feedback-press'
-import { ConfirmDialog } from '@tastic/hud/chrome'
-import { JSX, useCallback, useEffect, useState } from 'react'
+import { IconButton } from '@rific/feedback-press'
+import { JSX, useCallback, useState } from 'react'
 import { type LayoutChangeEvent, StyleSheet, useWindowDimensions, View } from 'react-native'
-import { Portal, Text, useTheme } from 'react-native-paper'
+import { Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { DEFAULT_CELEBRATION } from '@/effects/registry'
+import { WORD_SEARCH_GAME_ID } from '@/constants/games'
 import { useGameHaptics } from '@/hooks/useGameHaptics'
 import { usePackSelection } from '@/hooks/usePackSelection'
-import { usePuzzleDefaults } from '@/hooks/usePuzzleDefaults'
+import { usePuzzleOptions } from '@/hooks/usePuzzleOptions'
 import { useSoundEffects } from '@/hooks/useSoundEffects'
-import { goHome, safeBack } from '@/utils/navigation'
+import { safeBack } from '@/utils/navigation'
 import { gameShell } from '@/utils/webLayout'
 import { drawWordSearch, findSelectedWord, type GridCell, type WordSearchBoard } from '@/utils/wordSearch'
 
-import { ReadableAccent } from './ReadableAccent'
+import { formatElapsed, PuzzleSolvedCelebration, PuzzleUnavailable } from './PuzzleScreenParts'
 import { ScreenHeader } from './ScreenHeader'
 import { type FoundWord, WordSearchGrid } from './WordSearchGrid'
 
-// A win's fireworks get a moment before the card covers them, as a solved Hangman puzzle's do.
-const SOLVED_CARD_DELAY_MS = 2000
 const COLUMN_MAX_WIDTH = 480
 const GUTTER = 16
 const HEADER_HEIGHT = 64
 const WORD_ROW_HEIGHT = 26
 const WORD_COLUMNS = 2
 const PROGRESS_HEIGHT = 36
-const CelebrationView = DEFAULT_CELEBRATION.Component
-
-const formatElapsed = (ms: number): string => {
-  const seconds = Math.max(0, Math.round(ms / 1000))
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
-}
 
 type Puzzle = { board: WordSearchBoard | null; startedAt: number }
 
 // A prototype of Word Search, built to find out whether grids themed by the packs are fun. A grid comes
-// from one of the active player's selected packs, and their Difficulty sets its size and directions
+// from one of the active player's selected packs, and their settings set its size and directions
 // (see wordSearch.ts). Nothing is saved yet: leaving drops the puzzle, and it adds to no stats.
 export const WordSearchScreen = (): JSX.Element => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const window = useWindowDimensions()
   const { selectedPackKeys } = usePackSelection()
-  const { difficulty } = usePuzzleDefaults()
+  const { options } = usePuzzleOptions(WORD_SEARCH_GAME_ID)
   const { correctGuess, win } = useGameHaptics()
   const { playCorrect, playWin } = useSoundEffects()
 
-  const draw = useCallback((): Puzzle => ({ board: drawWordSearch(selectedPackKeys, difficulty), startedAt: Date.now() }), [selectedPackKeys, difficulty])
+  const draw = useCallback((): Puzzle => ({ board: drawWordSearch(selectedPackKeys, options), startedAt: Date.now() }), [selectedPackKeys, options])
   const [puzzle, setPuzzle] = useState(draw)
   const [found, setFound] = useState<FoundWord[]>([])
   const [elapsedMs, setElapsedMs] = useState<number | null>(null)
-  const [cardVisible, setCardVisible] = useState(false)
-  const [celebrationCycle, setCelebrationCycle] = useState(0)
   const [measured, setMeasured] = useState<{ width: number; height: number } | null>(null)
 
   const { board, startedAt } = puzzle
   const solved = elapsedMs !== null
 
-  useEffect(() => {
-    if (!solved) return
-    const timeout = setTimeout(() => setCardVisible(true), SOLVED_CARD_DELAY_MS)
-    return () => clearTimeout(timeout)
-  }, [solved])
-
   const newPuzzle = useCallback(() => {
     setPuzzle(draw())
     setFound([])
     setElapsedMs(null)
-    setCardVisible(false)
   }, [draw])
 
   const handleSelect = useCallback(
@@ -97,21 +79,7 @@ export const WordSearchScreen = (): JSX.Element => {
 
   const handleLayout = useCallback(({ nativeEvent: { layout } }: LayoutChangeEvent) => setMeasured({ width: layout.width, height: layout.height }), [])
 
-  if (!board) {
-    return (
-      <View style={[styles.screen, gameShell]}>
-        <ScreenHeader icon='arrow-left' label='Back' onPress={safeBack} title='Word Search' />
-        <View style={styles.empty}>
-          <Text variant='bodyLarge' style={[styles.emptyText, { color: theme.colors.onSurface }]}>
-            None of your selected packs has enough short answers for a grid.
-          </Text>
-          <Button mode='contained' icon='cards-outline' onPress={safeBack}>
-            Choose Packs
-          </Button>
-        </View>
-      </View>
-    )
-  }
+  if (!board) return <PuzzleUnavailable title='Word Search' message='None of your selected packs has enough short answers for a grid.' />
 
   // The list keeps its full height, and the grid takes what's left, in whole points per cell so its
   // letters and bands stay crisp. Until the body has been measured, the window stands in for it.
@@ -146,14 +114,7 @@ export const WordSearchScreen = (): JSX.Element => {
         </View>
       </View>
 
-      {solved && !cardVisible ? (
-        <Portal>
-          <CelebrationView key={celebrationCycle} colors={[theme.colors.primary, theme.colors.secondary, theme.colors.tertiary]} dark={theme.dark} onComplete={() => setCelebrationCycle((cycle) => cycle + 1)} />
-        </Portal>
-      ) : null}
-      <ReadableAccent>
-        <ConfirmDialog visible={cardVisible} icon='trophy' title='Puzzle Solved!' message={`You found all ${words.length} in ${formatElapsed(elapsedMs ?? 0)}.`} confirmLabel='Next Puzzle' cancelLabel='Home' onConfirm={newPuzzle} onCancel={goHome} />
-      </ReadableAccent>
+      {elapsedMs !== null ? <PuzzleSolvedCelebration message={`You found all ${words.length} in ${formatElapsed(elapsedMs)}.`} onNext={newPuzzle} /> : null}
     </View>
   )
 }
@@ -161,8 +122,6 @@ export const WordSearchScreen = (): JSX.Element => {
 const styles = StyleSheet.create({
   body: { flex: 1 },
   centered: { alignItems: 'center' },
-  empty: { alignItems: 'center', flex: 1, gap: 24, justifyContent: 'center', padding: 32 },
-  emptyText: { textAlign: 'center' },
   fill: { flex: 1, justifyContent: 'center' },
   progress: { lineHeight: PROGRESS_HEIGHT },
   screen: { flex: 1 },

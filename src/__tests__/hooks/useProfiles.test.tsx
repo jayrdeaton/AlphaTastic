@@ -55,9 +55,11 @@ const BOB: Profile = { id: 'profile-b', name: 'Bob', color: '#4caf50', tag: 'B',
 // `roster` is this device's own copy of the roster, and `seatedId` holds the Pass & Play table's second
 // seat, the way the coming seat picker will (there's no action for it yet).
 const makeStore = ({ roster = [], seatedId = null }: { roster?: Profile[]; seatedId?: string | null } = {}) => {
-  const { session } = initialRoundState.pnp
+  // Two seats: a fresh table has one.
+  const table = round(initialRoundState, roundActions.addPnpPlayer())
+  const { session } = table.pnp
   const players = session.players.map((player, index) => (index === 1 ? { ...player, profileId: seatedId } : player))
-  const roundState: RoundState = { ...initialRoundState, pnp: { ...initialRoundState.pnp, session: { ...session, players } } }
+  const roundState: RoundState = { ...table, pnp: { ...table.pnp, session: { ...session, players } } }
   return configureStore({ reducer: combineReducers({ achievements, activePlayer, playerSettings, playerTheme, profiles: profilesReducer, profileSelection: profileSelectionReducer, round }), preloadedState: { profiles: roster, round: roundState } })
 }
 type TestStore = ReturnType<typeof makeStore>

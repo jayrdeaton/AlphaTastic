@@ -7,6 +7,7 @@ import { Keyboard, StyleSheet, View } from 'react-native'
 import { Text, TextInput } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { titleType } from '@/constants/typography'
 import { useActivePlayer } from '@/hooks/useActivePlayer'
 import { useGameStats } from '@/hooks/useGameStats'
 import { useKeyboard } from '@/hooks/useKeyboard'
@@ -254,7 +255,7 @@ const PackEditorForm = ({ editingKey, onSaved, onCancel, onDelete, onShare }: Pa
         <FadingScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps='handled' automaticallyAdjustKeyboardInsets>
           {/* A section label rather than just another field like the entries below: this is the one field
               that names the whole thing the rest of the screen is building. */}
-          <Text variant='titleMedium' style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+          <Text variant='titleMedium' style={[styles.sectionTitle, { color: theme.colors.onSurface }, titleType]}>
             Pack Name
           </Text>
           <TextInput testID='pack-label-input' ref={labelRef} onSubmitEditing={focusFirstEntry} blurOnSubmit={labelBlurOnSubmit} returnKeyType='next' value={label} onChangeText={setLabel} mode='outlined' maxLength={60} />

@@ -1,17 +1,22 @@
-import { opponentActions } from '@tastic/shell'
-import { act, render } from '@testing-library/react-native'
+import { render } from '@testing-library/react-native'
 import { useLocalSearchParams } from 'expo-router'
 import { Provider as ReduxProvider } from 'react-redux'
 
 import GameLoadoutRoute from '@/app/loadout/[game]'
-import type { LoadoutScreenProps } from '@/components/LoadoutScreen'
-import { HANGMAN_GAME_ID, WORD_SEARCH_GAME_ID } from '@/constants/games'
+import { HANGMAN_GAME_ID, PUZZLE_GAME_IDS } from '@/constants/games'
 import { store } from '@/redux/store'
 
-let mockProps: LoadoutScreenProps | null = null
+let mockHangman = false
+let mockPuzzleGame: string | null = null
+jest.mock('@/components/PuzzleLoadoutScreen', () => ({
+  PuzzleLoadoutScreen: ({ game }: { game: string }) => {
+    mockPuzzleGame = game
+    return null
+  }
+}))
 jest.mock('@/components/LoadoutScreen', () => ({
-  LoadoutScreen: (props: LoadoutScreenProps) => {
-    mockProps = props
+  LoadoutScreen: () => {
+    mockHangman = true
     return null
   }
 }))
@@ -27,35 +32,30 @@ const renderRoute = (game: string) => {
 
 describe('the setup route', () => {
   beforeEach(() => {
-    mockProps = null
-    store.dispatch(opponentActions.setSeatTwo('cpu'))
+    mockHangman = false
+    mockPuzzleGame = null
   })
 
-  it('opens Hangman for one player until Pass & Play is picked, and remembers the pick', async () => {
+  // One page for any number of players (Jay, 2026-11-19): no mode to read or remember.
+  it("opens Hangman's own setup page", async () => {
     await renderRoute(HANGMAN_GAME_ID)
-    expect(mockProps).toMatchObject({ mode: 'solo' })
 
-    await act(async () => mockProps?.onModeChange?.('pnp'))
-
-    expect(mockProps).toMatchObject({ mode: 'pnp' })
-    expect(store.getState().opponent.seatTwo).toBe('person')
-
-    await act(async () => mockProps?.onModeChange?.('solo'))
-    expect(mockProps).toMatchObject({ mode: 'solo' })
-    expect(store.getState().opponent.seatTwo).toBe('nobody')
+    expect(mockHangman).toBe(true)
+    expect(mockPuzzleGame).toBeNull()
   })
 
-  it('gives Word Search one mode, with no picker', async () => {
-    await renderRoute(WORD_SEARCH_GAME_ID)
+  it.each(PUZZLE_GAME_IDS)('gives %s its own setup screen', async (game) => {
+    await renderRoute(game)
 
-    expect(mockProps).toMatchObject({ game: WORD_SEARCH_GAME_ID, mode: 'solo' })
-    expect(mockProps?.onModeChange).toBeUndefined()
+    expect(mockPuzzleGame).toBe(game)
+    expect(mockHangman).toBe(false)
   })
 
   it('sends an unknown game Home', async () => {
     const screen = await renderRoute('chess')
 
-    expect(mockProps).toBeNull()
+    expect(mockHangman).toBe(false)
+    expect(mockPuzzleGame).toBeNull()
     expect(screen.getByTestId('redirect')).toHaveTextContent('/')
   })
 })

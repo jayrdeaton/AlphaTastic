@@ -10,6 +10,7 @@ import { activePlayerActions } from '@/redux/activePlayerSlice'
 import { playerSettingsActions } from '@/redux/playerSettingsSlice'
 import { roundActions, selectSoloRound } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
+import { seatTwoWriting } from '@/testUtils/table'
 import { GUEST_PLAYER_KEY, guestSeatKey } from '@/utils/players'
 
 const wrapper = ({ children }: { children: ReactNode }) => (
@@ -33,6 +34,7 @@ describe('useSelectArt', () => {
     store.dispatch(activePlayerActions.setActivePlayer(null))
     store.dispatch(playerSettingsActions.reset())
     store.dispatch(roundActions.reset())
+    seatTwoWriting()
   })
 
   it("makes the pick the active player's art", async () => {

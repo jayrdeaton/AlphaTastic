@@ -6,7 +6,7 @@ import { usePuzzleDefaults } from '@/hooks/usePuzzleDefaults'
 import { roundActions } from '@/redux/roundSlice'
 import type { GameMode } from '@/types/gameModes'
 
-// The one way art gets picked (today the Settings sheet's ART grid, ArtPicker): it becomes the active
+// The one way art gets picked (today the setup page's art row, ArtRow): it becomes the active
 // player's art for every puzzle from here on (their playerSettings entry, through usePuzzleDefaults),
 // and, since the art is cosmetic, it also redraws the rounds already waiting (roundSlice's setRoundArt
 // says which: today the player's own solo round and the Pass & Play round). A round open on the board

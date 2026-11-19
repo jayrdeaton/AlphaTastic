@@ -54,6 +54,15 @@ function strokeToPath(points: Point[], x: number, y: number, scale: number): { d
   return catmullRomPath(scaled)
 }
 
+// A whole letter as static path data, top-left at (x, y), for text that doesn't draw itself in: a
+// puzzle's letters, many on screen at once.
+export const sketchGlyphPath = (letter: string, x: number, y: number, height: number): string => {
+  const glyph = HERSHEY_GLYPHS[letter.toUpperCase()]
+  if (!glyph) return ''
+  const scale = height / GLYPH_HEIGHT
+  return glyph.strokes.map((stroke) => strokeToPath(stroke, x, y, scale).d).join(' ')
+}
+
 type SketchLetterTiming = { start?: boolean; erased?: boolean; durationMs?: number }
 
 // Draws a single letter stroke-by-stroke from HERSHEY_GLYPHS, top-left at (x, y), scaled to

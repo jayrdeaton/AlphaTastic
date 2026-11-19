@@ -64,8 +64,8 @@ export const LAYOUT_ROWS: Record<KeyboardLayout, string[][]> = {
   qwerty: ['QWERTYUIOP'.split(''), 'ASDFGHJKL'.split(''), 'ZXCVBNM'.split('')]
 }
 
-const KEY_BORDER_RADIUS = 8
-const KEY_MARGIN = 2
+export const KEY_BORDER_RADIUS = 8
+export const KEY_MARGIN = 2
 // Half of each visible gap between keys, so a key's hit area extends exactly to meet its
 // neighbor's - no dead zone in the gap (tapping between two keys still hits one of them, like the
 // native iOS keyboard), and no overlap either (adjacent hit areas meet, not cross, at the
@@ -180,7 +180,7 @@ const KEY_FILL_STROKE_WIDTH = 1.6
 // of the Button's own box - the letter (centered correctly WITHIN the Button) then reads as
 // off-center relative to the visible key shape underneath it, not because the label itself is
 // mispositioned, but because the two boxes it's being judged against don't line up.
-const KeyFill = ({ width, height, color, start, delayMs }: { width: number; height: number; color: string; start: boolean; delayMs: number }) => (
+export const KeyFill = ({ width, height, color, start, delayMs }: { width: number; height: number; color: string; start: boolean; delayMs: number }) => (
   <View pointerEvents='none' style={[StyleSheet.absoluteFill, { left: KEY_MARGIN, right: KEY_MARGIN }]}>
     <Svg width={width} height={height}>
       <SketchFill bounds={{ x: 0, y: 0, width, height }} clip={<Rect x={0} y={0} width={width} height={height} rx={KEY_BORDER_RADIUS} />} mode='hatch' color={color} spacing={KEY_FILL_SPACING} strokeWidth={KEY_FILL_STROKE_WIDTH} start={start} delayMs={delayMs} />

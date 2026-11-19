@@ -52,7 +52,7 @@ const readMetaString = (metadata: Record<string, unknown> | undefined, key: stri
 // and the mixed Phrases pack are the packs where a category is actually informative on its own -
 // no "Movies"/"Shows" suffix needed to disambiguate a bare genre like "Action" anymore, since the
 // pack name sitting right next to it already supplies that context.
-const buildHint = (puzzle: Pick<Puzzle, 'category' | 'metadata'>, pack: Pick<PuzzleManifestItem, 'categories'>): string | undefined => {
+export const buildHint = (puzzle: Pick<Puzzle, 'category' | 'metadata'>, pack: Pick<PuzzleManifestItem, 'categories'>): string | undefined => {
   const explicitHint = readMetaString(puzzle.metadata, 'hint')
   if (explicitHint) return explicitHint
 

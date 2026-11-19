@@ -13,6 +13,7 @@ import { DEFAULT_HARMONY, playerThemeActions } from '@/redux/playerThemeSlice'
 import { roundActions, type SavedPuzzle, selectSoloRound } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
 import { Providers } from '@/testUtils/Providers'
+import { seatTwoWriting } from '@/testUtils/table'
 import { GUEST_PLAYER_KEY, guestSeatKey, type PlayerKey } from '@/utils/players'
 import * as puzzlePicker from '@/utils/puzzlePicker'
 import * as unlocks from '@/utils/unlocks'
@@ -106,6 +107,7 @@ beforeEach(() => {
   mockUseIsFocused.mockImplementation(() => true)
   store.dispatch(achievementsActions.reset())
   store.dispatch(roundActions.reset())
+  seatTwoWriting()
   store.dispatch(activePlayerActions.setActivePlayer(null))
   store.dispatch(playerSettingsActions.reset())
   store.dispatch(playerThemeActions.reset())

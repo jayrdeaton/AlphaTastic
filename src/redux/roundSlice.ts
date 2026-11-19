@@ -3,7 +3,7 @@ import { profilesActions } from '@tastic/profile'
 
 import type { PuzzleSourceMode } from '@/types/gameSession'
 import { isProfileId, type PlayerKey, playerKeyFor } from '@/utils/players'
-import { createDefaultPnpSession, createPlayer, getStanding, guestName, MAX_PNP_PLAYERS, MIN_PNP_PLAYERS, normalizePlayerName, numberGuests, packTurnRoundKey, pickFairGuesser, pickNextTurn, type PnpSession, seatAfterRemoved, type SeatedProfile, type WordSource } from '@/utils/pnpSession'
+import { createDefaultPnpSession, createPlayer, getStanding, guestName, MAX_PNP_PLAYERS, MIN_PNP_PLAYERS, MIN_WRITE_PLAYERS, normalizePlayerName, numberGuests, packTurnRoundKey, pickFairGuesser, pickNextTurn, type PnpSession, seatAfterRemoved, type SeatedProfile, type WordSource } from '@/utils/pnpSession'
 import type { PuzzleDifficultyTier } from '@/utils/puzzleCatalog'
 
 import { playerSettingsActions } from './playerSettingsSlice'
@@ -202,8 +202,11 @@ const roundSlice = createSlice({
       if (session.players.some((player) => player.id === action.payload)) session.focusedId = action.payload
     },
     // Where the table's words come from: the packs, or the players write them.
+    // Writing takes two: a table of one stays on the packs.
     setPnpSource: (state, action: PayloadAction<WordSource>) => {
-      state.pnp.session.source = action.payload
+      const { session } = state.pnp
+      if (action.payload === 'write' && session.players.length < MIN_WRITE_PLAYERS) return
+      session.source = action.payload
     },
     // A fresh, blank board for the next word. When the round on the board was decided (its result is
     // in the standings), whoever guessed it writes this one: the session moves around the table here, at
@@ -284,12 +287,13 @@ const roundSlice = createSlice({
       openPrompt(state.pnp)
     },
     // A new guest seat at the end of the table, up to MAX_PNP_PLAYERS. With the next word not written
-    // yet, the fair pick is made again, since the newcomer has guessed nothing.
+    // yet, the fair pick is made again, since the newcomer has guessed nothing (and a table of one had
+    // nobody to guess).
     addPnpPlayer: (state) => {
       const { session } = state.pnp
       if (session.players.length >= MAX_PNP_PLAYERS) return
       session.players.push(createPlayer(session.players))
-      if (isPickOpen(state.pnp)) session.guesserId = pickFairGuesser(session, session.writerId)
+      if (isPickOpen(state.pnp) || session.guesserId === session.writerId) session.guesserId = pickFairGuesser(session, session.writerId)
     },
     // The seats in a new order (Jay, 2026-10-20: dragged on the loadout), by seat id, each seat once:
     // any other list changes nothing. Everything kept by seat goes with its seat (standings, the writer
@@ -305,7 +309,7 @@ const roundSlice = createSlice({
       state.pnp.session.players = order.map((id) => byId.get(id)!)
       numberGuests(state.pnp.session.players)
     },
-    // A seat leaves, down to MIN_PNP_PLAYERS, and their standing with them; the guests after it move up
+    // A seat leaves, down to one (MIN_PNP_PLAYERS), and their standing with them; the guests after it move up
     // a seat, and a number (their own art and colors go with them: they're kept by seat id, not number).
     // What the seat's own guest kept is forgotten with the seat, by usePlayerData's forgetGuestSeat,
     // except seat 1's, whose guest is Single Player's (players.ts' SINGLE_PLAYER_SEAT_ID): it can leave
@@ -338,6 +342,8 @@ const roundSlice = createSlice({
       if (resultIn) session.recordedRoundId = null
       if (inWaitingWord) openPrompt(pnp)
       else if (resultIn || isPickOpen(pnp)) session.guesserId = pickFairGuesser(session, session.writerId)
+      // One left can't write for anyone: back to the packs.
+      if (session.players.length < MIN_WRITE_PLAYERS) session.source = 'packs'
     },
     // The art is purely cosmetic, so a player's new pick applies to their own waiting solo round, and to
     // the Pass & Play word waiting for them to guess (from the hand-off on the board is the guesser's), as

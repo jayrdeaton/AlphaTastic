@@ -3,6 +3,8 @@ import { JSX, ReactNode } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { Text } from 'react-native-paper'
 
+import { labelType } from '@/constants/typography'
+
 export type SettingsSectionProps = {
   label: string
   children: ReactNode
@@ -15,7 +17,7 @@ export const SettingsSection = ({ label, children }: SettingsSectionProps): JSX.
   const { colors } = useAutoPaperTheme()
   return (
     <View style={styles.section}>
-      <Text variant='labelMedium' style={[styles.label, { color: colors.onSurfaceVariant }]}>
+      <Text variant='labelMedium' style={[styles.label, { color: colors.onSurfaceVariant }, labelType]}>
         {label}
       </Text>
       {children}

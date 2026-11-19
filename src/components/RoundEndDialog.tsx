@@ -7,6 +7,7 @@ import { Icon, Portal, ProgressBar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { fitSketchWordFontSize, SketchWord, sketchWordWidth } from '@/components/SketchWord'
+import { titleType } from '@/constants/typography'
 import { commaString } from '@/utils/commaString'
 import type { PnpStandingRow } from '@/utils/pnpSession'
 
@@ -227,7 +228,7 @@ const RoundEndCard = ({ visible, outcome, phrase, guessedLetters, categoryProgre
       <OverlayBackdrop style={[styles.overlay, { paddingBottom: insets.bottom + SCREEN_GUTTER, paddingTop: insets.top + SCREEN_GUTTER }]}>
         <OverlayCard accessibilityViewIsModal style={[styles.card, { maxHeight: cardMaxHeight }]}>
           <Icon source={won ? 'trophy' : 'skull-outline'} size={64} color={won ? theme.colors.primary : fgMuted} />
-          <Text variant='headlineLarge' style={[styles.title, { color: won ? theme.colors.primary : fg }]}>
+          <Text variant='headlineLarge' style={[styles.title, { color: won ? theme.colors.primary : fg }, titleType]}>
             {won ? 'You Won!' : 'You Lost!'}
           </Text>
           <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} alwaysBounceVertical={false}>

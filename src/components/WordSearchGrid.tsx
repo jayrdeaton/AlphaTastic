@@ -4,8 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useTheme } from 'react-native-paper'
 import Svg, { Line, Path } from 'react-native-svg'
 
-import { GLYPH_HEIGHT, HERSHEY_GLYPHS, type Point } from '@/modes/shared/letterformsHershey'
-import { catmullRomPath } from '@/modes/shared/sketchLetter'
+import { glyphWidth, sketchGlyphPath } from '@/modes/shared/sketchLetter'
 import { type GridCell, snapWordSearchSelection, wordSearchCellAt, type WordSearchGrid as Board } from '@/utils/wordSearch'
 
 export type FoundWord = { id: string; start: GridCell; end: GridCell }
@@ -30,17 +29,8 @@ const sameCell = (a: GridCell, b: GridCell) => a.row === b.row && a.col === b.co
 // hundreds of native views, and it never changes during a puzzle.
 const lettersPath = (grid: string[][], cellSize: number): string => {
   const height = cellSize * LETTER_HEIGHT
-  const scale = height / GLYPH_HEIGHT
-  const strokes: string[] = []
-  grid.forEach((letters, row) =>
-    letters.forEach((letter, col) => {
-      const glyph = HERSHEY_GLYPHS[letter]
-      const left = col * cellSize + (cellSize - glyph.width * scale) / 2
-      const top = row * cellSize + (cellSize - height) / 2
-      for (const stroke of glyph.strokes) strokes.push(catmullRomPath(stroke.map(([x, y]): Point => [left + x * scale, top + y * scale])).d)
-    })
-  )
-  return strokes.join(' ')
+  const top = (cellSize - height) / 2
+  return grid.flatMap((letters, row) => letters.map((letter, col) => sketchGlyphPath(letter, col * cellSize + (cellSize - glyphWidth(letter, height)) / 2, row * cellSize + top, height))).join(' ')
 }
 
 const GridLetters = memo(({ grid, cellSize }: { grid: string[][]; cellSize: number }): JSX.Element => {

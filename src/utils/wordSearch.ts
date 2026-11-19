@@ -1,7 +1,10 @@
 import type { Puzzle } from '@/types/puzzle'
-import { getPuzzleManifest, getPuzzlesForCategory, type PuzzleDifficultyTier } from '@/utils/puzzleCatalog'
+import { BLOCKED_WORDS } from '@/utils/blockedWords'
+import type { WordSearchOptions } from '@/utils/puzzleOptions'
 
 import { normalizePhrase } from './normalizePhrase'
+import { drawFromPacks } from './packDraw'
+import { pickFrom, type Rng, shuffled } from './random'
 
 export type GridCell = { row: number; col: number }
 export type WordSearchDirection = readonly [row: number, col: number]
@@ -10,7 +13,6 @@ export type WordSearchEntry = { id: string; answer: string; letters: string }
 export type PlacedWord = WordSearchEntry & { start: GridCell; end: GridCell }
 export type WordSearchGrid = { size: number; grid: string[][]; words: PlacedWord[] }
 export type WordSearchBoard = WordSearchGrid & { packKey: string; packLabel: string }
-type Rng = () => number
 
 const ACROSS: WordSearchDirection = [0, 1]
 const DOWN: WordSearchDirection = [1, 0]
@@ -22,15 +24,24 @@ const ALL_DIRECTIONS = FORWARD_DIRECTIONS.flatMap(([row, col]): WordSearchDirect
   [0 - row, 0 - col]
 ])
 
-// The player's Difficulty pick sets how the grid is built, not which answers it uses: an answer's
-// Hangman difficulty is about guessing it from blanks, which means nothing when it's printed in the list.
-export const WORD_SEARCH_RULES: Record<PuzzleDifficultyTier, WordSearchRules> = {
-  easy: { size: 10, wordCount: 8, directions: [ACROSS, DOWN] },
-  medium: { size: 12, wordCount: 10, directions: FORWARD_DIRECTIONS },
-  hard: { size: 12, wordCount: 12, directions: ALL_DIRECTIONS }
+const GRIDS: Record<WordSearchOptions['grid'], Pick<WordSearchRules, 'size' | 'wordCount'>> = {
+  small: { size: 10, wordCount: 8 },
+  medium: { size: 12, wordCount: 10 },
+  large: { size: 14, wordCount: 14 }
 }
 
-export const wordSearchRulesFor = (difficulty: 'any' | PuzzleDifficultyTier): WordSearchRules => WORD_SEARCH_RULES[difficulty === 'any' ? 'medium' : difficulty]
+const DIRECTIONS: Record<WordSearchOptions['directions'], { directions: readonly WordSearchDirection[]; summary: string }> = {
+  straight: { directions: [ACROSS, DOWN], summary: 'across and down' },
+  diagonal: { directions: FORWARD_DIRECTIONS, summary: 'including diagonals' },
+  backward: { directions: ALL_DIRECTIONS, summary: 'in every direction, backward too' }
+}
+
+export const wordSearchRulesFor = (options: WordSearchOptions): WordSearchRules => ({ ...GRIDS[options.grid], directions: DIRECTIONS[options.directions].directions })
+
+export const describeWordSearch = (options: WordSearchOptions): string => {
+  const { size, wordCount } = GRIDS[options.grid]
+  return `${wordCount} words on a ${size} by ${size} grid, ${DIRECTIONS[options.directions].summary}`
+}
 
 // Three-letter answers turn up by chance in the filler, so they'd rarely be the one the player was meant to find.
 const MIN_WORD_LETTERS = 4
@@ -41,21 +52,6 @@ const WORD_LETTER_FILLER_CHANCE = 0.5
 // How often a word that could cross another is made to, so the words tangle a little.
 const CROSSING_CHANCE = 0.4
 const MAX_FILLER_PASSES = 20
-
-// Random filler can spell anything, in any direction, and children play this. Any of these that appears
-// through a filler letter is rerolled. The hidden words come from the packs, which are filtered already.
-const BLOCKED_FILLER_WORDS = ['ANAL', 'ANUS', 'ARSE', 'ASS', 'BITCH', 'BOOB', 'CHINK', 'COCK', 'COON', 'CRAP', 'CUM', 'CUNT', 'DAMN', 'DICK', 'DIKE', 'DILDO', 'DYKE', 'FAG', 'FUCK', 'GOOK', 'HOMO', 'JIZZ', 'KIKE', 'KKK', 'MILF', 'NAZI', 'NIGGA', 'NIGGER', 'PENIS', 'PISS', 'PORN', 'PUSSY', 'RAPE', 'RETARD', 'SEX', 'SHIT', 'SLUT', 'SPIC', 'TITS', 'TRANNY', 'TWAT', 'VAGINA', 'WANK', 'WHORE']
-
-const pickFrom = <T>(items: readonly T[], rng: Rng): T => items[Math.floor(rng() * items.length)]
-
-const shuffled = <T>(items: readonly T[], rng: Rng): T[] => {
-  const result = [...items]
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1))
-    ;[result[i], result[j]] = [result[j], result[i]]
-  }
-  return result
-}
 
 const reversed = (text: string): string => [...text].reverse().join('')
 
@@ -133,7 +129,7 @@ const cleanFiller = (grid: string[][], isFiller: boolean[][], rng: Rng) => {
     let changed = false
     for (const line of lines) {
       const text = line.map(({ row, col }) => grid[row][col]).join('')
-      for (const word of BLOCKED_FILLER_WORDS) {
+      for (const word of BLOCKED_WORDS) {
         for (const spelled of [word, reversed(word)]) {
           const index = text.indexOf(spelled)
           if (index < 0) continue
@@ -184,18 +180,18 @@ export const buildWordSearch = (entries: readonly WordSearchEntry[], rules: Word
   return { size, grid, words: words.sort((a, b) => a.answer.localeCompare(b.answer)) }
 }
 
-// One grid from one pack, so its words share a theme. Every selected pack with enough answers is equally
-// likely, however many puzzles it has, the same as a Hangman draw (see puzzlePicker.ts). Null when no
-// selected pack can fill a grid.
-export const drawWordSearch = (packKeys: readonly string[], difficulty: 'any' | PuzzleDifficultyTier, rng: Rng = Math.random): WordSearchBoard | null => {
-  const rules = wordSearchRulesFor(difficulty)
-  const selected = new Set(packKeys)
-  const packs = getPuzzleManifest().filter((pack) => selected.has(pack.key) && pack.count >= rules.wordCount)
-  for (const pack of shuffled(packs, rng)) {
-    const built = buildWordSearch(wordSearchEntries(getPuzzlesForCategory(pack.key), rules.size), rules, rng)
-    if (built) return { ...built, packKey: pack.key, packLabel: pack.label }
-  }
-  return null
+// One grid from one of the selected packs, so its words share a theme. Null when none can fill one.
+export const drawWordSearch = (packKeys: readonly string[], options: WordSearchOptions, rng: Rng = Math.random): WordSearchBoard | null => {
+  const rules = wordSearchRulesFor(options)
+  return drawFromPacks(
+    packKeys,
+    rules.wordCount,
+    (pack, puzzles) => {
+      const built = buildWordSearch(wordSearchEntries(puzzles, rules.size), rules, rng)
+      return built ? { ...built, packKey: pack.key, packLabel: pack.label } : null
+    },
+    rng
+  )
 }
 
 export const wordSearchCellAt = (x: number, y: number, cellSize: number, size: number): GridCell => {

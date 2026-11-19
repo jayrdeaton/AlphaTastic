@@ -7,13 +7,10 @@ import { Text } from 'react-native-paper'
 import { useActivePlayer } from '@/hooks/useActivePlayer'
 import { useCatalogActions } from '@/hooks/useCatalog'
 import { useKeyboardLayout } from '@/hooks/useKeyboardLayout'
-import { usePuzzleDefaults } from '@/hooks/usePuzzleDefaults'
-import { useSelectArt } from '@/hooks/useSelectArt'
 import { alert } from '@/utils/alert'
 import { pickHangmanFile, shareProgressBackupFile } from '@/utils/hangmanFile'
 import { mergePuzzleUnlocks, parseProgressBackup } from '@/utils/unlocks'
 
-import { ArtPicker } from './ArtPicker'
 import { SettingsSection } from './SettingsSection'
 
 const KEYBOARD_BUTTONS = [
@@ -27,8 +24,6 @@ const KEYBOARD_BUTTONS = [
 export const SettingsSections = (): JSX.Element => {
   const { colors } = useAutoPaperTheme()
   const { layout, setLayout } = useKeyboardLayout()
-  const { mode } = usePuzzleDefaults()
-  const selectArt = useSelectArt()
   const { key: playerKey } = useActivePlayer()
   const { refreshUnlocks } = useCatalogActions()
   const { settings: themeSettings, set: setThemeSettings } = useThemeSettings()
@@ -58,11 +53,6 @@ export const SettingsSections = (): JSX.Element => {
 
   return (
     <>
-      {/* The active player's, like the backup below. Picked mid-round, it redraws the board behind the
-          sheet (see useSelectArt). */}
-      <SettingsSection label='ART'>
-        <ArtPicker selected={mode} onSelect={selectArt} />
-      </SettingsSection>
       {/* How the player's two other colors are drawn from their color (the picker's color page has no
           harmony control): icons only, since six labels don't fit the sheet. */}
       <SettingsSection label='HARMONY'>

@@ -1,10 +1,9 @@
-import { type AutoPaperTheme, Provider, type ThemeSettings, useAutoPaperTheme, useThemeSettings } from '@rific/auto-paper'
+import { Provider, type ThemeSettings, useThemeSettings } from '@rific/auto-paper'
 import { FeedbackPressProvider } from '@rific/feedback-press'
 import { ToastProvider } from '@rific/toaster'
 import { PackProvider, SettingsDialog } from '@tastic/shell'
-import { act, fireEvent, render as rtlRender, waitFor } from '@testing-library/react-native'
+import { fireEvent, render as rtlRender, waitFor } from '@testing-library/react-native'
 import { type ReactElement, type ReactNode, useEffect } from 'react'
-import { StyleSheet } from 'react-native'
 import * as RNPaper from 'react-native-paper'
 import { Portal } from 'react-native-paper'
 import { Provider as ReduxProvider } from 'react-redux'
@@ -13,11 +12,9 @@ import { PuzzleDefaultsProvider } from '@/components/PuzzleDefaultsProvider'
 import { release } from '@/constants/release'
 import { pack } from '@/games/pack'
 import { KeyboardLayoutContext } from '@/hooks/useKeyboardLayout'
-import { candleMode, classicMode, DEFAULT_MODE, robotMode, VISIBLE_MODES } from '@/modes/registry'
-import { fullyDrawnMistakes } from '@/modes/shared/fullyDrawnMistakes'
 import { activePlayerActions } from '@/redux/activePlayerSlice'
 import { playerSettingsActions } from '@/redux/playerSettingsSlice'
-import { roundActions, selectSoloRound } from '@/redux/roundSlice'
+import { roundActions } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
 import { alert } from '@/utils/alert'
 import { pickHangmanFile, shareProgressBackupFile } from '@/utils/hangmanFile'
@@ -38,19 +35,6 @@ jest.mock('@/utils/unlocks', () => ({
   ...jest.requireActual('@/utils/unlocks'),
   mergePuzzleUnlocks: jest.fn()
 }))
-// A stand-in for each art thumbnail: what the grid asks it to draw, and a count of every render, so a
-// test can tell a static thumbnail from one that keeps redrawing.
-const mockArtRenders: string[] = []
-jest.mock('@/components/GameVisual', () => {
-  const { createElement } = jest.requireActual('react')
-  const { View } = jest.requireActual('react-native')
-  return {
-    GameVisual: ({ mode, mistakes, color, colors }: { mode: { id: string }; mistakes: number; color: string; colors?: string[] }) => {
-      mockArtRenders.push(mode.id)
-      return createElement(View, { testID: `art-${mode.id}`, mistakes, color, colors })
-    }
-  }
-})
 const mockRefreshUnlocks = jest.fn()
 jest.mock('@/hooks/useCatalog', () => ({ ...jest.requireActual('@/hooks/useCatalog'), useCatalogActions: () => ({ refreshUnlocks: mockRefreshUnlocks, refreshCustomPacks: jest.fn() }) }))
 const mockPickHangmanFile = jest.mocked(pickHangmanFile)
@@ -58,20 +42,17 @@ const mockShareProgressBackupFile = jest.mocked(shareProgressBackupFile)
 const mockAlert = jest.mocked(alert)
 const mockMergePuzzleUnlocks = jest.mocked(mergePuzzleUnlocks)
 
-// The theme the sheet renders with, for the art's colors, and the live settings, for its harmony.
-let capturedTheme: AutoPaperTheme | null = null
+// The live theme settings, for the harmony.
 let capturedSettings: ThemeSettings | null = null
 const ThemeCapture = () => {
-  const theme = useAutoPaperTheme()
   const { settings } = useThemeSettings()
   useEffect(() => {
-    capturedTheme = theme
     capturedSettings = settings
-  }, [theme, settings])
+  }, [settings])
   return null
 }
 
-// The app's nesting: the pack, whose sections the shell's sheet shows, the store (the backup and the art are the active player's),
+// The app's nesting: the pack, whose sections the shell's sheet shows, the store (the backup is the active player's),
 // FeedbackPressProvider outside auto-paper's Provider (its Portal.Host and theme), a ToastProvider for
 // the update-error toast, and the player's puzzle defaults for the art.
 const mockSetLayout = jest.fn()
@@ -95,24 +76,12 @@ const Wrapper = ({ children }: { children: ReactNode }) => (
   </PackProvider>
 )
 const render = (ui: ReactElement) => rtlRender(ui, { wrapper: Wrapper })
-type Screen = Awaited<ReturnType<typeof render>>
-
-const thumbnail = (screen: Screen, label: string) => screen.getByRole('button', { name: `${label} art` })
-const borderColor = (screen: Screen, label: string) => StyleSheet.flatten(thumbnail(screen, label).props.style).borderColor
-const playerArt = (playerKey = GUEST_PLAYER_KEY) => store.getState().playerSettings[playerKey]?.modeId
-const soloRound = (playerKey = GUEST_PLAYER_KEY) => selectSoloRound(store.getState().round, playerKey)
-// A solo round waiting on the board, on the Classic art, with a guess on it.
-const seedSoloRound = (playerKey = GUEST_PLAYER_KEY) => {
-  store.dispatch(roundActions.startSolo({ playerKey, puzzle: { phrase: 'DOG', modeId: DEFAULT_MODE.id, sourceMode: 'random' } }))
-  store.dispatch(roundActions.saveSoloProgress({ playerKey, guessedLetters: ['D', 'Q'], hintRevealed: false }))
-}
 
 describe("SettingsSections, in the shell's Settings sheet", () => {
   beforeEach(() => {
     store.dispatch(activePlayerActions.setActivePlayer(null))
     store.dispatch(playerSettingsActions.reset())
     store.dispatch(roundActions.reset())
-    mockArtRenders.length = 0
     mockSetLayout.mockClear()
     mockRefreshUnlocks.mockClear()
     mockPickHangmanFile.mockReset()
@@ -163,160 +132,19 @@ describe("SettingsSections, in the shell's Settings sheet", () => {
     expect(getByLabelText('Triadic').props.accessibilityState).toMatchObject({ checked: true })
   })
 
+  // Art is picked on the setup page's art row (Jay, 2026-11-19), not here.
+  it('has no art section', async () => {
+    const { queryByText, queryAllByLabelText } = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
+
+    expect(queryByText('ART')).toBeNull()
+    expect(queryAllByLabelText(/ art$/)).toHaveLength(0)
+  })
+
   it('renders nothing while closed', async () => {
     const { queryByText } = await render(<SettingsDialog visible={false} onDismiss={jest.fn()} />)
 
     expect(queryByText('Settings')).toBeNull()
     expect(queryByText('KEYBOARD')).toBeNull()
-  })
-
-  describe('Art', () => {
-    it("offers every visible art as a thumbnail, with the player's art selected and named under the grid", async () => {
-      const screen = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
-
-      expect(screen.getByText('ART')).toBeTruthy()
-      for (const mode of VISIBLE_MODES) expect(thumbnail(screen, mode.label)).toBeTruthy()
-      // Only the picker's arts: a hidden one (reachable through a shared link) isn't offered.
-      expect(screen.getAllByRole('button', { name: / art$/ })).toHaveLength(VISIBLE_MODES.length)
-      expect(screen.getByRole('button', { name: `${DEFAULT_MODE.label} art`, selected: true })).toBeTruthy()
-      expect(screen.getAllByRole('button', { name: / art$/, selected: true })).toHaveLength(1)
-      expect(screen.getByText(DEFAULT_MODE.description)).toBeTruthy()
-    })
-
-    it("frames the selected art in the theme's primary, and the rest in its outline variant", async () => {
-      const screen = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
-      const { colors } = capturedTheme!
-
-      expect(borderColor(screen, DEFAULT_MODE.label)).toBe(colors.primary)
-      expect(borderColor(screen, robotMode.label)).toBe(colors.outlineVariant)
-    })
-
-    // A single representative frame per art, the same as the board's art at its fullest, in the
-    // player's palette (the triad PuzzleStage gives the board).
-    it("draws every thumbnail complete, in the player's colors", async () => {
-      const screen = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
-      const { colors } = capturedTheme!
-
-      for (const mode of VISIBLE_MODES) {
-        const art = screen.getByTestId(`art-${mode.id}`)
-        expect(art.props.mistakes).toBe(fullyDrawnMistakes(mode))
-        expect(art.props.colors).toEqual([colors.primary, colors.secondary, colors.tertiary])
-      }
-    })
-
-    it("shows the player's saved art as the selected one", async () => {
-      store.dispatch(playerSettingsActions.setMode({ playerKey: GUEST_PLAYER_KEY, modeId: robotMode.id }))
-      const screen = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
-
-      expect(screen.getByRole('button', { name: `${robotMode.label} art`, selected: true })).toBeTruthy()
-      expect(screen.getByText(robotMode.description)).toBeTruthy()
-    })
-
-    it("picks an art on a tap: the player's, selected and named, with nothing else to confirm", async () => {
-      const screen = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
-
-      await fireEvent.press(thumbnail(screen, candleMode.label))
-
-      expect(playerArt()).toBe(candleMode.id)
-      expect(screen.getByRole('button', { name: `${candleMode.label} art`, selected: true })).toBeTruthy()
-      expect(screen.getByRole('button', { name: `${classicMode.label} art`, selected: false })).toBeTruthy()
-      expect(screen.getByText(candleMode.description)).toBeTruthy()
-      expect(screen.queryByText(classicMode.description)).toBeNull()
-    })
-
-    // The art is cosmetic, so a pick redraws the round already waiting, guesses and all.
-    it("redraws the player's waiting round in the new art, keeping its guesses", async () => {
-      seedSoloRound()
-      const screen = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
-
-      await fireEvent.press(thumbnail(screen, robotMode.label))
-
-      expect(soloRound().puzzle?.modeId).toBe(robotMode.id)
-      expect(soloRound().guessedLetters).toEqual(['D', 'Q'])
-    })
-
-    it("picks for whoever is playing, leaving every other player's art and round alone", async () => {
-      seedSoloRound()
-      seedSoloRound('profile-a')
-      store.dispatch(activePlayerActions.setActivePlayer('profile-a'))
-      const screen = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
-
-      await fireEvent.press(thumbnail(screen, robotMode.label))
-
-      expect(playerArt('profile-a')).toBe(robotMode.id)
-      expect(soloRound('profile-a').puzzle?.modeId).toBe(robotMode.id)
-      expect(playerArt()).toBeUndefined()
-      expect(soloRound().puzzle?.modeId).toBe(DEFAULT_MODE.id)
-    })
-
-    // Until one is pressed, nothing here runs on a timer, so the art never redraws by itself.
-    it('never redraws the thumbnails while the sheet sits open', async () => {
-      jest.useFakeTimers()
-      try {
-        await render(<SettingsDialog visible onDismiss={jest.fn()} />)
-        await act(async () => {
-          jest.advanceTimersByTime(1000)
-        })
-        const rendersOnceOpen = mockArtRenders.length
-
-        await act(async () => {
-          jest.advanceTimersByTime(20000)
-        })
-
-        expect(mockArtRenders.length).toBe(rendersOnceOpen)
-      } finally {
-        jest.useRealTimers()
-      }
-    })
-
-    // Like the hero (Jay, 2026-10-18): a press picks the art and acts out a round on its thumbnail,
-    // Classic's figure redrawn a guess at a time, then it holds still again.
-    it('acts out a round on a pressed thumbnail, then holds it still', async () => {
-      jest.useFakeTimers()
-      try {
-        const screen = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
-        const art = () => screen.getByTestId(`art-${classicMode.id}`).props.mistakes
-
-        await fireEvent.press(thumbnail(screen, classicMode.label))
-        // The figure fades, then is drawn back in one step at a time.
-        await act(async () => {
-          jest.advanceTimersByTime(200)
-        })
-        expect(art()).toBe(0)
-        await act(async () => {
-          jest.advanceTimersByTime(500)
-        })
-        expect(art()).toBe(1)
-        for (let step = 1; step < classicMode.maxMistakes; step++) {
-          await act(async () => {
-            jest.advanceTimersByTime(500)
-          })
-        }
-        expect(art()).toBe(classicMode.maxMistakes)
-
-        await act(async () => {
-          jest.advanceTimersByTime(1000)
-        })
-        const rendersWhenSettled = mockArtRenders.length
-        await act(async () => {
-          jest.advanceTimersByTime(20000)
-        })
-        expect(mockArtRenders.length).toBe(rendersWhenSettled)
-        expect(art()).toBe(classicMode.maxMistakes)
-      } finally {
-        jest.useRealTimers()
-      }
-    })
-
-    // auto-paper's Dialog unmounts its rows after the close fade, so the grid isn't left mounted.
-    it('takes the thumbnails down once the sheet has closed', async () => {
-      const screen = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
-      expect(thumbnail(screen, DEFAULT_MODE.label)).toBeTruthy()
-
-      await screen.rerender(<SettingsDialog visible={false} onDismiss={jest.fn()} />)
-
-      await waitFor(() => expect(screen.queryByTestId(`art-${DEFAULT_MODE.id}`)).toBeNull())
-    })
   })
 
   describe('Backup', () => {

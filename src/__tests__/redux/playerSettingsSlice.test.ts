@@ -88,3 +88,23 @@ describe('sanitizePlayerSettings', () => {
     expect(reducer(before, { type: REHYDRATE, key: 'round', payload: {} })).toBe(before)
   })
 })
+
+describe('puzzle game settings', () => {
+  const stored = (puzzles: unknown) => reducer({}, { type: REHYDRATE, key: 'root', payload: { playerSettings: { [GUEST_PLAYER_KEY]: { ...DEFAULT_PLAYER_SETTINGS, puzzles } } } })[GUEST_PLAYER_KEY]
+
+  it('keeps known choices from storage and drops the rest', () => {
+    expect(stored({ jumble: { answers: '10', length: 'huge' }, chess: { rated: 'yes' } }).puzzles).toEqual({ jumble: { answers: '10' } })
+  })
+
+  it('leaves the field off with nothing valid stored', () => {
+    expect(stored({ jumble: { answers: 'lots' } })).not.toHaveProperty('puzzles')
+    expect(stored('nope')).not.toHaveProperty('puzzles')
+  })
+
+  it("keeps each player's and each game's apart, and resets one game alone", () => {
+    const state = run([playerSettingsActions.setPuzzleOption({ playerKey: GUEST_PLAYER_KEY, game: 'jumble', key: 'answers', value: '3' }), playerSettingsActions.setPuzzleOption({ playerKey: GUEST_PLAYER_KEY, game: 'cryptogram', key: 'headStart', value: '5' }), playerSettingsActions.setPuzzleOption({ playerKey: OTHER, game: 'jumble', key: 'answers', value: '10' }), playerSettingsActions.resetPuzzleOptions({ playerKey: GUEST_PLAYER_KEY, game: 'jumble' })])
+
+    expect(state[GUEST_PLAYER_KEY].puzzles).toEqual({ cryptogram: { headStart: '5' } })
+    expect(state[OTHER].puzzles).toEqual({ jumble: { answers: '10' } })
+  })
+})

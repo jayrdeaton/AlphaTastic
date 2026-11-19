@@ -1,8 +1,8 @@
 import { resolveSeedColor, useThemeSettings } from '@rific/auto-paper'
 import { useKeepAwake } from '@rific/core'
-import { type GamePreviewProps, type GuidelessGameDefinition, useOpponent } from '@tastic/shell'
+import { type GamePreviewProps, type GuidelessGameDefinition } from '@tastic/shell'
 import { useLocalSearchParams } from 'expo-router'
-import { JSX, useEffect, useMemo } from 'react'
+import { JSX, useMemo } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { useTheme } from 'react-native-paper'
 
@@ -16,19 +16,14 @@ import { parsePlayMode } from '@/utils/navigation'
 
 import { OWN_LOADOUT } from './ownLoadout'
 
-// The board. `door` is which of the setup page's modes it goes back to, the game's own when left out
-// (see gameHref). Keyed on both: a share link can pop back to a Pass & Play board in place, and a
-// changed `mode` param has to give a fresh screen. The setup page follows whichever mode was played, a
-// resumed game's included.
+// The board: `mode` is a player's own puzzle (solo) or a written word (pnp), and `door` 'pnp' on a
+// solo board is the table's turns from the packs (see gameHref). Keyed on both: a share link can pop
+// back to a written word's board in place, and a changed `mode` param has to give a fresh screen.
 const HangmanPlayScreen = (): JSX.Element => {
   const params = useLocalSearchParams<{ mode?: string; door?: string }>()
   const mode = parsePlayMode(params.mode)
   const door = params.door === undefined ? mode : parsePlayMode(params.door)
-  const { setSeatTwo } = useOpponent()
   useKeepAwake('game')
-  useEffect(() => {
-    setSeatTwo(door === 'pnp' ? 'person' : 'nobody')
-  }, [door, setSeatTwo])
   return <GameScreen key={`${mode}:${door}`} mode={mode} door={door} />
 }
 
@@ -52,7 +47,6 @@ export const hangman: GuidelessGameDefinition = {
   title: 'Hangman',
   blurb: 'Guess the word before the drawing is finished.',
   Preview: HangmanPreview,
-  seatTwo: ['nobody', 'person'],
   reducers: {},
   useLoadout: OWN_LOADOUT,
   PlayScreen: HangmanPlayScreen,

@@ -7,6 +7,7 @@ import { playerThemeActions } from '@/redux/playerThemeSlice'
 import { pruneLeftGuestSeats } from '@/redux/rehydrate'
 import { initialRoundState, roundActions, type RoundState } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
+import { seatTwoWriting } from '@/testUtils/table'
 import { GUEST_PLAYER_KEY, guestSeatKey } from '@/utils/players'
 import { createDefaultPnpSession } from '@/utils/pnpSession'
 
@@ -33,15 +34,18 @@ const migrateRound = (state: unknown): Promise<PersistedState> => {
 }
 
 const PERSIST = { version: 3, rehydrated: true }
+// A fresh table is one seat; these rounds are a table of two, writing.
+const TWO_SEATS = { ...createDefaultPnpSession(), players: [...createDefaultPnpSession().players, { id: 'p2', name: 'Player 2', profileId: null }], guesserId: 'p2', source: 'write' as const }
 const validRound: RoundState = {
   solo: { [GUEST_PLAYER_KEY]: { id: 2, puzzle: { phrase: 'HELLO WORLD', modeId: 'robot', sourceMode: 'random', packKey: 'phrases' }, guessedLetters: ['H', 'Z'], hintRevealed: true } },
-  pnp: { id: 5, puzzle: { phrase: 'CAT', modeId: 'classic', sourceMode: 'custom' }, guessedLetters: [], hintRevealed: false, phase: 'handoff', session: createDefaultPnpSession() },
+  pnp: { id: 5, puzzle: { phrase: 'CAT', modeId: 'classic', sourceMode: 'custom' }, guessedLetters: [], hintRevealed: false, phase: 'handoff', session: TWO_SEATS },
   activeMode: 'solo',
   activeDoor: 'solo'
 }
 
 beforeEach(() => {
   store.dispatch(roundActions.reset())
+  seatTwoWriting()
   store.dispatch(activePlayerActions.setActivePlayer(null))
   store.dispatch(playerSettingsActions.reset())
   store.dispatch(playerThemeActions.reset())
@@ -54,6 +58,7 @@ describe('store', () => {
   })
 
   it('mounts the round slice under the key the game screens read', () => {
+    store.dispatch(roundActions.reset())
     expect(store.getState().round).toEqual(initialRoundState)
 
     store.dispatch(roundActions.startSolo({ playerKey: GUEST_PLAYER_KEY, puzzle: { phrase: 'CAT', modeId: 'classic', sourceMode: 'random' } }))
@@ -141,7 +146,7 @@ describe('guest seats that have left the table', () => {
   const theme = { color: '#00bcd4', harmony: 'triadic' }
   const picks = { modeId: 'robot', difficulty: 'hard', packKeys: null }
 
-  // The table: p1, p2 and p3 (the default two and one added).
+  // The table: p1, p2 and p3 (seatTwoWriting's two and one added).
   beforeEach(() => {
     store.dispatch(roundActions.addPnpPlayer())
   })
@@ -211,7 +216,7 @@ describe("the round slice's migrate", () => {
     const { session: _session, ...versionTwoPnp } = validRound.pnp
     const versionTwo = { ...validRound, pnp: versionTwoPnp, _persist: { version: 2, rehydrated: true } }
 
-    await expect(migrateRound(versionTwo)).resolves.toEqual({ ...validRound, _persist: { version: 2, rehydrated: true } })
+    await expect(migrateRound(versionTwo)).resolves.toEqual({ ...validRound, pnp: { ...validRound.pnp, session: createDefaultPnpSession() }, _persist: { version: 2, rehydrated: true } })
   })
 
   it('falls back to the starting rounds for a stored blob with nothing usable in it', async () => {

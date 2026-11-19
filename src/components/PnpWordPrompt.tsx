@@ -8,6 +8,7 @@ import { BackHandler, ScrollView, StyleSheet, View } from 'react-native'
 import { Portal, Text, TextInput, useTheme } from 'react-native-paper'
 import Animated from 'react-native-reanimated'
 
+import { titleType } from '@/constants/typography'
 import { useAutoSaveCustom } from '@/hooks/useAutoSaveCustom'
 import { SCREEN_GUTTER, useKeyboardLiftedCard } from '@/hooks/useKeyboardLiftedCard'
 import { buildCustomPuzzle } from '@/utils/customPacks'
@@ -140,7 +141,7 @@ const PnpWordPromptCard = ({ writerName, writerProfile, guessers, guesserId, onG
           <OverlayCard accessibilityViewIsModal style={[styles.card, { maxHeight: cardMaxHeight }]}>
             {/* Names who is writing, so the device is in the right hands before anything is typed. */}
             <PlayerLine profile={writerProfile} size={TITLE_CHIP_SIZE} style={styles.titleLine}>
-              <Text variant='headlineSmall' accessibilityRole='header' style={[styles.title, writerProfile && styles.titleBeside, { color: theme.colors.primary }]}>
+              <Text variant='headlineSmall' accessibilityRole='header' style={[styles.title, writerProfile && styles.titleBeside, { color: theme.colors.primary }, titleType]}>
                 {writerName}&apos;s Word
               </Text>
             </PlayerLine>

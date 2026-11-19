@@ -4,6 +4,7 @@ import { type Profile, profilesActions } from '@tastic/profile'
 import { playerThemeActions } from '@/redux/playerThemeSlice'
 import { roundActions, type SavedPuzzle } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
+import { seatTwoWriting } from '@/testUtils/table'
 import { arePlayerColorsShown, getPackTurnPlan, getSeatPlayer, getSeatPlayerKey, getTurnPlayer, getTurnPlayerKey, isPackTurnUnderWay } from '@/utils/packTurns'
 import { GUEST_PLAYER_KEY, guestSeatKey } from '@/utils/players'
 
@@ -19,6 +20,7 @@ const countTurn = (playerKey: string) => store.dispatch(roundActions.recordPackT
 // Alice and Bob at the table, on the packs.
 beforeEach(() => {
   store.dispatch(roundActions.reset())
+  seatTwoWriting()
   store.dispatch(profilesActions.setAll([ALICE, BOB]))
   store.dispatch(roundActions.setPnpSeatProfile({ id: 'p1', profile: ALICE }))
   store.dispatch(roundActions.setPnpSeatProfile({ id: 'p2', profile: BOB }))

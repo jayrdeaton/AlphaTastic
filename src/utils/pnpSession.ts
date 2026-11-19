@@ -19,7 +19,10 @@ import { guestSeatRef, isPlayerKey, isProfileId, type PlayerRef } from './player
 // session can switch between them and carry on. A session is open-ended: it runs until the players
 // start a new one from the loadout (New session), which clears the standings.
 
-export const MIN_PNP_PLAYERS = 2
+// One player is a table too (Jay, 2026-11-19: one setup page, where 1 Player was its own mode): they
+// play their own puzzles from the packs. Writing words for each other takes two.
+export const MIN_PNP_PLAYERS = 1
+export const MIN_WRITE_PLAYERS = 2
 // Enough for a family or a table of friends, and few enough that the standings still fit the
 // round-over card on a phone.
 export const MAX_PNP_PLAYERS = 8
@@ -171,18 +174,15 @@ export const createPlayer = (players: PnpPlayer[]): PnpPlayer => {
   return { id: `p${highest + 1}`, name: guestName(players.length), profileId: null }
 }
 
-// A new session's table: two guests, Player 1 writing first for Player 2, the players writing the
-// words.
+// A new session's table: one guest, Player 1, playing from the packs (a second seat brings the fair
+// pick of who guesses, see roundSlice's addPnpPlayer).
 export const createDefaultPnpSession = (): PnpSession => ({
-  players: [
-    { id: 'p1', name: 'Player 1', profileId: null },
-    { id: 'p2', name: 'Player 2', profileId: null }
-  ],
+  players: [{ id: 'p1', name: 'Player 1', profileId: null }],
   standings: {},
   writerId: 'p1',
-  guesserId: 'p2',
+  guesserId: 'p1',
   recordedRoundId: null,
-  source: 'write',
+  source: 'packs',
   focusedId: 'p1',
   turnId: null,
   recordedTurnRound: null
@@ -219,11 +219,11 @@ const sanitizePlayers = (value: unknown): PnpPlayer[] | null => {
 }
 
 // Checks a stored session before it's trusted (sanitizeRoundState runs it on the Pass & Play round's
-// session). A table that doesn't pass (too few or too many seats, a seat without a usable id, a
+// session). A table that doesn't pass (no seats or too many, a seat without a usable id, a
 // profile's seat without a usable name, two seats sharing an id, one profile in two seats) starts a
 // fresh session. With the table kept, a standing that doesn't pass is dropped (that seat hasn't
 // guessed); a writer, focus or guesser who isn't at the table falls back to the first seat and the
-// fair pick; a word source that isn't one is the players writing; a pack turn whose seat isn't at the
+// fair pick; a word source that isn't one, or the players writing with one seat, is the packs; a pack turn whose seat isn't at the
 // table is no turn (and a turn's counted round that isn't one, or comes with no turn, is still to be
 // counted); and every guest is named for their seat. `roundId` is the round stored with it: only a
 // count of that round means anything (see recordedRoundId), so any other is dropped.
@@ -240,7 +240,7 @@ export const sanitizePnpSession = (value: unknown, roundId: number | null): PnpS
   const writerId = isSeat(value.writerId) ? value.writerId : players[0].id
   const guesserId = isSeat(value.guesserId) && value.guesserId !== writerId ? value.guesserId : pickFairGuesser({ players, standings }, writerId)
   const recordedRoundId = roundId !== null && value.recordedRoundId === roundId ? roundId : null
-  const source = SOURCES.includes(value.source as WordSource) ? (value.source as WordSource) : 'write'
+  const source = SOURCES.includes(value.source as WordSource) && (value.source !== 'write' || players.length >= MIN_WRITE_PLAYERS) ? (value.source as WordSource) : 'packs'
   const focusedId = isSeat(value.focusedId) ? value.focusedId : players[0].id
   const turnId = isSeat(value.turnId) ? value.turnId : null
   const recordedTurnRound = turnId && typeof value.recordedTurnRound === 'string' && TURN_ROUND_KEY.test(value.recordedTurnRound) ? value.recordedTurnRound : null

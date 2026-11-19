@@ -19,6 +19,7 @@ import playerThemeReducer, { playerThemeActions } from '@/redux/playerThemeSlice
 import roundReducer, { initialRoundState, type PnpPhase, roundActions, type SavedPuzzle, selectSoloRound } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
 import { Providers } from '@/testUtils/Providers'
+import { seatTwoWriting } from '@/testUtils/table'
 import { alert } from '@/utils/alert'
 import { addCustomPuzzle } from '@/utils/customPacks'
 import { GUEST_PLAYER_KEY, guestSeatKey } from '@/utils/players'
@@ -101,6 +102,7 @@ beforeEach(() => {
   mockUseIsFocused.mockReturnValue(true)
   store.dispatch(achievementsActions.reset())
   store.dispatch(roundActions.reset())
+  seatTwoWriting()
   store.dispatch(activePlayerActions.setActivePlayer(null))
   store.dispatch(playerSettingsActions.reset())
   store.dispatch(playerThemeActions.reset())
@@ -550,7 +552,7 @@ describe('GameScreen - pass and play', () => {
 
       const loadout = await render(
         <Providers>
-          <LoadoutScreen mode='pnp' />
+          <LoadoutScreen />
         </Providers>
       )
       const saved = pnpRound()
@@ -1054,7 +1056,7 @@ describe('LoadoutScreen - pass and play', () => {
   const renderLoadout = () =>
     render(
       <Providers>
-        <LoadoutScreen mode='pnp' />
+        <LoadoutScreen />
       </Providers>
     )
   type Loadout = Awaited<ReturnType<typeof renderLoadout>>
@@ -1123,7 +1125,7 @@ describe('LoadoutScreen - pass and play', () => {
     const AutoSaveProbe = () => <Text testID='auto-save'>{String(useAutoSaveCustom().autoSave)}</Text>
     const { getByLabelText, getByTestId, getByText } = await render(
       <Providers>
-        <LoadoutScreen mode='pnp' />
+        <LoadoutScreen />
         <AutoSaveProbe />
       </Providers>
     )

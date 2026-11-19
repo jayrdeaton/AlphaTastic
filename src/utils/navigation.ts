@@ -1,7 +1,7 @@
 import { configureNavigation, safeBack } from '@rific/core'
 import { router } from 'expo-router'
 
-import { type GameId, HANGMAN_GAME_ID, WORD_SEARCH_GAME_ID } from '@/constants/games'
+import { type GameId, HANGMAN_GAME_ID, type PuzzleGameId } from '@/constants/games'
 import type { PlayMode } from '@/redux/roundSlice'
 
 // The fleet's back: router.back() when there's somewhere to go back to, otherwise Home. A screen
@@ -24,6 +24,6 @@ export const loadoutHref = (game: GameId = HANGMAN_GAME_ID) => ({ pathname: '/lo
 // see utils/packTurns.ts).
 export const gameHref = (mode: PlayMode, door: PlayMode = mode) => ({ pathname: '/play/[game]' as const, params: door === mode ? { game: HANGMAN_GAME_ID, mode } : { game: HANGMAN_GAME_ID, mode, door } })
 
-export const wordSearchHref = () => ({ pathname: '/play/[game]' as const, params: { game: WORD_SEARCH_GAME_ID } })
+export const puzzleGameHref = (game: PuzzleGameId) => ({ pathname: '/play/[game]' as const, params: { game } })
 
 export const parsePlayMode = (value: string | string[] | undefined): PlayMode => (value === 'pnp' ? 'pnp' : 'solo')

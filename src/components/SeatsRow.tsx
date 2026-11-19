@@ -71,6 +71,8 @@ type SeatProps = {
   seat: PnpPlayer
   // Whether this is the seat the page shows (its player is the active one).
   focused: boolean
+  // Ringed as the seat the page shows: only once there's another seat to tell it from.
+  ringed: boolean
   // More than the fewest a table can seat: it can be swiped away, and has the remove glyph while
   // focused. Seat 1 too (Jay, 2026-10-20: a parent's seat, for the children to play on their own); its
   // guest, Single Player's, keeps what they have when it goes (see players.ts' SINGLE_PLAYER_SEAT_ID).
@@ -106,7 +108,7 @@ type SeatProps = {
 //
 // Held still for a moment, any seat lifts to be dragged into a new place (see LIFT_MS): the whole pill is
 // the drag handle.
-const Seat = memo(({ seat, focused, removable, confirming, standing, takenIds, onFocus, onPick, onRemove, pressBlocked }: SeatProps): JSX.Element => {
+const Seat = memo(({ seat, focused, ringed, removable, confirming, standing, takenIds, onFocus, onPick, onRemove, pressBlocked }: SeatProps): JSX.Element => {
   const theme = useTheme()
   const host = useLoadoutPopoverHost()
   const motion = useLoadoutMotion()
@@ -151,7 +153,7 @@ const Seat = memo(({ seat, focused, removable, confirming, standing, takenIds, o
   return (
     <Sortable.Handle style={styles.seat}>
       <SwipeToDismiss ref={swipeRef} onDismiss={removable ? handleSwipedAway : undefined} testID={`seat-${seat.id}`} style={styles.seat}>
-        <View style={[styles.ring, focused && { borderColor: theme.colors.primary }]}>
+        <View style={[styles.ring, ringed && { borderColor: theme.colors.primary }]}>
           <PlayerPicker host={seatHost} idPrefix={idPrefix} selectedId={profile?.id ?? null} takenIds={takenIds} guestLabel={seat.name} onSelect={handleSelect} colors={colors} />
         </View>
         {standing ? (
@@ -241,7 +243,7 @@ export const SeatsRow = memo(({ players, focusedId, standings, showStandings, on
         <Sortable.Flex customHandle sortEnabled={players.length > 1} width='fill' alignContent='center' alignItems='center' justifyContent='center' columnGap={10} rowGap={12} dragActivationDelay={LIFT_MS} dropAnimationDuration={REFLOW_MS} activeItemScale={1.08} inactiveItemOpacity={1} autoScrollEnabled={false} stackingOrder='desc' itemEntering={motion ? SEAT_ENTERING : null} itemExiting={motion ? SEAT_EXITING : null} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           {players.map((seat) => (
             <View key={seat.id} testID={`seat-slot-${seat.id}`} style={styles.slot}>
-              <Seat seat={seat} focused={seat.id === focusedId} removable={canRemove} confirming={seat.id === removingId} standing={showStandings ? getStanding({ standings }, seat.id) : null} takenIds={takenIds} onFocus={onFocus} onPick={onPick} onRemove={onRemove} pressBlocked={pressBlocked} />
+              <Seat seat={seat} focused={seat.id === focusedId} ringed={players.length > 1 && seat.id === focusedId} removable={canRemove} confirming={seat.id === removingId} standing={showStandings ? getStanding({ standings }, seat.id) : null} takenIds={takenIds} onFocus={onFocus} onPick={onPick} onRemove={onRemove} pressBlocked={pressBlocked} />
             </View>
           ))}
           {onNewSession ? (

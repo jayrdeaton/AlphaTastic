@@ -21,8 +21,8 @@ export type StartSoloCallbacks = {
 // already put a guess into. Then it asks first, and a confirmed abandon counts as a loss, the same as
 // running out of guesses would (a fresh round, or one already decided, costs nothing to leave). Shared
 // by the loadout (Ready, a puzzle picked from a pack's list, Play This Pack) and share links (/play).
-// Render `abandonDialog` wherever the hook is used; `asking` is whether it's up.
-export const useStartSolo = (): { requestStart: (payload: GameStartPayload, callbacks: StartSoloCallbacks) => void; abandonDialog: JSX.Element; asking: boolean } => {
+// Render `abandonDialog` wherever the hook is used.
+export const useStartSolo = (): { requestStart: (payload: GameStartPayload, callbacks: StartSoloCallbacks) => void; abandonDialog: JSX.Element } => {
   const dispatch = useDispatch()
   const store = useStore<RootState>()
   const player = useActivePlayer()
@@ -78,5 +78,5 @@ export const useStartSolo = (): { requestStart: (payload: GameStartPayload, call
 
   const abandonDialog = <ConfirmDialog visible={pending !== null} title='Abandon This Puzzle?' message="You've already made a guess. Starting a new puzzle will count this one as a loss." icon='flag-outline' confirmLabel='Abandon' cancelLabel='Cancel' destructive onConfirm={handleConfirm} onCancel={handleCancel} />
 
-  return { requestStart, abandonDialog, asking: pending !== null }
+  return { requestStart, abandonDialog }
 }

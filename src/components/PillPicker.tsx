@@ -6,6 +6,7 @@ import { useTheme } from 'react-native-paper'
 
 import { type DifficultyOptionColors, useDifficultyOptionColors } from '@/hooks/useDifficultyColors'
 import type { DifficultyFilter } from '@/redux/playerSettingsSlice'
+import type { PuzzleSetting } from '@/utils/puzzleOptions'
 
 export type PillPickerOption<T extends string> = { value: T; label: string; icon: string }
 
@@ -53,6 +54,16 @@ export const DifficultyPicker = memo(({ id, host, value, onChange }: { id: strin
   return <PillPicker id={id} host={host} options={DIFFICULTY_TIERS} colors={colors} value={value} onChange={onChange} />
 })
 DifficultyPicker.displayName = 'DifficultyPicker'
+
+const SETTING_TIERS = ['easy', 'medium', 'hard'] as const
+
+// One of a puzzle game's settings, its choices in the difficulty pills' three colors, in order.
+export const PuzzleSettingPicker = memo(({ id, host, setting, value, onChange }: { id: string; host: PopoverHost; setting: PuzzleSetting; value: string; onChange: (key: string, value: string) => void }): JSX.Element => {
+  const tiers = useDifficultyOptionColors()
+  const colors = useMemo(() => Object.fromEntries(setting.choices.map((choice, i) => [choice.value, tiers[SETTING_TIERS[i % SETTING_TIERS.length]]])), [setting, tiers])
+  return <PillPicker id={id} host={host} options={setting.choices} colors={colors} value={value} onChange={(next) => onChange(setting.key, next)} />
+})
+PuzzleSettingPicker.displayName = 'PuzzleSettingPicker'
 
 const styles = StyleSheet.create({
   // Rounded at both ends, like PlayerPicker's, and raised off the board the same way.

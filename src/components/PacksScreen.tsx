@@ -5,6 +5,7 @@ import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native'
 import { Icon, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { titleType } from '@/constants/typography'
 import { usePuzzleUnlocks } from '@/hooks/usePuzzleUnlocks'
 import type { GameMode } from '@/types/gameModes'
 import type { GameStartPayload } from '@/types/gameSession'
@@ -340,7 +341,7 @@ export const PacksScreen = memo(({ visible, onDismiss, selectedKeys, onChangeSel
     () => (
       <>
         <View style={[styles.sectionHeaderRow, styles.firstSection]}>
-          <Text variant='titleMedium' style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+          <Text variant='titleMedium' style={[styles.sectionTitle, { color: theme.colors.onSurface }, titleType]}>
             My Packs
           </Text>
           <View style={styles.sectionActions}>
@@ -367,7 +368,7 @@ export const PacksScreen = memo(({ visible, onDismiss, selectedKeys, onChangeSel
           </View>
         )}
 
-        <Text variant='titleMedium' style={[styles.sectionTitle, styles.builtInTitle, { color: theme.colors.onSurface }]}>
+        <Text variant='titleMedium' style={[styles.sectionTitle, styles.builtInTitle, { color: theme.colors.onSurface }, titleType]}>
           Built-In Packs
         </Text>
       </>

@@ -42,9 +42,7 @@ const SCAFFOLDED_MODE_ID = 'classic'
 // `paused` (Home is covered, by another screen or the Settings sheet) stops the cycle outright; see
 // its own guard below.
 //
-// Three users: Home's hero (HeroTitle, always focused, `once`), the loadout's art
-// carousel (ArtCarousel, one card per art, `isFocused` true only for the card it settled on, paused
-// while the page is covered) and the Settings sheet's ART thumbnails (ArtPicker, `waitForReplay`).
+// Its user: the setup page's art tiles (ArtThumbnail, `waitForReplay`).
 //
 // `startBlank` (Home's hero) starts on a blank scene that draws itself in at mount, rather than on the
 // resting "fully drawn" preview with an entry fade: nobody has seen a resting frame to fade out of.

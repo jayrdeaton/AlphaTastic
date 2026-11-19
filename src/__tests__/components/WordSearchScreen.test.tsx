@@ -67,8 +67,8 @@ describe('WordSearchScreen', () => {
     for (const word of mockGrid.board.words) expect(getByTestId(`word-search-word-${word.id}`)).toHaveTextContent(word.answer)
   })
 
-  it("builds the grid from the active player's difficulty", async () => {
-    store.dispatch(playerSettingsActions.setDifficulty({ playerKey: GUEST_PLAYER_KEY, difficulty: 'easy' }))
+  it("builds the grid from the active player's settings", async () => {
+    store.dispatch(playerSettingsActions.setPuzzleOption({ playerKey: GUEST_PLAYER_KEY, game: 'wordsearch', key: 'grid', value: 'small' }))
 
     await renderScreen()
 

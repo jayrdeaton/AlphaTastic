@@ -5,6 +5,8 @@ import { JSX, useEffect } from 'react'
 import { BackHandler, StyleSheet, View } from 'react-native'
 import { Portal, Text, useTheme } from 'react-native-paper'
 
+import { titleType } from '@/constants/typography'
+
 import { ReadableAccent } from './ReadableAccent'
 
 export type PnpHandoffDialogProps = {
@@ -49,7 +51,7 @@ const ProfileHandoffCard = ({ visible, title, message, profile, onReady }: Profi
         <OverlayCard style={styles.card}>
           <View style={compact ? styles.headerCompact : styles.header}>
             <ProfileChip profile={profile} size={compact ? COMPACT_HEADER_CHIP_SIZE : HEADER_CHIP_SIZE} />
-            <Text accessibilityRole='header' variant={compact ? 'headlineSmall' : 'headlineLarge'} style={[styles.title, compact && styles.titleCompact, { color: theme.colors.primary }]}>
+            <Text accessibilityRole='header' variant={compact ? 'headlineSmall' : 'headlineLarge'} style={[styles.title, compact && styles.titleCompact, { color: theme.colors.primary }, titleType]}>
               {title}
             </Text>
           </View>

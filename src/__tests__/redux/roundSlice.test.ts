@@ -9,7 +9,10 @@ type RoundAction = Parameters<typeof reducer>[1]
 
 const OTHER = 'profile-a'
 const puzzle = (overrides: Partial<SavedPuzzle> = {}): SavedPuzzle => ({ phrase: 'HELLO WORLD', modeId: 'classic', sourceMode: 'random', ...overrides })
-const run = (actions: RoundAction[], state: RoundState = initialRoundState): RoundState => actions.reduce<RoundState>((next, action) => reducer(next, action), state)
+// A fresh table is one seat on the packs; the Pass & Play cases here start from the table they were
+// written against, Player 1 and Player 2 writing for each other.
+const TABLE_OF_TWO: RoundState = [roundActions.addPnpPlayer(), roundActions.setPnpSource('write')].reduce<RoundState>((next, action) => reducer(next, action), initialRoundState)
+const run = (actions: RoundAction[], state: RoundState = TABLE_OF_TWO): RoundState => actions.reduce<RoundState>((next, action) => reducer(next, action), state)
 const startSolo = (overrides: Partial<SavedPuzzle> = {}, playerKey = GUEST_PLAYER_KEY) => roundActions.startSolo({ playerKey, puzzle: puzzle(overrides) })
 const saveSolo = (guessedLetters: string[], hintRevealed = false, playerKey = GUEST_PLAYER_KEY) => roundActions.saveSoloProgress({ playerKey, guessedLetters, hintRevealed })
 const guest = (state: RoundState) => selectSoloRound(state, GUEST_PLAYER_KEY)
@@ -19,7 +22,7 @@ const guest = (state: RoundState) => selectSoloRound(state, GUEST_PLAYER_KEY)
 const midGame = (): RoundState => run([startSolo({ phrase: 'SOLO WORD', packKey: 'phrases', puzzleId: 'phrases:1' }), saveSolo(['S', 'Z'], true), roundActions.startPnpAuthoring(), roundActions.setPnpWord(puzzle({ phrase: 'PASS WORD', sourceMode: 'custom' })), roundActions.startPnpPlaying(), roundActions.savePnpProgress({ guessedLetters: ['P', 'Q'], hintRevealed: true })])
 
 describe('roundSlice', () => {
-  it('starts with no solo rounds, an empty Pass & Play round for a fresh two-guest session and no game open', () => {
+  it('starts with no solo rounds, an empty Pass & Play round for a fresh table of one and no game open', () => {
     expect(reducer(undefined, { type: '@@INIT' })).toEqual({
       solo: {},
       pnp: { id: 0, puzzle: null, guessedLetters: [], hintRevealed: false, phase: null, session: createDefaultPnpSession() },
@@ -401,7 +404,7 @@ describe('the Pass & Play session', () => {
   const session = (state: RoundState): PnpSession => state.pnp.session
   const word = puzzle({ phrase: 'CAT', sourceMode: 'custom' })
   // A round on the board in play, and the same round guessed to its end (CAT, solved or missed).
-  const inPlay = (state: RoundState = initialRoundState): RoundState => run([roundActions.startPnpAuthoring(), roundActions.setPnpWord(word), roundActions.startPnpPlaying()], state)
+  const inPlay = (state: RoundState = TABLE_OF_TWO): RoundState => run([roundActions.startPnpAuthoring(), roundActions.setPnpWord(word), roundActions.startPnpPlaying()], state)
   const decide = (state: RoundState, result: 'win' | 'loss' = 'win'): RoundState => run([roundActions.savePnpProgress({ guessedLetters: result === 'win' ? ['C', 'A', 'T'] : ['Z', 'X', 'Q', 'W', 'E', 'R'], hintRevealed: false }), roundActions.recordPnpResult({ roundId: state.pnp.id, result })], state)
   const threePlayers = (): RoundState => run([roundActions.addPnpPlayer()])
 
@@ -511,9 +514,28 @@ describe('the Pass & Play session', () => {
     })
   })
 
+  // One page for any number of players (Jay, 2026-11-19): a table of one plays from the packs, and
+  // writing words for each other takes two.
+  describe('a table of one', () => {
+    it('stays on the packs', () => {
+      expect(session(reducer(initialRoundState, roundActions.setPnpSource('write'))).source).toBe('packs')
+    })
+
+    it('gets a guesser with a second seat, and can write then', () => {
+      const two = run([roundActions.addPnpPlayer(), roundActions.setPnpSource('write')], initialRoundState)
+      expect(session(two)).toMatchObject({ writerId: 'p1', guesserId: 'p2', source: 'write' })
+    })
+
+    it('goes back to the packs when the table is down to one, and keeps its last seat', () => {
+      const one = run([roundActions.removePnpPlayer('p2')])
+      expect(session(one)).toMatchObject({ players: [{ id: 'p1' }], source: 'packs', focusedId: 'p1' })
+      expect(reducer(one, roundActions.removePnpPlayer('p1'))).toBe(one)
+    })
+  })
+
   describe('addPnpPlayer', () => {
     it('adds the next guest seat at the end of the table', () => {
-      expect(session(threePlayers()).players).toEqual([...createDefaultPnpSession().players, { id: 'p3', name: 'Player 3', profileId: null }])
+      expect(session(threePlayers()).players).toEqual([...TABLE_OF_TWO.pnp.session.players, { id: 'p3', name: 'Player 3', profileId: null }])
     })
 
     it('stops at eight', () => {
