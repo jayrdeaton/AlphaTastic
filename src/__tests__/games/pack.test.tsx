@@ -39,7 +39,7 @@ describe('the pack', () => {
   it("loads its title font and letters the shell's titles and labels with it", () => {
     expect(Object.keys(pack.fonts ?? {})).toEqual([TITLE_FONT, LABEL_FONT])
     expect(pack.titleStyle).toEqual({ fontFamily: TITLE_FONT, fontWeight: 'normal', textTransform: 'uppercase', letterSpacing: 1 })
-    expect(pack.labelStyle).toEqual({ fontFamily: LABEL_FONT, fontWeight: 'normal', textTransform: 'uppercase', fontSize: 14, lineHeight: 20 })
+    expect(pack.labelStyle).toEqual({ fontFamily: LABEL_FONT, fontWeight: 'normal', textTransform: 'uppercase', fontSize: 14, lineHeight: 20, letterSpacing: 0 })
     expect(pack.fontFamily).toBeUndefined()
   })
 

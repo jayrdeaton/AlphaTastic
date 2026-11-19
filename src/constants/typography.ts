@@ -22,11 +22,14 @@ export const TITLE_FONTS: Record<string, FontSource> = { [TITLE_FONT]: require('
 export const titleType: TextStyle = { fontFamily: TITLE_FONT, fontWeight: 'normal', textTransform: 'uppercase', letterSpacing: TITLE_LETTER_SPACING }
 
 // A small label's lettering (Jay, 2026-11-19: the Stats screen and the pickers too): the picker pills,
-// the Stats tabs and section headings, the Settings sheet's sections. Laid over each label's own type,
-// keeping its spacing, in the heavier pen and at one size, 14pt (Jay, 2026-11-19: in the title's pen
-// the Stats cards' 12pt headings looked thin beside their bold numbers, and then small; the pills were
-// 13pt and the tabs 14pt, and at 15pt ACHIEVEMENTS no longer fit its tab on a phone).
-export const labelType: TextStyle = { fontFamily: LABEL_FONT, fontWeight: 'normal', textTransform: 'uppercase', fontSize: 14, lineHeight: 20 }
+// the Stats tabs and section headings, the Settings sheet's sections. Laid over each label's own type:
+// - the heavier pen, since in the title's the Stats cards' 12pt headings looked thin beside their bold
+//   numbers;
+// - one size, 14pt, bigger than the headings' 12 and the pills' 13 (at 15, ACHIEVEMENTS no longer fit
+//   its tab on a phone);
+// - no extra spacing: the font's own bearings space its capitals, and the pills' 1pt put the Stats
+//   screen's two pickers on two rows on a phone (2pt to spare at 375 without it).
+export const labelType: TextStyle = { fontFamily: LABEL_FONT, fontWeight: 'normal', textTransform: 'uppercase', fontSize: 14, lineHeight: 20, letterSpacing: 0 }
 
 // A character the font doesn't have is drawn in the fallback font, about this wide.
 const FALLBACK_ADVANCE = 600
