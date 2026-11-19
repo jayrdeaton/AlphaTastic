@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useState } from 'react'
+import React, { createContext, useContext, useEffect, useId, useState } from 'react'
 import Animated, { Easing, useAnimatedProps, useSharedValue, withDelay, withTiming } from 'react-native-reanimated'
 import { Circle, ClipPath, Defs, Ellipse, G, Line, Path, Rect } from 'react-native-svg'
 
@@ -33,8 +33,14 @@ const AnimatedG = Animated.createAnimatedComponent(G)
 // the same shared value from two separate effects, and there's no real need for two here anyway:
 // `start`/`erased` are never both relevant at once for a single shape (a shape either hasn't drawn
 // in yet, or is being erased after it already has), so one branch always wins.
+// Shapes mounted under it already drawn, with no draw-in: the setup page's art tiles until one is
+// pressed (Jay, 2026-11-19: the art needn't draw in on first render, only on a press). Read once, as a
+// shape mounts: a shape mounted after it turns false (a press remounts the art) draws in as ever.
+export const SketchDrawnContext = createContext(false)
+
 const useDrawProgress = (from: number, to: number, { start = true, erased = false, delayMs = 0, durationMs = DRAW_MS }: { start?: boolean; erased?: boolean; delayMs?: number; durationMs?: number }) => {
-  const value = useSharedValue(from)
+  const drawn = useContext(SketchDrawnContext)
+  const value = useSharedValue(drawn && start && !erased ? to : from)
   useEffect(() => {
     if (erased) {
       value.value = withTiming(from, { duration: durationMs, easing: DRAW_EASING })

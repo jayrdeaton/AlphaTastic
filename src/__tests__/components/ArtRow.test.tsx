@@ -27,7 +27,9 @@ jest.mock('@/components/GameVisual', () => {
   return {
     GameVisual: ({ mode, mistakes, color, colors }: { mode: { id: string }; mistakes: number; color: string; colors?: string[] }) => {
       mockArtRenders.push(mode.id)
-      return createElement(View, { testID: `art-${mode.id}`, mistakes, color, colors })
+      // Whether its strokes would mount already drawn (SketchDrawnContext).
+      const drawn = jest.requireActual('react').useContext(jest.requireActual('@/modes/shared/sketchShapes').SketchDrawnContext)
+      return createElement(View, { testID: `art-${mode.id}`, mistakes, color, colors, drawn })
     }
   }
 })
@@ -124,6 +126,18 @@ describe('ArtRow', () => {
       expect(art.props.mistakes).toBe(fullyDrawnMistakes(mode))
       expect(art.props.colors).toEqual([colors.primary, colors.secondary, colors.tertiary])
     }
+  })
+
+  // Jay, 2026-11-19: no draw-in as the page opens, only on a press.
+  it('shows every tile already drawn until it is pressed, and draws it in then', async () => {
+    const screen = await renderRow()
+
+    for (const mode of VISIBLE_MODES) expect(screen.getByTestId(`art-${mode.id}`).props.drawn).toBe(true)
+
+    await fireEvent.press(thumbnail(screen, robotMode.label))
+
+    expect(screen.getByTestId(`art-${robotMode.id}`).props.drawn).toBe(false)
+    expect(screen.getByTestId(`art-${candleMode.id}`).props.drawn).toBe(true)
   })
 
   it("shows the player's saved art as the selected one", async () => {

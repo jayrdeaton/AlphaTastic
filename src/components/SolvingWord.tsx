@@ -1,4 +1,6 @@
-import { JSX, useEffect, useMemo, useState } from 'react'
+import { JSX, useContext, useEffect, useMemo, useState } from 'react'
+
+import { SketchDrawnContext } from '@/modes/shared/sketchShapes'
 
 import { SketchWord, sketchWordBlanksDrawnMs } from './SketchWord'
 
@@ -30,7 +32,9 @@ export type SolvingWordProps = {
 // a time, one timer at a time, and none once the word is whole.
 export const SolvingWord = ({ word, fontSize, color, paused = false, firstLetterDelayMs, onSolved }: SolvingWordProps): JSX.Element => {
   const target = useMemo(() => word.split(''), [word])
-  const [revealed, setRevealed] = useState(0)
+  // Already solved under SketchDrawnContext (an art tile before its first press), as its strokes are.
+  const drawn = useContext(SketchDrawnContext)
+  const [revealed, setRevealed] = useState(() => (drawn ? target.length : 0))
   const firstDelay = firstLetterDelayMs ?? firstLetterMs(target.length)
   useEffect(() => {
     if (paused || revealed >= target.length) return
