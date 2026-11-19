@@ -20,6 +20,8 @@ export type PillPickerProps<T extends string> = {
   colors: Record<T, Pick<DifficultyOptionColors, 'vibrant' | 'container'>>
   value: T
   onChange: (value: T) => void
+  // A small line over the picked option naming what the pill picks ('Difficulty').
+  caption?: string
 }
 
 // One of the app's picker pills: @tastic/profile's OptionPicker (the fleet's CPU difficulty control in
@@ -29,13 +31,13 @@ export type PillPickerProps<T extends string> = {
 // option's vibrant color, and every other row's icon its own option's (@tastic/profile 0.16.1+). The
 // loadout's Difficulty, and a pack's page's filters (Jay, 2026-10-19: one dropdown look for the app).
 // The caller hosts the popover and its press away catcher.
-export const PillPicker = <T extends string>({ id, host, options, colors, value, onChange }: PillPickerProps<T>): JSX.Element => {
+export const PillPicker = <T extends string>({ id, host, options, colors, value, onChange, caption }: PillPickerProps<T>): JSX.Element => {
   const theme = useTheme()
   const rows = useMemo((): OptionPickerOption<T>[] => options.map((option) => ({ ...option, color: colors[option.value].vibrant })), [options, colors])
   const icon = options.find((option) => option.value === value)?.icon ?? options[0].icon
   const container = colors[value].container
   const pillStyle = useMemo(() => [styles.pill, { backgroundColor: container }], [container])
-  return <OptionPicker id={id} host={host} options={rows} value={value} onChange={onChange} color={colors[value].vibrant} dark={theme.dark} icon={icon} triggerStyle={pillStyle} />
+  return <OptionPicker id={id} host={host} options={rows} value={value} onChange={onChange} color={colors[value].vibrant} dark={theme.dark} icon={icon} caption={caption} triggerStyle={pillStyle} />
 }
 
 // Signal bars for the tiers, an open set for Any (every tier).
@@ -48,10 +50,11 @@ export const DIFFICULTY_TIERS: PillPickerOption<DifficultyFilter>[] = [
 
 // Difficulty as a picker pill, in the colors the board's difficulty badge uses (Any is the theme's
 // primary). A pill rather than a segmented control, which cut "Medium" short on small phones; the
-// difficulty is a saved pick, so the extra tap costs little.
+// difficulty is a saved pick, so the extra tap costs little. Captioned Difficulty over its pick (Jay,
+// 2026-11-19), so a pill reading Any says what it's for.
 export const DifficultyPicker = memo(({ id, host, value, onChange }: { id: string; host: PopoverHost; value: DifficultyFilter; onChange: (value: DifficultyFilter) => void }): JSX.Element => {
   const colors = useDifficultyOptionColors()
-  return <PillPicker id={id} host={host} options={DIFFICULTY_TIERS} colors={colors} value={value} onChange={onChange} />
+  return <PillPicker id={id} host={host} options={DIFFICULTY_TIERS} colors={colors} value={value} onChange={onChange} caption='Difficulty' />
 })
 DifficultyPicker.displayName = 'DifficultyPicker'
 

@@ -12,10 +12,6 @@ configureNavigation({ router })
 
 export { safeBack }
 
-// The Home corner (the loadouts'): dismissTo pops back to the Home already beneath, or replaces this
-// screen with it when there's none (a loadout reached from a resumed game).
-export const goHome = () => router.dismissTo('/')
-
 // A game's setup screen, the shell's route for it (Home's cards open these).
 export const loadoutHref = (game: GameId = HANGMAN_GAME_ID) => ({ pathname: '/loadout/[game]' as const, params: { game } })
 

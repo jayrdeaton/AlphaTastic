@@ -7,10 +7,10 @@ import { Portal, useTheme } from 'react-native-paper'
 import { useReducedMotion } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { goHome, safeBack } from '@/utils/navigation'
+import { safeBack } from '@/utils/navigation'
 import { gameShell } from '@/utils/webLayout'
 
-// The corners' strip: 8pt in, a 40pt button with Paper's 6pt margin, 8pt out (the 56pt Home leaves
+// The corners' strip: 8pt in, a 40pt button with Paper's 6pt margin, 8pt out (the 56pt back arrow leaves
 // above its hero too). The body starts under it.
 export const CORNER_BAND_HEIGHT = 56
 // How far in CornerActionButtons sets each corner's button.
@@ -61,7 +61,7 @@ export type LoadoutShellProps = {
   // share link pushed over it), so coming back finds the page itself.
   closeAllOverlays: () => void
   overlays?: ReactNode
-  // A button centered in the corners' strip, between Home and the cog, in their layer and at their
+  // A button centered in the corners' strip, between the back arrow and the cog, in their layer and at their
   // height (the Pass & Play page's Add player): it stays put however the page below it changes. It's
   // inside the page's popover host, so it can close an open popover first, as the cog does.
   centerAction?: ReactNode
@@ -70,8 +70,10 @@ export type LoadoutShellProps = {
 // The loadout's frame (see LoadoutScreen): the corners, the body under them, Android back, the page's
 // popover host, and the Settings sheet. Transparent, over the app's one board (see BoardBackground),
 // like every screen. No title, and the fleet's plain-glyph corners rather than the scroll view header's
-// blurred action circles, like the other games' loadouts (Jay, 2026-10-18): Home top-left, as on the
-// game screen (Solitaire's), the Settings cog top-right. The body starts below the corners and runs
+// blurred action circles, like the other games' loadouts (Jay, 2026-10-18): a back arrow top-left, to
+// Home, as the shell's own setup page and CardTastic's have (Jay, 2026-11-19: Home in this corner was
+// Solitaire's, and CardTastic went back to arrows while still reopening into a game left open), the
+// Settings cog top-right. The body starts below the corners and runs
 // down to the bottom safe area.
 export const LoadoutShell = ({ children, closeOverlay, closeAllOverlays, overlays, centerAction }: LoadoutShellProps): JSX.Element => {
   const theme = useTheme()
@@ -130,19 +132,21 @@ export const LoadoutShell = ({ children, closeOverlay, closeAllOverlays, overlay
           <LoadoutPopoverContext.Provider value={popoverHost}>{children}</LoadoutPopoverContext.Provider>
         </LoadoutCoveredContext.Provider>
       </View>
-      {/* The corner strip's own press away catcher: a tap between Home and the cog closes an open popover
+      {/* The corner strip's own press away catcher: a tap between the back arrow and the cog closes an open popover
           (Jay, 2026-10-18) even when the page has scrolled its own catcher out from under the strip. The
-          corners sit over it, so Home and the cog still take their taps (the cog closes the popover first
+          corners sit over it, so the back arrow and the cog still take their taps (the cog closes the popover first
           anyway). Out of a screen reader's way: the page's own catcher is the one it reaches. */}
       <View testID='loadout-corner-press-away' style={[styles.strip, { height: insets.top + CORNER_BAND_HEIGHT }]} pointerEvents='box-none' accessibilityElementsHidden importantForAccessibility='no-hide-descendants'>
         <PressAwayOverlay active={openId !== null} onPress={closePopover} />
       </View>
-      {/* The same corner pair as Home and the game screen, over the whole screen like theirs. box-none
+      {/* The same corner pair as Home and the game screen, over the whole screen like theirs. The arrow
+          steps back, as Android back does (safeBack: Home, or replacing this page with Home when nothing
+          is beneath, as after a resumed game). box-none
           lets taps between them reach the page. hitSlop={4} makes each a 48pt target. The center
           action sits between them, at their 8pt inset (CornerActionButtons' own), over the strip's
           catcher so it takes its own taps. */}
       <View style={[StyleSheet.absoluteFill, styles.corners]} pointerEvents='box-none'>
-        <CornerActionButtons backIcon='home' backLabel='Home' onBack={goHome} onSettings={openSettings} fg={theme.colors.onSurface} insets={insets} hitSlop={4} />
+        <CornerActionButtons onBack={safeBack} onSettings={openSettings} fg={theme.colors.onSurface} insets={insets} hitSlop={4} />
         {centerAction ? (
           <View style={[styles.center, { top: CORNER_INSET + insets.top }]} pointerEvents='box-none'>
             <LoadoutPopoverContext.Provider value={popoverHost}>{centerAction}</LoadoutPopoverContext.Provider>

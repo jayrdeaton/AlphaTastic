@@ -577,12 +577,11 @@ export const GameScreen = ({ mode, door = mode }: GameScreenProps): JSX.Element 
     },
     [clearActive]
   )
-  // A step back to the door's loadout: Android's back button, the prompt's close glyph, a shared
-  // puzzle's Next.
+  // A step back to the door's loadout: the corner's back arrow, Android's back button, the prompt's
+  // close glyph, a shared puzzle's Next. The corner was Home, as in Solitaire, until CardTastic went
+  // back to arrows (Jay, 2026-11-19): a launch that resumes straight into this screen still has the
+  // loadout to step back to, since dismissTo opens it when nothing is beneath.
   const leave = useCallback(() => leaveFor(loadoutHref()), [leaveFor])
-  // The corner is Home, as in Solitaire, not a back arrow: a launch can open straight into this screen,
-  // with nothing the player came from to go back to.
-  const goHome = useCallback(() => leaveFor('/'), [leaveFor])
 
   // Android's back button steps back to the loadout, even with nothing beneath this screen in the
   // stack (where the navigator would otherwise close the app). The result card, the Pass & Play
@@ -640,7 +639,7 @@ export const GameScreen = ({ mode, door = mode }: GameScreenProps): JSX.Element 
             pills between them. hitSlop={4} makes each a 48pt target; the pills sit 8pt from the
             buttons' boxes, so 4pt of clearance is left (see hud's CLAUDE.md on CornerActionButtons). */}
         <View style={[StyleSheet.absoluteFill, styles.corners]} pointerEvents='box-none'>
-          <CornerActionButtons backIcon='home' backLabel='Home' onBack={goHome} onSettings={handleOpenSettings} fg={theme.colors.onSurface} insets={insets} hitSlop={4} />
+          <CornerActionButtons onBack={leave} onSettings={handleOpenSettings} fg={theme.colors.onSurface} insets={insets} hitSlop={4} />
         </View>
 
         <SettingsDialog visible={settingsOpen} onDismiss={handleDismissSettings} />

@@ -12,13 +12,13 @@ import { SketchFill } from '@/modes/shared/sketchShapes'
 export type KeyboardProps = {
   disabled?: boolean
   guessedLetters: string[]
-  // Which of guessedLetters were actually wrong - folded into each key's own hatch-fill color
+  // Which of guessedLetters were actually wrong - folded into each key's own fill color
   // below (see KeyboardKey's own fill state) rather than a separate marker: a correct guess
   // re-draws its key's fill in the app's own secondary tone, a wrong one in its danger tone, so the
   // two read differently at a glance without needing anything extra layered on top.
   phrase: string
   // The letter whose guess completed the round, if the round was just won - undefined/null the
-  // rest of the time. Drives a final hatch-fill redraw across the whole board, radiating outward
+  // rest of the time. Drives a final fill redraw across the whole board, radiating outward
   // from this key: every key's fill re-draws itself once more in the app's success color, the same
   // SketchFill wipe-reveal every key's fill already uses for a guess landing - a win is just
   // another redraw, not a different visual language. Game.tsx sets it once, in the same tick as
@@ -26,7 +26,7 @@ export type KeyboardProps = {
   // via GameScreen's SavedBoard on the round id, so there's nothing to reset here).
   winningLetter?: string | null
   // True once the round has been lost - drives a quick shake across the whole board, then the same
-  // final hatch-fill redraw a win uses, in the app's danger color instead, cascading down the board
+  // final fill redraw a win uses, in the app's danger color instead, cascading down the board
   // top row first. Set synchronously by Game.tsx in the same tick as its own roundOverRef flip, NOT
   // gated behind outcome/dialogReady's 450ms delay, so the shake begins the instant the round is
   // actually decided rather than a beat later - RoundEndDialog's own Portal then covers the board
@@ -36,13 +36,13 @@ export type KeyboardProps = {
   // Mirrors Game.tsx's own gameReady (see gameModes.ts's own `started` comment for the same
   // convention already used by the mode artwork) - true once the whole screen's reveal curtain has
   // resolved. Drives this keyboard's own one-time entrance below: every key fades in while its own
-  // hatch fill draws in for the first time, staggered left to right across the whole board (see
+  // fill draws in for the first time, staggered left to right across the whole board (see
   // ENTRANCE_COLUMN_STAGGER_MS), starting at KEYBOARD_SWEEP_DELAY_MS (see sceneReveal.ts). The
   // keyboard sits at the very bottom of the screen, so it's the first band of the whole-screen
   // sweep to begin, ahead of the pips/word/artwork/info-row above it, rather than racing them on
   // its own schedule. Defaults true so a keyboard mounted without wiring the real signal still gets
   // a plain on-mount entrance rather than sitting permanently hidden. Also gates each key's own
-  // very first hatch-fill draw-in, for the same reason.
+  // very first fill draw-in, for the same reason.
   started?: boolean
   layout?: KeyboardLayout
   onGuess: (letter: string) => void
@@ -150,27 +150,21 @@ type KeyboardKeyProps = {
   theme: AutoPaperTheme
 }
 
-// Draws a key's own background as a hand-sketched hatch fill - the exact same SketchFill
-// wipe-reveal balloons/hourglass/etc. already use for their own filled shapes - instead of a flat
-// react-native-paper Button color. This is what makes the keyboard itself read as hand-drawn rather
-// than a plain flat UI control, and it's the ONLY thing that ever changes a key's color: entrance,
-// a guess landing, a win, a loss all just redraw this in a new color (see KeyboardKey's own `fill`
-// state below), the same drawing code every time rather than a bespoke look per outcome.
+// Draws a key's own background as a solid fill wiped in by hand: the same SketchFill wipe-reveal
+// balloons/hourglass/etc. use for their own filled shapes, in its solid mode, instead of a flat
+// react-native-paper Button color. The wipe is what keeps the keyboard reading as drawn rather than a
+// plain flat control, and it's the ONLY thing that ever changes a key's color: entrance, a guess
+// landing, a win, a loss all just redraw this in a new color (see KeyboardKey's own `fill` state
+// below), the same drawing code every time rather than a bespoke look per outcome.
+//
+// Solid, not hatched (Jay, 2026-11-19): at a key's size even a tightly packed hatch showed its gaps as
+// thin dark diagonals across every key, which read as scratches rather than shading, and the letters
+// needed a shadow to stay legible over it. Every other control on the page is a flat fill.
 //
 // `clip` hands SketchFill the key's own rounded-rect silhouette (stroke/fill on it don't matter,
 // only its outline), the same way balloons hand it an Ellipse. Sized off the same keySize
 // KeyboardKey already measures via onLayout, and always mounted behind the Button (see its own
 // z-order comment below) so the Button's own transparent body lets it show through.
-//
-// spacing/strokeWidth are both tighter than SketchFill's own balloon-tuned defaults (2.4/2.2) - at
-// a key's own much smaller size, those defaults leave gaps between hatch strokes wide enough that
-// the letter sitting on top loses its background behind it entirely wherever a gap and a glyph
-// stroke happen to overlap (confirmed on screen, not just in theory: the label read as broken up
-// and partly invisible against it). Packing the hatch this much tighter reads as a solid-ish fill
-// with just a hint of hand-drawn texture instead of bold candy-stripes, which is what a key this
-// small needs to keep its own letter legible.
-const KEY_FILL_SPACING = 1.1
-const KEY_FILL_STROKE_WIDTH = 1.6
 
 // Inset by KEY_MARGIN on both sides, same as the Button's own marginHorizontal below - without
 // this, StyleSheet.absoluteFill stretches this wrapper to the FULL width of the shared parent
@@ -183,7 +177,7 @@ const KEY_FILL_STROKE_WIDTH = 1.6
 export const KeyFill = ({ width, height, color, start, delayMs }: { width: number; height: number; color: string; start: boolean; delayMs: number }) => (
   <View pointerEvents='none' style={[StyleSheet.absoluteFill, { left: KEY_MARGIN, right: KEY_MARGIN }]}>
     <Svg width={width} height={height}>
-      <SketchFill bounds={{ x: 0, y: 0, width, height }} clip={<Rect x={0} y={0} width={width} height={height} rx={KEY_BORDER_RADIUS} />} mode='hatch' color={color} spacing={KEY_FILL_SPACING} strokeWidth={KEY_FILL_STROKE_WIDTH} start={start} delayMs={delayMs} />
+      <SketchFill bounds={{ x: 0, y: 0, width, height }} clip={<Rect x={0} y={0} width={width} height={height} rx={KEY_BORDER_RADIUS} />} mode='solid' color={color} start={start} delayMs={delayMs} />
     </Svg>
   </View>
 )
@@ -215,7 +209,7 @@ const keyFillColors = (theme: AutoPaperTheme, role: KeyFillRole): { color: strin
 const KeyboardKey = ({ letter, isGuessed, isWrong, disabled, width, rippleDistance, falling, cascadeBaseDelayMs, started, entranceBaseDelayMs, onPress, theme }: KeyboardKeyProps) => {
   const translateX = useSharedValue(0)
   const rotate = useSharedValue(0)
-  // Starts invisible, not 1 - fades in as this key's own hatch fill draws in below, rather than the
+  // Starts invisible, not 1 - fades in as this key's own fill draws in below, rather than the
   // plain-text label popping in stark and instant ahead of its own background. Nothing outside the
   // entrance effect ever touches this, so it stays at 1 for the rest of the key's life once the
   // entrance completes.
@@ -241,7 +235,7 @@ const KeyboardKey = ({ letter, isGuessed, isWrong, disabled, width, rippleDistan
   // pattern React itself documents for one-time-per-mount randomness.
   const [jitterMs] = useState(() => Math.random() * CASCADE_JITTER_MS)
 
-  // This key's own hatch fill: `role` is what it should currently be showing (its colors come from
+  // This key's own fill: `role` is what it should currently be showing (its colors come from
   // the live theme, see keyFillColors), `gen` is bumped every time the role changes so KeyFill (keyed
   // on it below) remounts and replays its own draw-in in the new color - SketchFill's own mask has no "already fully open,
   // just recolor instantly" mode, so a fresh mount is what makes each transition read as a redraw
@@ -420,15 +414,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: ROW_MARGIN_VERTICAL
   },
-  // A dark, tight shadow behind the letter - insurance on top of KEY_FILL_SPACING/
-  // KEY_FILL_STROKE_WIDTH's own denser hatch: even a tightly-packed hatch is still real texture,
-  // not a flat color, and every fill color here is light enough (see KeyboardKey's own fill state)
-  // that a plain light label can still lose contrast right where a stroke happens to cross it
-  // without something anchoring its edges regardless of what's directly behind them.
   text: {
-    marginHorizontal: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.45)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 2
+    marginHorizontal: 4
   }
 })

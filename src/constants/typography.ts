@@ -31,6 +31,11 @@ export const titleType: TextStyle = { fontFamily: TITLE_FONT, fontWeight: 'norma
 //   screen's two pickers on two rows on a phone (2pt to spare at 375 without it).
 export const labelType: TextStyle = { fontFamily: LABEL_FONT, fontWeight: 'normal', textTransform: 'uppercase', fontSize: 14, lineHeight: 20, letterSpacing: 0 }
 
+// The setup pages' one big button, Ready, and Choose Packs' Done under its list (Jay, 2026-11-19: the
+// last of the setup page in the system font): the labels' lettering, a size up for the page's main
+// action, as their 16pt was before.
+export const actionType: TextStyle = { ...labelType, fontSize: 16, lineHeight: 22 }
+
 // A character the font doesn't have is drawn in the fallback font, about this wide.
 const FALLBACK_ADVANCE = 600
 

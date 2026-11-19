@@ -4,7 +4,7 @@ import * as Gestures from '@rific/gestures'
 import { type Profile, profilesActions } from '@tastic/profile'
 import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native'
 import { router, useIsFocused } from 'expo-router'
-import { BackHandler, View } from 'react-native'
+import { BackHandler, StyleSheet, View } from 'react-native'
 import { useReducedMotion } from 'react-native-reanimated'
 
 import { LoadoutScreen } from '@/components/LoadoutScreen'
@@ -194,13 +194,13 @@ describe('the Pass & Play page', () => {
       store.dispatch(playerSettingsActions.setDifficulty({ playerKey: ALICE.id, difficulty: 'hard' }))
       store.dispatch(roundActions.setPnpSource('packs'))
       const screen = await renderLoadout()
-      expect(screen.getByLabelText('ANY')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, ANY')).toBeTruthy()
 
       await fireEvent.press(pill(screen, 'Alice'))
 
       expect(session().focusedId).toBe('p2')
       expect(active()).toBe(ALICE.id)
-      expect(screen.getByLabelText('HARD')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, HARD')).toBeTruthy()
       expect(screen.queryByText('Manage')).toBeNull()
 
       await fireEvent.press(pill(screen, 'Alice'))
@@ -510,13 +510,13 @@ describe('the Pass & Play page', () => {
       const screen = await renderLoadout()
 
       expect(activePlayer()).toEqual({ profileId: null, seatId: null })
-      expect(screen.getByLabelText('HARD')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, HARD')).toBeTruthy()
       expect(screen.getByText(`All ${MANIFEST.length} packs`)).toBeTruthy()
 
       await fireEvent.press(pill(screen, 'Player 2'))
 
       expect(activePlayer()).toEqual({ profileId: null, seatId: 'p2' })
-      expect(screen.getByLabelText('EASY')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, EASY')).toBeTruthy()
       expect(screen.getByText(`1 of ${MANIFEST.length} packs`)).toBeTruthy()
       expect(store.getState().playerSettings[GUEST_PLAYER_KEY]?.difficulty).toBe('hard')
     })
@@ -526,7 +526,7 @@ describe('the Pass & Play page', () => {
       store.dispatch(roundActions.focusPnpSeat('p2'))
       const screen = await renderLoadout()
 
-      await fireEvent.press(screen.getByLabelText('ANY'))
+      await fireEvent.press(screen.getByLabelText('DIFFICULTY, ANY'))
       await fireEvent.press(screen.getByText('Hard'))
 
       expect(store.getState().playerSettings[guestSeatKey('p2')]?.difficulty).toBe('hard')
@@ -577,13 +577,13 @@ describe('the Pass & Play page', () => {
         seat('p2', ALICE)
       })
       expect(activePlayer()).toEqual({ profileId: ALICE.id, seatId: null })
-      expect(screen.getByLabelText('ANY')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, ANY')).toBeTruthy()
       await waitFor(() => expect(store.getState().theme.color).toBe(ALICE.color))
       await fireEvent.press(pill(screen, 'Alice'))
       await fireEvent.press(screen.getByText('Guest'))
 
       expect(activePlayer()).toEqual({ profileId: null, seatId: 'p2' })
-      expect(screen.getByLabelText('HARD')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, HARD')).toBeTruthy()
       await waitFor(() => expect(store.getState().theme.color).toBe('#00bcd4'))
     })
 
@@ -643,7 +643,7 @@ describe('the Pass & Play page', () => {
 
       expect(activePlayer()).toEqual({ profileId: null, seatId: null })
       expect(pill(screen, 'Player 1')).toBeTruthy()
-      expect(screen.getByLabelText('ANY')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, ANY')).toBeTruthy()
     })
   })
 
@@ -656,9 +656,6 @@ describe('the Pass & Play page', () => {
       const screen = await renderLoadout()
       await layout(screen, 'loadout-players', 116)
       await layout(screen, 'loadout-options', 290)
-      // The packs card taller than Keep Each Word, as it is.
-      await layout(screen, 'loadout-packs-content', 118)
-      await layout(screen, 'loadout-write-content', 98)
       return screen
     }
     // react-native-sortables lays the seats out and glides them itself (src/__mocks__/react-native-sortables.ts
@@ -695,11 +692,13 @@ describe('the Pass & Play page', () => {
       expect(seatMotion(screen)).toEqual({ itemEntering: null, itemExiting: null })
     })
 
-    // Both sources' cards sit in one cell as tall as the taller, cross-fading in place.
-    it("keeps both word sources' cards laid out together, the one not chosen hidden and untouchable", async () => {
+    // Both sources' cards sit in one cell as tall as the taller, both filling it, cross-fading in place,
+    // so a switch moves nothing (Jay, 2026-11-19).
+    it("keeps both word sources' cards laid out together and filling one cell, the one not chosen hidden and untouchable", async () => {
       const screen = await laidOut()
       const options = (testID: string) => screen.getByTestId(testID, { includeHiddenElements: true }).props
       const below = within(screen.getByTestId('loadout-options'))
+      for (const card of ['packs-card', 'keep-words-card']) expect(StyleSheet.flatten(options(card).style)).toMatchObject({ flexGrow: 1 })
 
       expect(options('loadout-write-options')).toMatchObject({ pointerEvents: 'auto', 'aria-hidden': false })
       expect(options('loadout-packs-options')).toMatchObject({ pointerEvents: 'none', 'aria-hidden': true })
@@ -737,14 +736,16 @@ describe('the Pass & Play page', () => {
 
   describe('where the words come from', () => {
     // Written words are drawn in art too, so the art row stays when the difficulty's pill goes.
+    // A line saying how writing plays holds Difficulty's place, so the switch moves nothing.
     it('starts on the players writing, with the art row and Keep Each Word, and no packs or difficulty', async () => {
       const screen = await renderLoadout()
 
       expect(session().source).toBe('write')
       expect(screen.getByLabelText('Classic art')).toBeTruthy()
       expect(screen.getByText('Keep Each Word')).toBeTruthy()
+      expect(screen.getByText('Players take turns writing words for each other.')).toBeTruthy()
       expect(screen.queryByTestId('packs-card')).toBeNull()
-      expect(screen.queryByLabelText('ANY')).toBeNull()
+      expect(screen.queryByLabelText('DIFFICULTY, ANY')).toBeNull()
     })
 
     it("switches to the packs, showing the focused player's difficulty and packs, and back, kept with the table", async () => {
@@ -753,9 +754,10 @@ describe('the Pass & Play page', () => {
       await fireEvent.press(screen.getByText('Packs'))
 
       expect(session().source).toBe('packs')
-      expect(screen.getByLabelText('ANY')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, ANY')).toBeTruthy()
       expect(screen.getByText(`All ${MANIFEST.length} packs`)).toBeTruthy()
       expect(screen.queryByText('Keep Each Word')).toBeNull()
+      expect(screen.queryByText('Players take turns writing words for each other.')).toBeNull()
 
       await fireEvent.press(screen.getByText('Write-In'))
       expect(session().source).toBe('write')
@@ -1012,7 +1014,7 @@ describe('the Pass & Play page', () => {
       await pressStrip()
       expect(screen.queryByText('Manage')).toBeNull()
 
-      await fireEvent.press(screen.getByLabelText('ANY'))
+      await fireEvent.press(screen.getByLabelText('DIFFICULTY, ANY'))
       expect(screen.getByText('Medium')).toBeTruthy()
       await pressStrip()
       expect(screen.queryByText('Medium')).toBeNull()

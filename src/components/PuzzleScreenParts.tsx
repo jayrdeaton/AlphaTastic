@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native'
 import { Portal, Text, useTheme } from 'react-native-paper'
 
 import { DEFAULT_CELEBRATION } from '@/effects/registry'
-import { goHome, safeBack } from '@/utils/navigation'
+import { safeBack } from '@/utils/navigation'
 import { gameShell } from '@/utils/webLayout'
 
 import { ReadableAccent } from './ReadableAccent'
@@ -20,7 +20,8 @@ export const formatElapsed = (ms: number): string => {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 }
 
-// How a puzzle game ends: fireworks, then a card with Next Puzzle and Home. Mounted once it's solved.
+// How a puzzle game ends: fireworks, then a card with Next Puzzle and Back (to its setup screen, as the
+// header's arrow goes). Mounted once it's solved.
 export const PuzzleSolvedCelebration = ({ message, onNext }: { message: string; onNext: () => void }): JSX.Element => {
   const theme = useTheme()
   const [cardVisible, setCardVisible] = useState(false)
@@ -39,7 +40,7 @@ export const PuzzleSolvedCelebration = ({ message, onNext }: { message: string; 
         </Portal>
       ) : null}
       <ReadableAccent>
-        <ConfirmDialog visible={cardVisible} icon='trophy' title='Puzzle Solved!' message={message} confirmLabel='Next Puzzle' cancelLabel='Home' onConfirm={onNext} onCancel={goHome} />
+        <ConfirmDialog visible={cardVisible} icon='trophy' title='Puzzle Solved!' message={message} confirmLabel='Next Puzzle' cancelLabel='Back' onConfirm={onNext} onCancel={safeBack} />
       </ReadableAccent>
     </>
   )

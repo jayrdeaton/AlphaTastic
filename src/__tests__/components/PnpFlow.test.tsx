@@ -453,14 +453,14 @@ describe('GameScreen - pass and play', () => {
     expect(store.getState().round.activeMode).toBeNull()
   })
 
-  it('goes Home from the corner mid-round with the guesses saved for Continue', async () => {
+  it('steps back to the loadout from the corner mid-round with the guesses saved for Ready', async () => {
     const utils = await renderGame()
 
     await playThroughToRound(utils, 'CAT')
     await guess(utils, ['C', 'Z'])
-    await fireEvent.press(utils.getByLabelText('Home'))
+    await fireEvent.press(utils.getByLabelText('Back'))
 
-    expect(router.dismissTo).toHaveBeenCalledWith('/')
+    expect(router.dismissTo).toHaveBeenCalledWith(PNP_LOADOUT)
     expect(pnpRound()).toMatchObject({ phase: 'playing', id: 1, puzzle: savedCat, guessedLetters: ['C', 'Z'] })
   })
 

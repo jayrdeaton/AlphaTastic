@@ -710,19 +710,21 @@ describe('GameScreen (solo)', () => {
   // The solo game played from the Pass & Play door is the table's pack turns: PackTurns.test.tsx's.
 
   describe('leaving', () => {
-    // Home, not back: a launch can open straight into the game, with no loadout it came from.
-    it('goes Home from the corner: the keyboard down, the resume cleared, and a dismiss to Home that keeps the round', async () => {
+    // A back arrow to the loadout, as CardTastic's (Jay, 2026-11-19), not Home: dismissTo opens the
+    // loadout even when a launch resumed straight into the game with nothing beneath it.
+    it('steps back to the loadout from the corner: the keyboard down, the resume cleared, and a dismiss that keeps the round', async () => {
       const dismissKeyboard = jest.spyOn(Keyboard, 'dismiss')
       seedRound(savedPuzzle(), { guessedLetters: ['D'], hintRevealed: false })
       const screen = await renderScreen()
       expect(store.getState().round.activeMode).toBe('solo')
 
-      await fireEvent.press(screen.getByLabelText('Home'))
+      expect(screen.queryByLabelText('Home')).toBeNull()
+      await fireEvent.press(screen.getByLabelText('Back'))
 
       expect(dismissKeyboard).toHaveBeenCalled()
       expect(store.getState().round.activeMode).toBeNull()
       expect(router.dismissTo).toHaveBeenCalledTimes(1)
-      expect(router.dismissTo).toHaveBeenCalledWith('/')
+      expect(router.dismissTo).toHaveBeenCalledWith({ pathname: '/loadout/[game]', params: { game: 'hangman' } })
       // Left for later: the loadout offers Continue.
       expect(solo()).toMatchObject({ puzzle: { phrase: 'DOG' }, guessedLetters: ['D'] })
     })
@@ -785,14 +787,14 @@ describe('GameScreen (solo)', () => {
         jest.useFakeTimers()
       })
 
-      // Both ways out, the Home corner and then Android's back button. Back is still handled (so
+      // Both ways out, the corner's back arrow and then Android's back button. Back is still handled (so
       // Android doesn't close the app instead), it just does nothing.
       const tryToLeave = async (screen: Screen, pressBack: () => Promise<boolean>) => {
-        await fireEvent.press(screen.getByLabelText('Home'))
+        await fireEvent.press(screen.getByLabelText('Back'))
         expect(await pressBack()).toBe(true)
       }
 
-      it('stays on a won round through its celebration, then goes Home from the corner once Next has drawn the next puzzle', async () => {
+      it('stays on a won round through its celebration, then steps back from the corner once Next has drawn the next puzzle', async () => {
         const pressBack = installBackHandler()
         seedRound(savedPuzzle())
         const screen = await renderScreen()
@@ -817,9 +819,9 @@ describe('GameScreen (solo)', () => {
         expect(mockResolvePuzzle).toHaveBeenCalledTimes(1)
         expect(revealed(screen)).toEqual(['_', '_', '_', '_'])
 
-        await fireEvent.press(screen.getByLabelText('Home'))
+        await fireEvent.press(screen.getByLabelText('Back'))
         expect(router.dismissTo).toHaveBeenCalledTimes(1)
-        expect(router.dismissTo).toHaveBeenCalledWith('/')
+        expect(router.dismissTo).toHaveBeenCalledWith({ pathname: '/loadout/[game]', params: { game: 'hangman' } })
         expect(store.getState().round.activeMode).toBeNull()
       })
 

@@ -226,12 +226,16 @@ describe('LoadoutScreen (Single Player)', () => {
   })
 
   // Condensed like the other games' loadouts (Jay, 2026-10-18).
-  it('is the player picker, the art row, Difficulty with the reset, the packs card and Ready, and nothing of the old page', async () => {
+  // No reset (Jay, 2026-11-19): it was the settings row's only other control, and a source switch
+  // changed the row's height around it. A table of one only plays from the packs, so it has no Keep
+  // Each Word card behind its packs card.
+  it('is the player picker, the art row, Difficulty, the packs card and Ready, and nothing of the old page', async () => {
     const screen = await renderLoadout()
 
     expect(screen.getByLabelText(`${DEFAULT_MODE.label} art`)).toBeTruthy()
-    expect(screen.getByLabelText('ANY')).toBeTruthy()
-    expect(screen.getByLabelText('Reset settings')).toBeTruthy()
+    expect(screen.getByLabelText('DIFFICULTY, ANY')).toBeTruthy()
+    expect(screen.queryByLabelText('Reset settings')).toBeNull()
+    expect(screen.queryByTestId('keep-words-card', { includeHiddenElements: true })).toBeNull()
     expect(screen.getByText(`All ${N} packs`)).toBeTruthy()
     expect(screen.getByLabelText('PLAYER 1')).toBeTruthy()
     expect(ready(screen)).toBeTruthy()
@@ -399,25 +403,26 @@ describe('LoadoutScreen (Single Player)', () => {
     it("shows the player's difficulty, and saves a pick from its popover as theirs", async () => {
       const screen = await renderLoadout()
 
-      await fireEvent.press(screen.getByLabelText('ANY'))
+      await fireEvent.press(screen.getByLabelText('DIFFICULTY, ANY'))
       for (const tier of ['Any', 'Easy', 'Medium', 'Hard']) expect(screen.getByText(tier)).toBeTruthy()
       await fireEvent.press(screen.getByText('Hard'))
 
-      expect(screen.getByLabelText('HARD')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, HARD')).toBeTruthy()
       // Picking closes the popover.
       expect(screen.queryByText('Medium')).toBeNull()
       expect(store.getState().playerSettings[GUEST_PLAYER_KEY]).toEqual({ modeId: DEFAULT_MODE.id, difficulty: 'hard', packKeys: null })
     })
 
-    // Its popover drops down over the packs card and Ready, which come after it on the page.
+    // Its popover drops down over the packs card and Ready, which come after it on the page: over the
+    // chosen card's layer too, lifted inside the cards' cell.
     it('lifts its row over the rest of the page while its popover is open', async () => {
       const screen = await renderLoadout()
       const rowZIndex = () => StyleSheet.flatten(screen.getByTestId('loadout-settings-row').props.style).zIndex
 
       expect(rowZIndex()).toBeUndefined()
-      await fireEvent.press(screen.getByLabelText('ANY'))
-      expect(rowZIndex()).toBe(1)
-      await fireEvent.press(screen.getByLabelText('ANY'))
+      await fireEvent.press(screen.getByLabelText('DIFFICULTY, ANY'))
+      expect(rowZIndex()).toBe(2)
+      await fireEvent.press(screen.getByLabelText('DIFFICULTY, ANY'))
       expect(rowZIndex()).toBeUndefined()
     })
 
@@ -431,16 +436,16 @@ describe('LoadoutScreen (Single Player)', () => {
           .queryAll((node) => StyleSheet.flatten(node.props.style)?.backgroundColor !== undefined)
           .map((node) => StyleSheet.flatten(node.props.style).backgroundColor)
 
-      expect(chipFills('ANY')).toContain(theme.colors.primary)
+      expect(chipFills('DIFFICULTY, ANY')).toContain(theme.colors.primary)
 
-      await fireEvent.press(screen.getByLabelText('ANY'))
+      await fireEvent.press(screen.getByLabelText('DIFFICULTY, ANY'))
       await fireEvent.press(screen.getByText('Easy'))
-      expect(chipFills('EASY')).toContain(theme.colors.success)
+      expect(chipFills('DIFFICULTY, EASY')).toContain(theme.colors.success)
 
-      await fireEvent.press(screen.getByLabelText('EASY'))
+      await fireEvent.press(screen.getByLabelText('DIFFICULTY, EASY'))
       await fireEvent.press(screen.getByText('Hard'))
-      expect(chipFills('HARD')).toContain(theme.colors.danger)
-      expect(svgFills(screen.getByLabelText('HARD').toJSON()).Path).toEqual([])
+      expect(chipFills('DIFFICULTY, HARD')).toContain(theme.colors.danger)
+      expect(svgFills(screen.getByLabelText('DIFFICULTY, HARD').toJSON()).Path).toEqual([])
     })
 
     // @tastic/profile 0.16.1's option colors: the picked row fills with the picker's color instead.
@@ -451,7 +456,7 @@ describe('LoadoutScreen (Single Player)', () => {
       const rowIconColor = (source: string) => mockIcon.mock.calls.filter(([props]) => props.source === source && props.size === 13).at(-1)?.[0].color
 
       mockIcon.mockClear()
-      await fireEvent.press(screen.getByLabelText('ANY'))
+      await fireEvent.press(screen.getByLabelText('DIFFICULTY, ANY'))
 
       expect(rowIconColor('signal-cellular-1')).toBe(theme.colors.success)
       expect(rowIconColor('signal-cellular-2')).toBe(theme.colors.warning)
@@ -460,7 +465,7 @@ describe('LoadoutScreen (Single Player)', () => {
 
       await fireEvent.press(screen.getByText('Hard'))
       mockIcon.mockClear()
-      await fireEvent.press(screen.getByLabelText('HARD'))
+      await fireEvent.press(screen.getByLabelText('DIFFICULTY, HARD'))
 
       expect(rowIconColor('all-inclusive')).toBe(theme.colors.primary)
       expect(rowIconColor('signal-cellular-3')).not.toBe(theme.colors.danger)
@@ -469,7 +474,7 @@ describe('LoadoutScreen (Single Player)', () => {
     it('closes on a press away, changing nothing', async () => {
       const screen = await renderLoadout()
 
-      await fireEvent.press(screen.getByLabelText('ANY'))
+      await fireEvent.press(screen.getByLabelText('DIFFICULTY, ANY'))
       await fireEvent.press(screen.getByLabelText('Dismiss'))
 
       expect(screen.queryByText('Medium')).toBeNull()
@@ -573,7 +578,7 @@ describe('LoadoutScreen (Single Player)', () => {
     // A category with two packs in it, and a pack of another.
     const pair = byGroup(PACK_A.group).slice(0, 2)
     const other = MANIFEST.find((item) => item.group !== PACK_A.group)!
-    const cardFill = (screen: Screen) => StyleSheet.flatten(screen.getByTestId('packs-card-container').props.style).backgroundColor
+    const cardFill = (screen: Screen) => StyleSheet.flatten(screen.getByTestId('packs-card').props.style).backgroundColor
     const select = (packKeys: string[] | null) => store.dispatch(playerSettingsActions.setPackKeys({ playerKey: GUEST_PLAYER_KEY, packKeys }))
 
     it.each([
@@ -601,65 +606,6 @@ describe('LoadoutScreen (Single Player)', () => {
       expect(badge().icon).toBe('format-list-checks')
       expect(StyleSheet.flatten(badge().style).backgroundColor).toBe(screen.theme.colors.tertiary)
       expect(cardFill(screen)).toBe(screen.theme.colors.tertiaryContainer)
-    })
-  })
-
-  describe('reset', () => {
-    const reset = (screen: Screen) => screen.getByLabelText('Reset settings')
-
-    it('is off while the art, difficulty and packs are all at their defaults', async () => {
-      const screen = await renderLoadout()
-
-      expect(reset(screen).props.accessibilityState?.disabled).toBe(true)
-    })
-
-    it.each([
-      ['an art picked', () => store.dispatch(playerSettingsActions.setMode({ playerKey: GUEST_PLAYER_KEY, modeId: robotMode.id }))],
-      ['a difficulty picked', () => store.dispatch(playerSettingsActions.setDifficulty({ playerKey: GUEST_PLAYER_KEY, difficulty: 'easy' }))],
-      ['a pack left out', () => store.dispatch(playerSettingsActions.setPackKeys({ playerKey: GUEST_PLAYER_KEY, packKeys: MANIFEST.slice(1).map((item) => item.key) }))]
-    ])('turns on with %s', async (_change, change) => {
-      change()
-      const screen = await renderLoadout()
-
-      expect(reset(screen).props.accessibilityState?.disabled).toBe(false)
-    })
-
-    it('asks first, and Cancel changes nothing', async () => {
-      store.dispatch(playerSettingsActions.setDifficulty({ playerKey: GUEST_PLAYER_KEY, difficulty: 'hard' }))
-      store.dispatch(playerSettingsActions.setPackKeys({ playerKey: GUEST_PLAYER_KEY, packKeys: [PACK_A.key] }))
-      const before = store.getState().playerSettings[GUEST_PLAYER_KEY]
-      const screen = await renderLoadout()
-
-      await fireEvent.press(reset(screen))
-      expect(screen.getByText('Reset Settings?')).toBeTruthy()
-      await fireEvent.press(screen.getByText('Cancel'))
-
-      expect(screen.queryByText('Reset Settings?')).toBeNull()
-      expect(store.getState().playerSettings[GUEST_PLAYER_KEY]).toEqual(before)
-    })
-
-    it('puts back the default art, Any and every pack once confirmed, redrawing the round waiting', async () => {
-      seedSoloRound(['D'])
-      store.dispatch(playerSettingsActions.setMode({ playerKey: GUEST_PLAYER_KEY, modeId: 'letters' }))
-      store.dispatch(roundActions.setRoundArt({ playerKey: GUEST_PLAYER_KEY, modeId: 'letters' }))
-      store.dispatch(playerSettingsActions.setDifficulty({ playerKey: GUEST_PLAYER_KEY, difficulty: 'hard' }))
-      store.dispatch(playerSettingsActions.setPackKeys({ playerKey: GUEST_PLAYER_KEY, packKeys: [PACK_A.key] }))
-      const screen = await renderLoadout()
-      expect(screen.getByText(`1 of ${N} packs`)).toBeTruthy()
-
-      await fireEvent.press(reset(screen))
-      expect(screen.getByText(`The art goes back to ${DEFAULT_MODE.label}, the difficulty to Any, and every pack is selected again.`)).toBeTruthy()
-      await fireEvent.press(screen.getByText('Reset'))
-
-      // Every pack is stored as every pack (null), so new ones join it.
-      expect(store.getState().playerSettings[GUEST_PLAYER_KEY]).toEqual({ modeId: DEFAULT_MODE.id, difficulty: 'any', packKeys: null })
-      // The art is picked the way any art is, so the round waiting follows, guesses and all.
-      expect(soloRound().puzzle?.modeId).toBe(DEFAULT_MODE.id)
-      expect(soloRound().guessedLetters).toEqual(['D'])
-      expect(screen.queryByText('Reset Settings?')).toBeNull()
-      expect(screen.getByLabelText('ANY')).toBeTruthy()
-      expect(screen.getByText(`All ${N} packs`)).toBeTruthy()
-      expect(reset(screen).props.accessibilityState?.disabled).toBe(true)
     })
   })
 
@@ -834,7 +780,7 @@ describe('LoadoutScreen (Single Player)', () => {
       expect(store.getState().activePlayer.profileId).toBe(ALICE.id)
       expect(screen.getByLabelText('ALICE')).toBeTruthy()
       expect(screen.queryByText('Manage')).toBeNull()
-      expect(screen.getByLabelText('HARD')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, HARD')).toBeTruthy()
       expect(screen.getByText(`1 of ${N} packs`)).toBeTruthy()
       // The guest's waiting round isn't theirs.
       expect(ready(screen).props.accessibilityHint).toBe('Starts a new puzzle')
@@ -845,7 +791,7 @@ describe('LoadoutScreen (Single Player)', () => {
       await fireEvent.press(screen.getByText('Guest'))
 
       expect(store.getState().activePlayer.profileId).toBeNull()
-      expect(screen.getByLabelText('ANY')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, ANY')).toBeTruthy()
       expect(ready(screen).props.accessibilityHint).toBe('Continues your puzzle')
     })
 
@@ -901,7 +847,7 @@ describe('LoadoutScreen (Single Player)', () => {
     // 2026-10-18: a tap between Home and the cog left the popover open).
     it.each([
       ['the player picker', 'PLAYER 1', 'Manage'],
-      ['Difficulty', 'ANY', 'Medium']
+      ['Difficulty', 'DIFFICULTY, ANY', 'Medium']
     ])("closes %s's popover on a press in the corners' strip, which has nothing to press with none open", async (_picker, trigger, row) => {
       const screen = await renderLoadout()
       const strip = () => within(screen.getByTestId('loadout-corner-press-away', { includeHiddenElements: true }))
@@ -920,7 +866,7 @@ describe('LoadoutScreen (Single Player)', () => {
       const screen = await renderLoadout()
 
       await open(screen)
-      await fireEvent.press(screen.getByLabelText('ANY'))
+      await fireEvent.press(screen.getByLabelText('DIFFICULTY, ANY'))
 
       expect(screen.queryByText('Manage')).toBeNull()
       expect(screen.getByText('Medium')).toBeTruthy()
@@ -958,12 +904,12 @@ describe('LoadoutScreen (Single Player)', () => {
       store.dispatch(playerSettingsActions.setDifficulty({ playerKey: OTHER, difficulty: 'hard' }))
       store.dispatch(playerSettingsActions.setPackKeys({ playerKey: OTHER, packKeys: [PACK_B.key] }))
       const screen = await renderLoadout()
-      expect(screen.getByLabelText('ANY')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, ANY')).toBeTruthy()
       expect(screen.getByText(`All ${N} packs`)).toBeTruthy()
 
       await setActivePlayer(OTHER)
 
-      expect(screen.getByLabelText('HARD')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, HARD')).toBeTruthy()
       expect(screen.getByText(`1 of ${N} packs`)).toBeTruthy()
       expect(screen.getByText(PACK_B.label)).toBeTruthy()
     })
@@ -1006,19 +952,6 @@ describe('LoadoutScreen (Single Player)', () => {
       expect(soloRound(OTHER).puzzle?.modeId).toBe(DEFAULT_MODE.id)
       expect(store.getState().playerSettings[OTHER]).toBeUndefined()
     })
-
-    it('reset, which leaves every other player as they were', async () => {
-      store.dispatch(playerSettingsActions.setDifficulty({ playerKey: GUEST_PLAYER_KEY, difficulty: 'hard' }))
-      store.dispatch(playerSettingsActions.setDifficulty({ playerKey: OTHER, difficulty: 'easy' }))
-      store.dispatch(activePlayerActions.setActivePlayer(OTHER))
-      const screen = await renderLoadout()
-
-      await fireEvent.press(screen.getByLabelText('Reset settings'))
-      await fireEvent.press(screen.getByText('Reset'))
-
-      expect(store.getState().playerSettings[OTHER]?.difficulty).toBe('any')
-      expect(store.getState().playerSettings[GUEST_PLAYER_KEY]?.difficulty).toBe('hard')
-    })
   })
 
   describe('header and Android back', () => {
@@ -1028,16 +961,18 @@ describe('LoadoutScreen (Single Player)', () => {
       const screen = await renderLoadout()
 
       expect(screen.queryByText('Single Player')).toBeNull()
-      expect(screen.queryByLabelText('Back')).toBeNull()
     })
 
-    it('goes Home from the Home corner', async () => {
+    // A back arrow, as the shell's own setup page and CardTastic's have (Jay, 2026-11-19), not Home.
+    // The router mock's canGoBack is false, so safeBack replaces this page with Home.
+    it('steps back to Home from the corner', async () => {
       const screen = await renderLoadout()
+      expect(screen.queryByLabelText('Home')).toBeNull()
 
-      await fireEvent.press(screen.getByLabelText('Home'))
+      await fireEvent.press(screen.getByLabelText('Back'))
 
-      expect(mockRouter.dismissTo).toHaveBeenCalledTimes(1)
-      expect(mockRouter.dismissTo).toHaveBeenCalledWith('/')
+      expect(mockRouter.replace).toHaveBeenCalledTimes(1)
+      expect(mockRouter.replace).toHaveBeenCalledWith('/')
     })
 
     it('opens Settings from the cog', async () => {
@@ -1091,47 +1026,25 @@ describe('LoadoutScreen (Single Player)', () => {
 
       // Not the page's to close: each adds its own listener as it opens, after the page's, so it runs
       // first.
-      it.each([
-        ['the Settings sheet', (screen: Screen) => fireEvent.press(screen.getByLabelText('Settings')), (screen: Screen) => screen.queryByTestId('dialog')],
-        [
-          'the reset confirm',
-          async (screen: Screen) => {
-            await act(async () => {
-              store.dispatch(playerSettingsActions.setDifficulty({ playerKey: GUEST_PLAYER_KEY, difficulty: 'hard' }))
-            })
-            await fireEvent.press(screen.getByLabelText('Reset settings'))
-          },
-          (screen: Screen) => screen.queryByText('Reset Settings?')
-        ]
-      ])('closes %s first, then goes back', async (_dialog, open, find) => {
+      it('closes the Settings sheet first, then goes back', async () => {
         const screen = await renderLoadout()
+        const find = () => screen.queryByTestId('dialog')
 
-        await open(screen)
-        expect(find(screen)).toBeTruthy()
+        await fireEvent.press(screen.getByLabelText('Settings'))
+        expect(find()).toBeTruthy()
 
         expect(await pressAndroidBack()).toBe(true)
         expect(mockRouter.replace).not.toHaveBeenCalled()
-        await waitFor(() => expect(find(screen)).toBeNull())
+        await waitFor(() => expect(find()).toBeNull())
 
         expect(await pressAndroidBack()).toBe(true)
         expect(mockRouter.replace).toHaveBeenCalledWith('/')
       })
 
-      // The reset itself didn't happen: back is Cancel.
-      it('leaves the settings alone when back cancels the reset confirm', async () => {
-        store.dispatch(playerSettingsActions.setDifficulty({ playerKey: GUEST_PLAYER_KEY, difficulty: 'hard' }))
-        const screen = await renderLoadout()
-
-        await fireEvent.press(screen.getByLabelText('Reset settings'))
-        await pressAndroidBack()
-
-        expect(store.getState().playerSettings[GUEST_PLAYER_KEY]?.difficulty).toBe('hard')
-      })
-
       // The page's own, through its one listener: an open picker's popover closes before anything else.
       it.each([
         ['the player picker', 'PLAYER 1', 'Manage'],
-        ['Difficulty', 'ANY', 'Medium']
+        ['Difficulty', 'DIFFICULTY, ANY', 'Medium']
       ])("closes %s's popover first, then goes back", async (_picker, trigger, row) => {
         store.dispatch(profilesActions.setAll([ALICE]))
         const measure = answerMeasureInWindow()
@@ -1277,7 +1190,7 @@ describe('LoadoutScreen (Single Player)', () => {
 
         it.each([
           ['the player picker', 'PLAYER 1', 'Manage'],
-          ['Difficulty', 'ANY', 'Medium']
+          ['Difficulty', 'DIFFICULTY, ANY', 'Medium']
         ])("closes %s's popover, so coming back finds the page itself", async (_picker, trigger, row) => {
           store.dispatch(profilesActions.setAll([ALICE]))
           const measure = answerMeasureInWindow()

@@ -14,7 +14,7 @@ const mockHaptics = { correctGuess: jest.fn(), win: jest.fn() }
 const mockSounds = { playCorrect: jest.fn(), playWin: jest.fn() }
 jest.mock('@/hooks/useGameHaptics', () => ({ useGameHaptics: () => mockHaptics }))
 jest.mock('@/hooks/useSoundEffects', () => ({ useSoundEffects: () => mockSounds }))
-jest.mock('@/utils/navigation', () => ({ ...jest.requireActual('@/utils/navigation'), safeBack: jest.fn(), goHome: jest.fn() }))
+jest.mock('@/utils/navigation', () => ({ ...jest.requireActual('@/utils/navigation'), safeBack: jest.fn() }))
 jest.mock('@/effects/registry', () => {
   const { createElement } = jest.requireActual('react')
   const { Text } = jest.requireActual('react-native')

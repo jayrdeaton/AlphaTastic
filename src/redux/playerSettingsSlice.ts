@@ -78,10 +78,6 @@ const playerSettingsSlice = createSlice({
       const entry = entryFor(state, playerKey)
       entry.puzzles = { ...entry.puzzles, [game]: { ...entry.puzzles?.[game], [key]: value } }
     },
-    resetPuzzleOptions: (state, action: PlayerPayload<{ game: PuzzleGameId }>) => {
-      const entry = state[action.payload.playerKey]
-      if (entry?.puzzles) delete entry.puzzles[action.payload.game]
-    },
     // A forgotten profile's picks (see usePlayerData's forgetPlayer).
     removePlayer: (state, action: PayloadAction<PlayerKey>) => {
       delete state[action.payload]

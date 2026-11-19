@@ -5,7 +5,7 @@ import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native'
 import { Icon, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { titleType } from '@/constants/typography'
+import { actionType, titleType } from '@/constants/typography'
 import { usePuzzleUnlocks } from '@/hooks/usePuzzleUnlocks'
 import type { GameMode } from '@/types/gameModes'
 import type { GameStartPayload } from '@/types/gameSession'
@@ -392,7 +392,7 @@ export const PacksScreen = memo(({ visible, onDismiss, selectedKeys, onChangeSel
               the one line every eye lands on before closing, the way Ready ends the loadout. With none
               selected it's off and says what it needs. */}
           <View style={[styles.footer, { paddingBottom: 12 + insets.bottom }]}>
-            <Button mode='contained' icon={noneSelected ? undefined : 'check'} onPress={onDismiss} disabled={noneSelected} contentStyle={styles.doneContent} labelStyle={styles.doneLabel}>
+            <Button mode='contained' icon={noneSelected ? undefined : 'check'} onPress={onDismiss} disabled={noneSelected} contentStyle={styles.doneContent} labelStyle={actionType}>
               {noneSelected ? 'Choose at least one pack' : `Done (${commaString(selectedPackKeysInManifest.length)} of ${commaString(manifest.length)})`}
             </Button>
           </View>
@@ -415,7 +415,6 @@ const styles = StyleSheet.create({
   customRows: { gap: GAP },
   // Ready's size on the loadout.
   doneContent: { height: 48 },
-  doneLabel: { fontSize: 16, letterSpacing: 1 },
   emptyText: { marginBottom: 4, opacity: 0.7 },
   // My Packs, the first thing under the header.
   firstSection: { marginTop: 4 },

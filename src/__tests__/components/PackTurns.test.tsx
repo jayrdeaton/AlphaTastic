@@ -454,7 +454,7 @@ describe('leaving, and hidden', () => {
     const screen = await renderTurns()
     await settle()
 
-    await fireEvent.press(screen.getByLabelText('Home'))
+    await fireEvent.press(screen.getByLabelText('Back'))
     mockUseIsFocused.mockImplementation(() => false)
     await act(async () => {
       store.dispatch(activePlayerActions.setActivePlayer(BOB.id))

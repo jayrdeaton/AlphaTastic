@@ -287,7 +287,7 @@ describe('PackPuzzleList', () => {
       const screen = await render(<ListWithUnlocks packKey={smallestPack().key} />)
 
       expect(screen.getByLabelText('ALL PUZZLES')).toBeTruthy()
-      expect(screen.getByLabelText('ANY')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, ANY')).toBeTruthy()
     })
 
     it('the status picker offers All puzzles, Unsolved and Solved', async () => {
@@ -302,7 +302,7 @@ describe('PackPuzzleList', () => {
       const screen = await render(<ListWithUnlocks packKey={smallestPack().key} />)
 
       await fireEvent.press(screen.getByLabelText('ALL PUZZLES'))
-      await fireEvent.press(screen.getByLabelText('ANY'))
+      await fireEvent.press(screen.getByLabelText('DIFFICULTY, ANY'))
 
       expect(screen.queryByText('Unsolved')).toBeNull()
       expect(screen.getByText('Any')).toBeTruthy()
@@ -352,12 +352,12 @@ describe('PackPuzzleList', () => {
       if (!easyPuzzle || !otherPuzzle) throw new Error('expected both an easy and a non-easy puzzle')
       const screen = await render(<ListWithUnlocks packKey={pack.key} />)
 
-      await fireEvent.press(screen.getByLabelText('ANY'))
+      await fireEvent.press(screen.getByLabelText('DIFFICULTY, ANY'))
       await pressOption(screen, 'Easy')
 
       expect(await screen.findByTestId(`puzzle-row-${easyPuzzle.id}`)).toBeTruthy()
       expect(screen.queryByTestId(`puzzle-row-${otherPuzzle.id}`)).toBeNull()
-      expect(screen.getByLabelText('EASY')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, EASY')).toBeTruthy()
     })
 
     it('loads a previously persisted filter preference from storage on mount', async () => {
@@ -370,7 +370,7 @@ describe('PackPuzzleList', () => {
 
       expect(await screen.findByTestId(`puzzle-row-${hardPuzzle.id}`)).toBeTruthy()
       expect(screen.queryByTestId(`puzzle-row-${easyPuzzle.id}`)).toBeNull()
-      expect(screen.getByLabelText('HARD')).toBeTruthy()
+      expect(screen.getByLabelText('DIFFICULTY, HARD')).toBeTruthy()
     })
 
     it('persists a newly picked status filter to storage, so a pack opened afterward keeps the same choice', async () => {
@@ -387,7 +387,7 @@ describe('PackPuzzleList', () => {
       seedPrefs({ difficultyFilter: 'easy' })
       const screen = await render(<ListWithUnlocks packKey={packWithMixedDifficulty().key} />)
 
-      await fireEvent.press(await screen.findByLabelText('EASY'))
+      await fireEvent.press(await screen.findByLabelText('DIFFICULTY, EASY'))
       await pressOption(screen, 'Any')
 
       expect(JSON.parse(mockStore[PREFS_KEY])).toEqual({ statusFilter: 'all', difficultyFilter: 'all' })

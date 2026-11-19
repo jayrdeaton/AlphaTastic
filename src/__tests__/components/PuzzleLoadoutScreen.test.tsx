@@ -48,7 +48,7 @@ describe('the setup pages', () => {
       expect(router.push).toHaveBeenCalledWith(puzzleGameHref(game))
     })
 
-    it("saves a change as this player's, for this game alone, and resets it", async () => {
+    it("saves a change as this player's, for this game alone", async () => {
       const screen = await renderPuzzleGame(JUMBLE_GAME_ID)
 
       await fireEvent.press(screen.getByLabelText('5 ANSWERS'))
@@ -58,8 +58,7 @@ describe('the setup pages', () => {
       expect(store.getState().playerSettings[GUEST_PLAYER_KEY].difficulty).toBe('any')
       expect(screen.getByTestId('puzzle-summary')).toHaveTextContent('10 answers, up to 2 words and 12 letters')
 
-      await fireEvent.press(screen.getByLabelText('Reset settings'))
-      expect(screen.getByTestId('puzzle-summary')).toHaveTextContent('5 answers, up to 2 words and 12 letters')
+      expect(screen.queryByLabelText('Reset settings')).toBeNull()
     })
 
     it('has nothing to play with no pack selected', async () => {

@@ -10,8 +10,8 @@ import { GameScreen } from '@/components/GameScreen'
 import { GameVisual } from '@/components/GameVisual'
 import { HangmanStatsSections } from '@/components/HangmanStats'
 import { HANGMAN_GAME_ID } from '@/constants/games'
-import { usePuzzleDefaults } from '@/hooks/usePuzzleDefaults'
-import { DEFAULT_MODE } from '@/modes/registry'
+import { classicMode } from '@/modes/registry'
+import { SketchDrawnContext } from '@/modes/shared/sketchShapes'
 import { parsePlayMode } from '@/utils/navigation'
 
 import { OWN_LOADOUT } from './ownLoadout'
@@ -27,17 +27,18 @@ const HangmanPlayScreen = (): JSX.Element => {
   return <GameScreen key={`${mode}:${door}`} mode={mode} door={door} />
 }
 
-// Home's card: the active player's art, fully drawn, in their colors.
+// Home's card: Classic's gallows and figure, fully drawn and still, in the theme's colors (Jay,
+// 2026-11-19: the game's own picture, not whichever art the player picked, which showed some arts tiny
+// and drawing themselves in).
 const HangmanPreview = ({ width, height }: GamePreviewProps): JSX.Element => {
   const theme = useTheme()
   const { settings } = useThemeSettings()
-  const { mode } = usePuzzleDefaults()
-  // Letters Only has no drawing to show.
-  const art = mode.hasVisual === false ? DEFAULT_MODE : mode
   const colors = useMemo(() => [theme.colors.primary, theme.colors.secondary, theme.colors.tertiary], [theme.colors.primary, theme.colors.secondary, theme.colors.tertiary])
   return (
     <View style={[styles.preview, { width, height }]}>
-      <GameVisual mode={art} mistakes={art.maxMistakes} color={resolveSeedColor(settings.color)} colors={colors} started style={{ width: height, height }} />
+      <SketchDrawnContext.Provider value>
+        <GameVisual mode={classicMode} mistakes={classicMode.maxMistakes} color={resolveSeedColor(settings.color)} colors={colors} started style={{ width: height, height }} />
+      </SketchDrawnContext.Provider>
     </View>
   )
 }

@@ -7,7 +7,7 @@ import { Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { JUMBLE_GAME_ID, type PuzzleGameId, WORD_SEARCH_GAME_ID } from '@/constants/games'
-import { titleType } from '@/constants/typography'
+import { actionType, titleType } from '@/constants/typography'
 import { useCatalogActions, useCatalogVersions } from '@/hooks/useCatalog'
 import { usePackSelection } from '@/hooks/usePackSelection'
 import { usePuzzleDefaults } from '@/hooks/usePuzzleDefaults'
@@ -19,7 +19,7 @@ import { puzzleGameHref } from '@/utils/navigation'
 import { type CryptogramOptions, type JumbleOptions, PUZZLE_GAME_SETUP, type WordSearchOptions } from '@/utils/puzzleOptions'
 import { describeWordSearch } from '@/utils/wordSearch'
 
-import { isPlayerPickerOpen, PacksCard, PlayerRow, ResetSettingsButton, useSelectedPacks } from './LoadoutScreen'
+import { isPlayerPickerOpen, PacksCard, PlayerRow, useSelectedPacks } from './LoadoutScreen'
 import { CORNER_BAND_HEIGHT, LoadoutPressAway, LoadoutShell, useLoadoutPopoverHost } from './LoadoutShell'
 import { PacksScreen, type PacksScreenHandle } from './PacksScreen'
 import { PuzzleSettingPicker } from './PillPicker'
@@ -59,7 +59,7 @@ const PuzzleLoadoutPage = ({ game, onOpenPacks, coveredPacks }: { game: PuzzleGa
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const host = useLoadoutPopoverHost()
-  const { options, isDefault, setOption, reset } = usePuzzleOptions(game)
+  const { options, setOption } = usePuzzleOptions(game)
   const { selectedPacks, manifest, totalUnlocked, totalAvailable, overallProgress } = coveredPacks
   const values = options as unknown as Record<string, string>
   const padding = { paddingTop: insets.top + CORNER_BAND_HEIGHT + GAP / 2, paddingBottom: insets.bottom + GAP / 2 }
@@ -81,11 +81,10 @@ const PuzzleLoadoutPage = ({ game, onOpenPacks, coveredPacks }: { game: PuzzleGa
           <Text testID='puzzle-summary' variant='bodySmall' style={[styles.summary, { color: theme.colors.onSurfaceVariant }]}>
             {describe(game, options)}
           </Text>
-          <ResetSettingsButton disabled={isDefault} onPress={reset} />
         </View>
       </Group>
       <PacksCard packs={selectedPacks} total={manifest.length} progress={overallProgress} unlocked={totalUnlocked} available={totalAvailable} onPress={onOpenPacks} />
-      <Button mode='contained' icon='play' onPress={() => router.push(puzzleGameHref(game))} disabled={selectedPacks.length === 0} accessibilityHint='Starts a new puzzle' style={styles.ready} contentStyle={styles.readyContent} labelStyle={styles.readyLabel}>
+      <Button mode='contained' icon='play' onPress={() => router.push(puzzleGameHref(game))} disabled={selectedPacks.length === 0} accessibilityHint='Starts a new puzzle' style={styles.ready} contentStyle={styles.readyContent} labelStyle={actionType}>
         Ready
       </Button>
     </FadingScrollView>
@@ -130,8 +129,7 @@ const styles = StyleSheet.create({
   pressAway: { zIndex: 1 },
   ready: { alignSelf: 'stretch' },
   readyContent: { height: 48 },
-  readyLabel: { fontSize: 16, letterSpacing: 1 },
-  summary: { flex: 1 },
+  summary: { flex: 1, textAlign: 'center' },
   summaryRow: { alignItems: 'center', alignSelf: 'stretch', flexDirection: 'row', gap: 8, marginTop: 4 },
   title: { height: 48, justifyContent: 'center', maxWidth: 240 },
   titleText: { fontWeight: '700' }

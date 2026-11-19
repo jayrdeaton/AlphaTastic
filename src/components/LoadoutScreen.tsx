@@ -1,16 +1,17 @@
 import { FadingScrollView } from '@rific/auto-paper'
-import { Button, Card, IconButton, SegmentedButtons, Switch } from '@rific/feedback-press'
+import { Button, IconButton, Pressable, type PressableProps, SegmentedButtons, Switch } from '@rific/feedback-press'
 import { ConfirmDialog, WELL_SHADOW } from '@tastic/hud/chrome'
 import { type Profile } from '@tastic/profile'
 import { router, useIsFocused } from 'expo-router'
 import { JSX, memo, type ReactNode, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AccessibilityInfo, type LayoutChangeEvent, Platform, StyleSheet, useWindowDimensions, View, type ViewStyle } from 'react-native'
 import { Avatar, Icon, ProgressBar, Text, useTheme } from 'react-native-paper'
-import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 
 import { REFLOW_EASING, REFLOW_MS, SOURCE_FADE_MS } from '@/constants/loadoutMotion'
+import { actionType, labelType } from '@/constants/typography'
 import { useActivePlayer } from '@/hooks/useActivePlayer'
 import { useAutoSaveCustom } from '@/hooks/useAutoSaveCustom'
 import { useCatalogActions, useCatalogVersions } from '@/hooks/useCatalog'
@@ -22,7 +23,6 @@ import { usePuzzleDefaults } from '@/hooks/usePuzzleDefaults'
 import { usePuzzleUnlocks } from '@/hooks/usePuzzleUnlocks'
 import { useSelectArt } from '@/hooks/useSelectArt'
 import { useStartSolo } from '@/hooks/useStartSolo'
-import { DEFAULT_MODE } from '@/modes/registry'
 import type { DifficultyFilter } from '@/redux/playerSettingsSlice'
 import { roundActions, selectSoloRound } from '@/redux/roundSlice'
 import type { RootState } from '@/redux/store'
@@ -53,19 +53,32 @@ import { isSeatPickerOpen, SeatsRow } from './SeatsRow'
 export const DIFFICULTY_PICKER_ID = 'loadout-difficulty'
 const PLAYER_PICKER_ID = `${PLAYER_PICKER_ID_PREFIX}-profile`
 
-// The fleet's black or white, as the pickers draw their name and chevron.
-const inkFor = (dark: boolean) => (dark ? '#FFFFFF' : '#000000')
-
 // The packs card's names line: two lines of it at most, across the card inside the page's gutters
 // (the game's 480pt column on the web), its padding, the icon and the chevron.
 const PACK_NAMES_LINES = 2
 const PACK_NAMES_INSET = 2 * 16 + 2 * 16 + 40 + 12 + 24 + 12
 const MAX_PAGE_WIDTH = 480
-// The names are the card's title now, in titleMedium's bolder, wider 16pt type.
-const TITLE_CHAR_WIDTH = 8.6
+// The names are the card's title, in the pills' lettering (labelType: the sketch font's heavier pen, in
+// capitals): its capitals average about 0.62 of the type's size with the spaces between words, counted
+// a little wide, as packNamesBudget's own default is.
+const TITLE_CHAR_WIDTH = 0.66 * (labelType.fontSize ?? 14)
 
 // The packs card's bar shows from 1% (Jay, 2026-10-18), where its fill starts to show.
 const MIN_SHOWN_PROGRESS = 0.01
+
+// One of the page's cards (the packs card, Keep Each Word): a raised, rounded surface in `color`, the
+// whole of it one press. Drawn here rather than with Paper's Card, whose press area is only as tall as
+// its content, so a card stretched to fill the word sources' cell (`fill`, see SourceSwap) would have
+// had a band at each edge that took no taps.
+type PageCardProps = Omit<PressableProps, 'children' | 'style'> & { color: string; fill: boolean; children: ReactNode }
+const PageCard = ({ color, fill, children, ...props }: PageCardProps): JSX.Element => {
+  const theme = useTheme()
+  return (
+    <Pressable {...props} style={[styles.card, styles.cardSurface, { backgroundColor: color, borderRadius: 3 * theme.roundness }, fill && styles.cardFill]}>
+      <View style={[styles.cardContent, fill && styles.cardFill]}>{children}</View>
+    </Pressable>
+  )
+}
 
 type PacksCardProps = {
   // The selected packs, in Choose Packs' order (the player's own packs first).
@@ -77,6 +90,8 @@ type PacksCardProps = {
   unlocked: number
   available: number
   onPress: () => void
+  // Fills its parent's height (the word sources' cell).
+  fill?: boolean
 }
 
 // Which packs the focused player's puzzles come from. One card in Hangman's card language (the pack
@@ -87,7 +102,7 @@ type PacksCardProps = {
 // are a list's, unless every pack selected is of one category (one pack, or Brands & Products and
 // Companies, both Business): then they're that category's, the way its rows in Choose Packs look (a
 // custom pack's category is Custom, as PackRow has it).
-export const PacksCard = memo(({ packs, total, progress, unlocked, available, onPress }: PacksCardProps): JSX.Element => {
+export const PacksCard = memo(({ packs, total, progress, unlocked, available, onPress, fill = false }: PacksCardProps): JSX.Element => {
   const theme = useTheme()
   const { width } = useWindowDimensions()
   const selected = packs.length
@@ -105,32 +120,27 @@ export const PacksCard = memo(({ packs, total, progress, unlocked, available, on
   const oneCategory = !all && selected > 0 && new Set(packs.map((item) => packGroupLabel(item.group))).size === 1
   const group = oneCategory ? packs[0].group : undefined
   const look = useMemo(() => (oneCategory ? { icon: packGroupIcon(group), ...packGroupColors(group, theme) } : { icon: 'format-list-checks', color: theme.colors.tertiary, onColor: theme.colors.onTertiary, container: theme.colors.tertiaryContainer, onContainer: theme.colors.onTertiaryContainer }), [oneCategory, group, theme])
-  // Card's own accessibilityLabel lands on a wrapper a screen reader never reaches (see PackRow), so
-  // the card sits in an accessible view of its own, which is the one button.
+  // The whole card is the one button, the count first, then which packs.
   return (
-    <View accessible accessibilityRole='button' accessibilityLabel={spoken} accessibilityHint='Opens Choose Packs' style={styles.card}>
-      <Card mode='contained' onPress={onPress} style={[styles.cardSurface, { backgroundColor: look.container }]} testID='packs-card'>
-        <Card.Content style={styles.cardContent}>
-          <Avatar.Icon size={40} icon={look.icon} color={look.onColor} style={{ backgroundColor: look.color }} testID='packs-card-badge' />
-          <View style={styles.cardText}>
-            <Text variant='titleMedium' style={[styles.cardTitle, { color: look.onContainer }]}>
-              {title}
-            </Text>
-            <Text variant='bodyMedium' style={[styles.cardDetail, { color: look.onContainer }]}>
-              {detail}
-            </Text>
-            {/* Only once its fill can be seen: an empty track reads like a broken slider, and a few puzzles
+    <PageCard testID='packs-card' color={look.container} onPress={onPress} fill={fill} accessibilityRole='button' accessibilityLabel={spoken} accessibilityHint='Opens Choose Packs'>
+      <Avatar.Icon size={40} icon={look.icon} color={look.onColor} style={{ backgroundColor: look.color }} testID='packs-card-badge' />
+      <View style={styles.cardText}>
+        <Text variant='titleMedium' style={[labelType, { color: look.onContainer }]}>
+          {title}
+        </Text>
+        <Text variant='bodyMedium' style={[styles.cardDetail, { color: look.onContainer }]}>
+          {detail}
+        </Text>
+        {/* Only once its fill can be seen: an empty track reads like a broken slider, and a few puzzles
                 of every pack's 19,643 would still draw one. */}
-            {selected > 0 && progress >= MIN_SHOWN_PROGRESS ? (
-              <View style={styles.progressWrapper}>
-                <ProgressBar progress={progress} color={look.color} style={[styles.progressBar, { backgroundColor: theme.colors.surface }]} />
-              </View>
-            ) : null}
+        {selected > 0 && progress >= MIN_SHOWN_PROGRESS ? (
+          <View style={styles.progressWrapper}>
+            <ProgressBar progress={progress} color={look.color} style={[styles.progressBar, { backgroundColor: theme.colors.surface }]} />
           </View>
-          <Icon source='chevron-right' size={24} color={look.onContainer} />
-        </Card.Content>
-      </Card>
-    </View>
+        ) : null}
+      </View>
+      <Icon source='chevron-right' size={24} color={look.onContainer} />
+    </PageCard>
   )
 })
 PacksCard.displayName = 'PacksCard'
@@ -138,56 +148,50 @@ PacksCard.displayName = 'PacksCard'
 // Whether each written word is kept (useAutoSaveCustom: the Pass & Play pack), for a table writing its
 // own words: a card like the packs card, in the secondary colors, the whole card switching it as well
 // as its switch.
-const KeepWordsCard = memo(({ value, onChange }: { value: boolean; onChange: (value: boolean) => void }): JSX.Element => {
+const KeepWordsCard = memo(({ value, onChange, fill = false }: { value: boolean; onChange: (value: boolean) => void; fill?: boolean }): JSX.Element => {
   const theme = useTheme()
   const toggle = useCallback(() => onChange(!value), [onChange, value])
   return (
-    <View style={styles.card}>
-      <Card mode='contained' onPress={toggle} style={[styles.cardSurface, { backgroundColor: theme.colors.secondaryContainer }]} testID='keep-words-card'>
-        <Card.Content style={styles.cardContent}>
-          <Avatar.Icon size={40} icon='content-save-outline' color={theme.colors.onSecondary} style={{ backgroundColor: theme.colors.secondary }} />
-          <View style={styles.cardText}>
-            <Text variant='titleMedium' style={[styles.cardTitle, { color: theme.colors.onSecondaryContainer }]}>
-              Keep Each Word
-            </Text>
-            <Text variant='bodyMedium' style={[styles.cardDetail, { color: theme.colors.onSecondaryContainer }]}>
-              Saves every word to your Pass & Play pack
-            </Text>
-          </View>
-          <Switch value={value} onValueChange={onChange} accessibilityLabel='Keep each word' />
-        </Card.Content>
-      </Card>
-    </View>
+    <PageCard testID='keep-words-card' color={theme.colors.secondaryContainer} onPress={toggle} fill={fill}>
+      <Avatar.Icon size={40} icon='content-save-outline' color={theme.colors.onSecondary} style={{ backgroundColor: theme.colors.secondary }} />
+      <View style={styles.cardText}>
+        <Text variant='titleMedium' style={[labelType, { color: theme.colors.onSecondaryContainer }]}>
+          Keep Each Word
+        </Text>
+        <Text variant='bodyMedium' style={[styles.cardDetail, { color: theme.colors.onSecondaryContainer }]}>
+          Saves every word to your Pass & Play pack
+        </Text>
+      </View>
+      <Switch value={value} onValueChange={onChange} accessibilityLabel='Keep each word' />
+    </PageCard>
   )
 })
 KeepWordsCard.displayName = 'KeepWordsCard'
-
-// Puts the focused player's art, difficulty and packs back to their defaults, after a confirm (the
-// page's). Off while all three already are.
-export const ResetSettingsButton = memo(({ disabled, onPress }: { disabled: boolean; onPress: () => void }): JSX.Element => {
-  const theme = useTheme()
-  return <IconButton icon='restore' iconColor={inkFor(theme.dark)} onPress={onPress} disabled={disabled} hitSlop={4} accessibilityLabel='Reset settings' style={styles.resetButton} />
-})
-ResetSettingsButton.displayName = 'ResetSettingsButton'
 
 type SettingsRowProps = {
   difficulty: DifficultyFilter
   onChangeDifficulty: (value: DifficultyFilter) => void
   // Off while the table writes its own words, which have no difficulty to pick.
   showDifficulty: boolean
-  canReset: boolean
-  onReset: () => void
 }
 
-// The player's settings under their art: Difficulty at the left edge, the reset at the right. Over what
-// comes after it while Difficulty's popover is open, since it drops down over the packs card and Ready
-// (zIndex only orders one parent's children).
-const SettingsRow = memo(({ difficulty, onChangeDifficulty, showDifficulty, canReset, onReset }: SettingsRowProps): JSX.Element => {
+// The player's settings under their art: Difficulty, centered. While the table writes its own words,
+// which have no difficulty, a line saying how that plays holds its place, so switching Packs and
+// Write-In moves nothing (Jay, 2026-11-19: the row was the pill's 44pt one way and the reset button's
+// 40 the other, and the reset went). Over what comes after it while Difficulty's popover is open, since
+// it drops down over the packs card and Ready (zIndex only orders one parent's children).
+const SettingsRow = memo(({ difficulty, onChangeDifficulty, showDifficulty }: SettingsRowProps): JSX.Element => {
   const host = useLoadoutPopoverHost()
+  const theme = useTheme()
   return (
     <View testID='loadout-settings-row' style={[styles.settingsRow, isSettingOpen(host.openId) && styles.settingsRowOpen]}>
-      {showDifficulty ? <DifficultyPicker id={DIFFICULTY_PICKER_ID} host={host} value={difficulty} onChange={onChangeDifficulty} /> : <View />}
-      <ResetSettingsButton disabled={!canReset} onPress={onReset} />
+      {showDifficulty ? (
+        <DifficultyPicker id={DIFFICULTY_PICKER_ID} host={host} value={difficulty} onChange={onChangeDifficulty} />
+      ) : (
+        <Text variant='bodyMedium' numberOfLines={2} style={[styles.writeNote, { color: theme.colors.onSurfaceVariant }]}>
+          Players take turns writing words for each other.
+        </Text>
+      )}
     </View>
   )
 })
@@ -223,11 +227,12 @@ PlayerRow.displayName = 'PlayerRow'
 type ChoiceOption = { value: string; label: string; icon: string }
 
 // Two side by side, one picked (Paper's SegmentedButtons), in the primary colors Choose Packs' filter
-// uses, raised off the board like the pills. An open popover closes first.
+// uses, raised off the board like the pills, its labels lettered like theirs (labelType). An open
+// popover closes first.
 const SegmentedChoice = memo(({ value, options, onChange, testID }: { value: string; options: readonly ChoiceOption[]; onChange: (value: string) => void; testID?: string }): JSX.Element => {
   const theme = useTheme()
   const { close } = useLoadoutPopoverHost()
-  const buttons = useMemo(() => options.map((option) => ({ ...option, checkedColor: theme.colors.onPrimary, uncheckedColor: theme.colors.onPrimaryContainer, style: { backgroundColor: option.value === value ? theme.colors.primary : theme.colors.primaryContainer } })), [options, value, theme.colors.primary, theme.colors.onPrimary, theme.colors.primaryContainer, theme.colors.onPrimaryContainer])
+  const buttons = useMemo(() => options.map((option) => ({ ...option, checkedColor: theme.colors.onPrimary, uncheckedColor: theme.colors.onPrimaryContainer, labelStyle: labelType, style: { backgroundColor: option.value === value ? theme.colors.primary : theme.colors.primaryContainer } })), [options, value, theme.colors.primary, theme.colors.onPrimary, theme.colors.primaryContainer, theme.colors.onPrimaryContainer])
   const handleChange = useCallback(
     (next: string | string[]) => {
       close()
@@ -290,17 +295,14 @@ const useHeightBeforePaint = (ref: RefObject<View | null>, onHeight: (height: nu
 // Its height eases to a new one (a row of seats more or less, a line more or less in the packs card)
 // rather than jumping (Jay, 2026-10-18), so the centered page glides. The content inside is laid out at
 // its new height at once (what's measured); only the group's own box eases. The first height lands as
-// is. The lower group hangs from its foot (`end`) and gives back what the shorter word source leaves
-// (`shrink`, see SourceSwap), easing once that's `measured`.
+// is. The lower group hangs from its foot (`end`).
 type PageGroupProps = {
   testID: string
   lift: (openId: string | null) => boolean
-  shrink?: number
-  measured?: boolean
   end?: boolean
   children: ReactNode
 }
-const PageGroup = ({ testID, lift, shrink = 0, measured = false, end = false, children }: PageGroupProps): JSX.Element => {
+const PageGroup = ({ testID, lift, end = false, children }: PageGroupProps): JSX.Element => {
   const { openId } = useLoadoutPopoverHost()
   const motion = useLoadoutMotion()
   const [height, setHeight] = useState(0)
@@ -308,9 +310,8 @@ const PageGroup = ({ testID, lift, shrink = 0, measured = false, end = false, ch
   useHeightBeforePaint(contentRef, setHeight)
   const handleLayout = useCallback((event: LayoutChangeEvent) => setHeight(Math.round(event.nativeEvent.layout.height)), [])
   const eased = useEasedValue(height, motion && height > 0, REFLOW_MS, REFLOW_EASING)
-  const easedShrink = useEasedValue(shrink, motion && measured, REFLOW_MS, REFLOW_EASING)
   // Its own height until the first measurement lands.
-  const easedStyle = useAnimatedStyle(() => (eased.value > 0 ? { height: eased.value - easedShrink.value } : {}))
+  const easedStyle = useAnimatedStyle(() => (eased.value > 0 ? { height: eased.value } : {}))
   return (
     <Animated.View pointerEvents='box-none' style={[styles.groupBox, end && styles.groupBoxEnd, easedStyle, lift(openId) && styles.lifted]}>
       <View ref={contentRef} testID={testID} onLayout={handleLayout} pointerEvents='box-none' style={styles.group}>
@@ -324,71 +325,45 @@ const PageGroup = ({ testID, lift, shrink = 0, measured = false, end = false, ch
 // mounted, laid over each other in one cell, the chosen one over the other, cross-fading on a switch.
 // The one not chosen is invisible, untouchable and out of a screen reader's way (on the web also out of
 // the keyboard's, once it has faded: CSS's visibility, which a transition holds back until the fade is
-// over). Each sits at the cell's foot, just above Ready.
+// over).
 //
-// The cell is as tall as the taller, but the page only keeps the chosen one's height. What the shorter
-// leaves (`slack`) comes off the group's box (PageGroup's `shrink`), and the choice and settings slide
-// down into that room, drawn over the cards (and, with a pill's popover open, over Ready). They ease on
-// the reflow's clock from the same commit once the page is measured, so they move as one. A card the
-// choice has to slide up past to uncover waits half the reflow before fading in.
+// The cell is as tall as the taller card, and both cards fill it (their `fill`), so a switch moves
+// nothing on the page (Jay, 2026-11-19: it used to keep only the chosen card's height, and the centered
+// page shifted by half the difference). A table of one only ever plays from the packs, so it has no
+// Write-In card to make room for.
 type SourceSwapProps = {
   source: WordSource
   choice: ReactNode
   packs: ReactNode
-  write: ReactNode
-  heights: { packs: number; write: number }
-  onPacksHeight: (height: number) => void
-  onWriteHeight: (height: number) => void
-  slack: number
-  measured: boolean
+  write: ReactNode | null
 }
-const SourceSwap = ({ source, choice, packs, write, heights, onPacksHeight, onWriteHeight, slack, measured }: SourceSwapProps): JSX.Element => {
+const SourceSwap = ({ source, choice, packs, write }: SourceSwapProps): JSX.Element => {
   const motion = useLoadoutMotion()
   const onPacks = source === 'packs'
-  const slide = useEasedValue(slack, motion && measured, REFLOW_MS, REFLOW_EASING)
-  const slideStyle = useAnimatedStyle(() => ({ transform: [{ translateY: slide.value }] }))
-
-  const chosenTaller = onPacks ? heights.packs > heights.write : heights.write > heights.packs
-  const fadeDelay = motion && chosenTaller ? REFLOW_MS / 2 : 0
   const shown = useSharedValue(onPacks ? 1 : 0)
   const fadedBefore = useRef(false)
   useEffect(() => {
     const target = onPacks ? 1 : 0
-    const fade = withTiming(target, { duration: SOURCE_FADE_MS })
-    shown.value = motion && fadedBefore.current ? (fadeDelay > 0 ? withDelay(fadeDelay, fade) : fade) : target
+    shown.value = motion && fadedBefore.current ? withTiming(target, { duration: SOURCE_FADE_MS }) : target
     fadedBefore.current = motion
-  }, [shown, onPacks, motion, fadeDelay])
+  }, [shown, onPacks, motion])
   const packsStyle = useAnimatedStyle(() => ({ opacity: shown.value }))
   const writeStyle = useAnimatedStyle(() => ({ opacity: 1 - shown.value }))
-  const hideAfterMs = motion ? fadeDelay + SOURCE_FADE_MS : 0
+  const hideAfterMs = motion ? SOURCE_FADE_MS : 0
   return (
     <>
-      <Animated.View style={[styles.sourceSlide, slideStyle]}>{choice}</Animated.View>
+      {choice}
       <View pointerEvents='box-none' style={styles.swap}>
         <Animated.View testID='loadout-packs-options' pointerEvents={onPacks ? 'auto' : 'none'} aria-hidden={!onPacks} style={[styles.swapLayer, packsStyle, swapLayerState(onPacks, hideAfterMs)]}>
-          <SwapContent testID='loadout-packs-content' onHeight={onPacksHeight}>
-            {packs}
-          </SwapContent>
+          {packs}
         </Animated.View>
-        <Animated.View testID='loadout-write-options' pointerEvents={onPacks ? 'none' : 'auto'} aria-hidden={onPacks} style={[styles.swapLayer, styles.swapLayerOver, writeStyle, swapLayerState(!onPacks, hideAfterMs)]}>
-          <SwapContent testID='loadout-write-content' onHeight={onWriteHeight}>
+        {write ? (
+          <Animated.View testID='loadout-write-options' pointerEvents={onPacks ? 'none' : 'auto'} aria-hidden={onPacks} style={[styles.swapLayer, styles.swapLayerOver, writeStyle, swapLayerState(!onPacks, hideAfterMs)]}>
             {write}
-          </SwapContent>
-        </Animated.View>
+          </Animated.View>
+        ) : null}
       </View>
     </>
-  )
-}
-
-// One word source's options, measured (for the room the other leaves; see SourceSwap).
-const SwapContent = ({ testID, onHeight, children }: { testID: string; onHeight: (height: number) => void; children: ReactNode }): JSX.Element => {
-  const ref = useRef<View>(null)
-  useHeightBeforePaint(ref, onHeight)
-  const handleLayout = useCallback((event: LayoutChangeEvent) => onHeight(Math.round(event.nativeEvent.layout.height)), [onHeight])
-  return (
-    <View ref={ref} testID={testID} onLayout={handleLayout} style={styles.swapContent}>
-      {children}
-    </View>
   )
 }
 
@@ -492,10 +467,8 @@ export const LoadoutScreen = (): JSX.Element => {
   // the turn's player's while the page is theirs (anyone else's turn shows their page instead, see
   // playTurn).
   const readyDisabled = source === 'packs' && (single || turnSeatId === focusedSeat.id) && selectedPacks.length === 0 && !resumable
-  const atDefaults = mode.id === DEFAULT_MODE.id && difficulty === 'any' && selectedPacks.length === manifest.length
 
   const [packsScreenVisible, setPacksScreenVisible] = useState(false)
-  const [resetVisible, setResetVisible] = useState(false)
   // The seat whose removal is waiting on its confirm (with what it would take, read as Remove was
   // pressed), the one whose switch is, and New session's.
   const [removing, setRemoving] = useState<{ id: string; message: string } | null>(null)
@@ -708,17 +681,6 @@ export const LoadoutScreen = (): JSX.Element => {
     [startPuzzle]
   )
 
-  // Back to the default art (picked the way any art is, so the rounds waiting follow it), Any and every
-  // pack.
-  const openReset = useCallback(() => setResetVisible(true), [])
-  const handleResetConfirm = useCallback(() => {
-    selectArt(DEFAULT_MODE)
-    setDifficulty('any')
-    setSelectedPackKeys(manifest.map((item) => item.key))
-    setResetVisible(false)
-  }, [selectArt, setDifficulty, setSelectedPackKeys, manifest])
-  const handleResetCancel = useCallback(() => setResetVisible(false), [])
-
   // Read through a ref by closeOverlay, so the shell's back listener needs nothing new each time.
   const packsScreenRef = useRef<PacksScreenHandle>(null)
   // Choose Packs' own pack browser and editor sit above it, so they close first, and Choose Packs
@@ -726,8 +688,7 @@ export const LoadoutScreen = (): JSX.Element => {
   // back themselves (each registers as it opens, so it runs first); this is the page's fallback.
   const hasPacks = selectedPacks.length > 0
   const closeOverlay = useCallback(() => {
-    if (resetVisible || removing || switching || clearing !== null) {
-      setResetVisible(false)
+    if (removing || switching || clearing !== null) {
       setRemoving(null)
       setSwitching(null)
       setClearing(null)
@@ -735,10 +696,9 @@ export const LoadoutScreen = (): JSX.Element => {
       if (!packsScreenRef.current?.closeTopOverlay() && hasPacks) setPacksScreenVisible(false)
     } else return false
     return true
-  }, [resetVisible, removing, switching, clearing, packsScreenVisible, hasPacks])
+  }, [removing, switching, clearing, packsScreenVisible, hasPacks])
   const closeAllOverlays = useCallback(() => {
     setPacksScreenVisible(false)
-    setResetVisible(false)
     setRemoving(null)
     setSwitching(null)
     setClearing(null)
@@ -750,17 +710,11 @@ export const LoadoutScreen = (): JSX.Element => {
   // the home indicator. The fade is the strip's height, so whatever passes under Home and the cog has
   // faded away there and the glyphs stay clear.
   const pagePadding = useMemo(() => ({ paddingBottom: insets.bottom + PAGE_PADDING, paddingTop: insets.top + CORNER_BAND_HEIGHT + PAGE_PADDING }), [insets.bottom, insets.top])
-  // The two word sources' cards: what the shorter leaves comes off the page (see SourceSwap).
-  const [swapHeights, setSwapHeights] = useState({ packs: 0, write: 0 })
-  const handlePacksHeight = useCallback((height: number) => setSwapHeights((previous) => (previous.packs === height ? previous : { ...previous, packs: height })), [])
-  const handleWriteHeight = useCallback((height: number) => setSwapHeights((previous) => (previous.write === height ? previous : { ...previous, write: height })), [])
-  const swapMeasured = swapHeights.packs > 0 && swapHeights.write > 0
-  const swapSlack = swapMeasured ? Math.max(swapHeights.packs, swapHeights.write) - (source === 'packs' ? swapHeights.packs : swapHeights.write) : 0
 
   // The focused player's art, settings and packs card.
   const artRow = <PageArtRow selected={mode} onSelect={selectArt} />
-  const settingsRow = <SettingsRow difficulty={difficulty} onChangeDifficulty={setDifficulty} showDifficulty={source === 'packs'} canReset={!atDefaults} onReset={openReset} />
-  const packsCard = <PacksCard packs={selectedPacks} total={manifest.length} progress={overallProgress} unlocked={totalUnlocked} available={totalAvailable} onPress={openPacksScreen} />
+  const settingsRow = <SettingsRow difficulty={difficulty} onChangeDifficulty={setDifficulty} showDifficulty={source === 'packs'} />
+  const packsCard = <PacksCard packs={selectedPacks} total={manifest.length} progress={overallProgress} unlocked={totalUnlocked} available={totalAvailable} onPress={openPacksScreen} fill />
 
   return (
     <LoadoutShell
@@ -772,7 +726,6 @@ export const LoadoutScreen = (): JSX.Element => {
           {/* With two or more the packs are only browsed: every puzzle comes by turns, from each player's
               own selection. */}
           <PacksScreen ref={packsScreenRef} visible={packsScreenVisible} onDismiss={closePacksScreen} selectedKeys={selectedPackKeys} onChangeSelectedKeys={setSelectedPackKeys} packsVersion={packsVersion} onPacksChanged={refreshCustomPacks} mode={mode} difficulty={difficulty} onConfirm={single ? startFromPacksScreen : undefined} />
-          <ConfirmDialog visible={resetVisible} icon='restore' title='Reset Settings?' message={`The art goes back to ${DEFAULT_MODE.label}, the difficulty to Any, and every pack is selected again.`} confirmLabel='Reset' cancelLabel='Cancel' onConfirm={handleResetConfirm} onCancel={handleResetCancel} />
           <ConfirmDialog visible={removing !== null} icon='account-remove-outline' title={`Remove ${removing ? getSeatIdentity(players, removing.id, profiles).name : ''}?`} message={removing?.message ?? ''} confirmLabel='Remove' cancelLabel='Cancel' onConfirm={handleRemoveConfirm} onCancel={handleRemoveCancel} destructive />
           <ConfirmDialog visible={switching !== null} icon='account-switch-outline' title={switching?.title ?? ''} message={switching?.message ?? ''} confirmLabel='Switch' cancelLabel='Cancel' onConfirm={handleSwitchConfirm} onCancel={handleSwitchCancel} />
           <ConfirmDialog visible={clearing !== null} icon='restore' title='New Session?' message={clearing ?? ''} confirmLabel='New Session' cancelLabel='Cancel' onConfirm={handleNewSessionConfirm} onCancel={handleNewSessionCancel} />
@@ -787,7 +740,7 @@ export const LoadoutScreen = (): JSX.Element => {
           <SeatsRow players={players} focusedId={focusedSeat.id} standings={standings} showStandings={sessionStarted} onFocus={handleFocus} onPick={handlePick} onRemove={handleRemove} onReorder={handleReorder} removingId={removing?.id ?? null} onNewSession={sessionUnderWay ? openNewSession : undefined} />
           {artRow}
         </PageGroup>
-        <PageGroup testID='loadout-options' lift={isSettingOpen} shrink={swapSlack} measured={swapMeasured} end>
+        <PageGroup testID='loadout-options' lift={isSettingOpen} end>
           <SourceSwap
             source={source}
             choice={
@@ -801,16 +754,11 @@ export const LoadoutScreen = (): JSX.Element => {
               </>
             }
             packs={packsCard}
-            write={<KeepWordsCard value={autoSave} onChange={setAutoSave} />}
-            heights={swapHeights}
-            onPacksHeight={handlePacksHeight}
-            onWriteHeight={handleWriteHeight}
-            slack={swapSlack}
-            measured={swapMeasured}
+            write={single ? null : <KeepWordsCard value={autoSave} onChange={setAutoSave} fill />}
           />
           {/* Off, rather than an alert after the tap, while there's nothing to draw from (the packs card
               says why). */}
-          <Button mode='contained' icon='play' onPress={handleReady} disabled={readyDisabled} accessibilityHint={readyHint} style={styles.ready} contentStyle={styles.readyContent} labelStyle={styles.readyLabel}>
+          <Button mode='contained' icon='play' onPress={handleReady} disabled={readyDisabled} accessibilityHint={readyHint} style={styles.ready} contentStyle={styles.readyContent} labelStyle={actionType}>
             Ready
           </Button>
         </PageGroup>
@@ -822,12 +770,14 @@ export const LoadoutScreen = (): JSX.Element => {
 const styles = StyleSheet.create({
   artRow: { alignSelf: 'stretch', marginTop: BLOCK_GAP },
   card: { alignSelf: 'stretch', marginTop: BLOCK_GAP },
-  cardContent: { alignItems: 'center', flexDirection: 'row', gap: 12 },
+  // Paper's Card.Content's padding, which the cards had before they were drawn here (see PageCard).
+  cardContent: { alignItems: 'center', flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingVertical: 16 },
   cardDetail: { marginTop: 2, opacity: 0.85 },
+  // A card filling the word sources' cell, its content centered in it (see SourceSwap).
+  cardFill: { flexGrow: 1 },
   // Raised off the board like the pills above it (the fleet's wells' shadow).
   cardSurface: { boxShadow: WELL_SHADOW },
   cardText: { flex: 1 },
-  cardTitle: { fontWeight: '700' },
   flex: { flex: 1 },
   group: { alignItems: 'center', alignSelf: 'stretch' },
   // The group's own box, whose height eases (its content keeps its own, see PageGroup).
@@ -848,22 +798,18 @@ const styles = StyleSheet.create({
   progressWrapper: { height: 6, marginTop: 8, overflow: 'hidden' },
   ready: { alignSelf: 'stretch', marginTop: BLOCK_GAP },
   readyContent: { height: 48 },
-  readyLabel: { fontSize: 16, letterSpacing: 1 },
-  // Paper's 6pt margin off, so the button ends at the gutter, in line with the card's edge.
-  resetButton: { margin: 0 },
-  // Difficulty at the left edge, the reset at the right.
   segmented: { alignSelf: 'stretch', borderRadius: 20, boxShadow: WELL_SHADOW },
-  settingsRow: { alignItems: 'center', alignSelf: 'stretch', flexDirection: 'row', gap: 8, justifyContent: 'space-between', marginTop: BLOCK_GAP },
-  settingsRowOpen: { zIndex: 1 },
+  // As tall as the Difficulty pill whichever way the words come, so a switch moves nothing.
+  settingsRow: { alignItems: 'center', alignSelf: 'stretch', flexDirection: 'row', justifyContent: 'center', marginTop: BLOCK_GAP, minHeight: 44 },
+  // Over the word sources' cards (the chosen one's layer is lifted inside their cell, see SourceSwap)
+  // and Ready.
+  settingsRowOpen: { zIndex: 2 },
   sourceChoice: { alignSelf: 'stretch', marginTop: BLOCK_GAP },
-  // Over the cards and Ready, so it slides over the card fading out and its popovers draw on top (see
-  // SourceSwap).
-  sourceSlide: { alignSelf: 'stretch', zIndex: 2 },
   // The word sources' cards overlaid: a row of two whole-width layers, the second pulled back over the
-  // first, so the row is as tall as the taller and each sits at its foot.
-  swap: { alignItems: 'flex-end', alignSelf: 'stretch', flexDirection: 'row' },
-  swapContent: { alignItems: 'center', alignSelf: 'stretch' },
+  // first, so the row is as tall as the taller and each card fills it.
+  swap: { alignSelf: 'stretch', flexDirection: 'row' },
   swapLayer: { alignItems: 'center', width: '100%' },
   swapLayerChosen: { zIndex: 1 },
-  swapLayerOver: { marginLeft: '-100%' }
+  swapLayerOver: { marginLeft: '-100%' },
+  writeNote: { flexShrink: 1, textAlign: 'center' }
 })

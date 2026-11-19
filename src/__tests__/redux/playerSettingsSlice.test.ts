@@ -101,10 +101,10 @@ describe('puzzle game settings', () => {
     expect(stored('nope')).not.toHaveProperty('puzzles')
   })
 
-  it("keeps each player's and each game's apart, and resets one game alone", () => {
-    const state = run([playerSettingsActions.setPuzzleOption({ playerKey: GUEST_PLAYER_KEY, game: 'jumble', key: 'answers', value: '3' }), playerSettingsActions.setPuzzleOption({ playerKey: GUEST_PLAYER_KEY, game: 'cryptogram', key: 'headStart', value: '5' }), playerSettingsActions.setPuzzleOption({ playerKey: OTHER, game: 'jumble', key: 'answers', value: '10' }), playerSettingsActions.resetPuzzleOptions({ playerKey: GUEST_PLAYER_KEY, game: 'jumble' })])
+  it("keeps each player's and each game's apart", () => {
+    const state = run([playerSettingsActions.setPuzzleOption({ playerKey: GUEST_PLAYER_KEY, game: 'jumble', key: 'answers', value: '3' }), playerSettingsActions.setPuzzleOption({ playerKey: GUEST_PLAYER_KEY, game: 'cryptogram', key: 'headStart', value: '5' }), playerSettingsActions.setPuzzleOption({ playerKey: OTHER, game: 'jumble', key: 'answers', value: '10' })])
 
-    expect(state[GUEST_PLAYER_KEY].puzzles).toEqual({ cryptogram: { headStart: '5' } })
+    expect(state[GUEST_PLAYER_KEY].puzzles).toEqual({ jumble: { answers: '3' }, cryptogram: { headStart: '5' } })
     expect(state[OTHER].puzzles).toEqual({ jumble: { answers: '10' } })
   })
 })
