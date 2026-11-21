@@ -22,7 +22,7 @@ jest.mock('@/utils/jumble', () => ({ ...jest.requireActual('@/utils/jumble'), dr
 
 const puzzle = (answer: string): JumblePuzzle => {
   const letters = answer.replace(/ /g, '')
-  return { id: answer, answer, hint: `About ${answer}`, words: answer.split(' '), letters, tiles: [...letters].map((letter, id) => ({ id, letter })) }
+  return { id: answer, answer, hint: `About ${answer}`, difficultyTier: 'easy', words: answer.split(' '), letters, tiles: [...letters].map((letter, id) => ({ id, letter })) }
 }
 const ROUND: JumbleRound = { packKey: 'test', packLabel: 'Test Pack', puzzles: ['CAT', 'DOG', 'OWL', 'HEN', 'RED FOX'].map(puzzle) }
 
@@ -49,15 +49,21 @@ describe('JumbleScreen', () => {
   })
   afterEach(() => jest.useRealTimers())
 
-  it('draws from the active player’s packs and settings, and shows the pack and clue', async () => {
+  // Hangman's pills (Jay, 2026-11-19): the answer's difficulty, and Hint keeping the pack and clue until
+  // it's pressed, which counts as a hint.
+  it('draws from the active player’s packs and settings, with the pack and clue behind Hint', async () => {
     store.dispatch(playerSettingsActions.setPuzzleOption({ playerKey: GUEST_PLAYER_KEY, game: 'jumble', key: 'length', value: 'long' }))
     store.dispatch(playerSettingsActions.setPackKeys({ playerKey: GUEST_PLAYER_KEY, packKeys: ['animals'] }))
     const screen = await renderScreen()
 
     expect(drawJumbleRound).toHaveBeenCalledWith(['animals'], { answers: '5', length: 'long' })
-    expect(screen.getByText('Test Pack')).toBeTruthy()
     expect(screen.getByTestId('jumble-progress')).toHaveTextContent('Answer 1 of 5')
-    expect(screen.getByTestId('jumble-clue')).toHaveTextContent('About CAT')
+    expect(screen.getByLabelText('Difficulty: Easy')).toBeTruthy()
+    expect(screen.queryByText(/Test Pack/)).toBeNull()
+    expect(screen.queryByText(/About CAT/)).toBeNull()
+
+    await fireEvent.press(screen.getByLabelText('Show hint'))
+    expect(screen.getByLabelText('Test Pack. About CAT')).toBeTruthy()
   })
 
   it('moves tiles into the answer and back to the pool', async () => {
@@ -83,8 +89,9 @@ describe('JumbleScreen', () => {
     for (const id of [0, 1, 2]) expect(screen.getByTestId(`jumble-tile-${id}`)).toBeTruthy()
   })
 
-  it('moves to the next answer after a solved one', async () => {
+  it('moves to the next answer after a solved one, the open Hint showing its clue', async () => {
     const screen = await renderScreen()
+    await fireEvent.press(screen.getByLabelText('Show hint'))
     jest.useFakeTimers()
 
     await pressTiles(screen, [0, 1, 2])
@@ -92,13 +99,13 @@ describe('JumbleScreen', () => {
     await nextWord()
 
     expect(screen.getByTestId('jumble-progress')).toHaveTextContent('Answer 2 of 5')
-    expect(screen.getByTestId('jumble-clue')).toHaveTextContent('About DOG')
+    expect(screen.getByLabelText('Test Pack. About DOG')).toBeTruthy()
   })
 
   it('fixes a hinted letter so it stays through Clear', async () => {
     const screen = await renderScreen()
 
-    await fireEvent.press(screen.getByText('Hint'))
+    await fireEvent.press(screen.getByText('Reveal Letter'))
     await pressTiles(screen, [2])
     await fireEvent.press(screen.getByText('Clear'))
 
@@ -114,7 +121,7 @@ describe('JumbleScreen', () => {
       await nextWord()
     }
 
-    await fireEvent.press(screen.getByText('Hint'))
+    await fireEvent.press(screen.getByText('Reveal Letter'))
     await pressTiles(screen, [1, 2, 3, 4, 5])
     expect(mockHaptics.win).toHaveBeenCalledTimes(1)
     expect(screen.getByTestId('fireworks')).toBeTruthy()

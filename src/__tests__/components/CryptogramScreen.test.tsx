@@ -21,7 +21,7 @@ jest.mock('@/effects/registry', () => {
 jest.mock('@/utils/cryptogram', () => ({ ...jest.requireActual('@/utils/cryptogram'), drawCryptogram: jest.fn() }))
 
 // RED FOX in code, with R given.
-const BOARD: CryptogramBoard = { id: 'p1', answer: 'Red Fox', hint: 'An animal', packKey: 'test', packLabel: 'Test Pack', words: ['RED', 'FOX'], cipherWords: ['KLM', 'NPQ'], plainByCipher: { K: 'R', L: 'E', M: 'D', N: 'F', P: 'O', Q: 'X' }, cipherLetters: ['K', 'L', 'M', 'N', 'P', 'Q'], given: ['K'] }
+const BOARD: CryptogramBoard = { id: 'p1', answer: 'Red Fox', hint: 'An animal', difficultyTier: 'medium', packKey: 'test', packLabel: 'Test Pack', words: ['RED', 'FOX'], cipherWords: ['KLM', 'NPQ'], plainByCipher: { K: 'R', L: 'E', M: 'D', N: 'F', P: 'O', Q: 'X' }, cipherLetters: ['K', 'L', 'M', 'N', 'P', 'Q'], given: ['K'] }
 
 const renderScreen = () =>
   render(
@@ -52,13 +52,18 @@ describe('CryptogramScreen', () => {
     expect(jest.mocked(drawCryptogram).mock.calls[0][1]).toEqual({ length: 'medium', headStart: '5' })
   })
 
-  it('shows the coded answer, the clue and the given letter', async () => {
+  // Hangman's pills (Jay, 2026-11-19): the answer's difficulty, and Hint keeping the pack and clue until
+  // it's pressed.
+  it('shows the coded answer and the given letter, with the pack and clue behind Hint', async () => {
     const screen = await renderScreen()
 
-    expect(screen.getByText('Test Pack')).toBeTruthy()
-    expect(screen.getByTestId('cryptogram-clue')).toHaveTextContent('An animal')
     expect(screen.getByLabelText('Code letter K, written as R')).toBeTruthy()
     expect(screen.getByLabelText('Code letter L, empty')).toBeTruthy()
+    expect(screen.getByLabelText('Difficulty: Medium')).toBeTruthy()
+    expect(screen.queryByText(/An animal/)).toBeNull()
+
+    await fireEvent.press(screen.getByLabelText('Show hint'))
+    expect(screen.getByLabelText('Test Pack. An animal')).toBeTruthy()
   })
 
   it('writes into the selected code letter and moves to the next open one', async () => {
@@ -102,14 +107,15 @@ describe('CryptogramScreen', () => {
     const screen = await renderScreen()
     jest.useFakeTimers()
 
-    await fireEvent.press(screen.getByText('Hint'))
+    await fireEvent.press(screen.getByLabelText('Show hint'))
+    await fireEvent.press(screen.getByText('Reveal Letter'))
     expect(screen.getByLabelText('Code letter L, written as E')).toBeTruthy()
     await typeLetters(screen, 'DFOX')
     expect(mockHaptics.win).toHaveBeenCalledTimes(1)
     expect(screen.getByTestId('fireworks')).toBeTruthy()
 
     await act(async () => jest.advanceTimersByTime(2000))
-    expect(screen.getByText(/Red Fox, cracked with 1 hint in/)).toBeTruthy()
+    expect(screen.getByText(/Red Fox, cracked with 2 hints in/)).toBeTruthy()
 
     await fireEvent.press(screen.getByText('Next Puzzle'))
     expect(screen.queryByText('Puzzle Solved!')).toBeNull()

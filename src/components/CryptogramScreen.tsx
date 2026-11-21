@@ -1,5 +1,5 @@
 import { useAutoPaperTheme } from '@rific/auto-paper'
-import { Button, IconButton, Pressable } from '@rific/feedback-press'
+import { Button, Pressable } from '@rific/feedback-press'
 import { useIsFocused } from 'expo-router'
 import { JSX, memo, useCallback, useMemo, useState } from 'react'
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native'
@@ -13,12 +13,9 @@ import { usePhysicalKeys } from '@/hooks/usePhysicalKeys'
 import { usePuzzleOptions } from '@/hooks/usePuzzleOptions'
 import { useSoundEffects } from '@/hooks/useSoundEffects'
 import { assignGuess, type CryptogramBoard, type CryptogramGuesses, drawCryptogram, eraseGuess, isCryptogramFull, isCryptogramSolved, nextOpenCipher, revealCipher, startingGuesses } from '@/utils/cryptogram'
-import { safeBack } from '@/utils/navigation'
-import { gameShell } from '@/utils/webLayout'
 
 import { PuzzleKeyboard } from './PuzzleKeyboard'
-import { formatElapsed, PuzzleSolvedCelebration, PuzzleUnavailable } from './PuzzleScreenParts'
-import { ScreenHeader } from './ScreenHeader'
+import { formatElapsed, PuzzleBoardFrame, PuzzleSolvedCelebration, PuzzleUnavailable, usePuzzleSettingsOpen } from './PuzzleScreenParts'
 import { SketchGlyph } from './SketchGlyph'
 
 const COLUMN_MAX_WIDTH = 480
@@ -53,6 +50,7 @@ const CryptogramBoardView = ({ board, frozen, onSolved, onHint }: BoardProps): J
   const { colors } = useAutoPaperTheme()
   const window = useWindowDimensions()
   const focused = useIsFocused()
+  const settingsOpen = usePuzzleSettingsOpen()
   const { wrongGuess, correctGuess } = useGameHaptics()
   const { playWrong, playCorrect } = useSoundEffects()
   const [guesses, setGuesses] = useState<CryptogramGuesses>(() => startingGuesses(board))
@@ -95,7 +93,7 @@ const CryptogramBoardView = ({ board, frozen, onSolved, onHint }: BoardProps): J
     },
     [locked]
   )
-  usePhysicalKeys(focused && !disabled, handleLetter, handleErase)
+  usePhysicalKeys(focused && !settingsOpen && !disabled, handleLetter, handleErase)
 
   const handleHint = () => {
     const reveal = revealCipher(board, guesses, locked, selected)
@@ -121,11 +119,6 @@ const CryptogramBoardView = ({ board, frozen, onSolved, onHint }: BoardProps): J
   return (
     <>
       <ScrollView style={styles.phraseScroll} contentContainerStyle={styles.phrase} showsVerticalScrollIndicator={false}>
-        {board.hint ? (
-          <Text testID='cryptogram-clue' variant='bodyMedium' style={[styles.centerText, { color: colors.onSurfaceVariant }]}>
-            {board.hint}
-          </Text>
-        ) : null}
         <View testID='cryptogram-phrase' style={styles.words}>
           {board.cipherWords.map((word, wordIndex) => (
             <View key={`${word}:${wordIndex}`} style={styles.word}>
@@ -140,8 +133,8 @@ const CryptogramBoardView = ({ board, frozen, onSolved, onHint }: BoardProps): J
         </Text>
       </ScrollView>
       <View style={styles.actions}>
-        <Button mode='outlined' icon='lightbulb-outline' onPress={handleHint} disabled={disabled}>
-          Hint
+        <Button mode='outlined' icon='format-letter-case' onPress={handleHint} disabled={disabled}>
+          Reveal Letter
         </Button>
       </View>
       <PuzzleKeyboard used={used} fixed={fixed} disabled={disabled} onLetter={handleLetter} onErase={handleErase} />
@@ -155,7 +148,6 @@ type Game = { board: CryptogramBoard | null; startedAt: number }
 // how long it can run and how many letters start solved (see cryptogram.ts). Nothing is saved yet,
 // and it adds to no stats.
 export const CryptogramScreen = (): JSX.Element => {
-  const { colors } = useAutoPaperTheme()
   const insets = useSafeAreaInsets()
   const { selectedPackKeys } = usePackSelection()
   const { options } = usePuzzleOptions(CRYPTOGRAM_GAME_ID)
@@ -164,12 +156,15 @@ export const CryptogramScreen = (): JSX.Element => {
   const draw = useCallback((): Game => ({ board: drawCryptogram(selectedPackKeys, options), startedAt: Date.now() }), [selectedPackKeys, options])
   const [game, setGame] = useState(draw)
   const [hints, setHints] = useState(0)
+  // Hangman's Hint pill: the pack, then the clue, once pressed.
+  const [clueShown, setClueShown] = useState(false)
   const [elapsedMs, setElapsedMs] = useState<number | null>(null)
   const { board, startedAt } = game
 
   const newPuzzle = useCallback(() => {
     setGame(draw())
     setHints(0)
+    setClueShown(false)
     setElapsedMs(null)
   }, [draw])
   const handleSolved = useCallback(() => {
@@ -178,18 +173,22 @@ export const CryptogramScreen = (): JSX.Element => {
     setElapsedMs(Date.now() - startedAt)
   }, [startedAt, win, playWin])
   const handleHint = useCallback(() => setHints((count) => count + 1), [])
+  // Opening the clue is a hint too, as Hangman's is.
+  const showClue = useCallback(() => {
+    setClueShown(true)
+    setHints((count) => count + 1)
+  }, [])
 
-  if (!board) return <PuzzleUnavailable title='Cryptogram' message='None of your selected packs has enough longer answers for a code.' />
+  if (!board) return <PuzzleUnavailable message='None of your selected packs has enough longer answers for a code.' />
 
   const help = hints === 0 ? '' : hints === 1 ? ' with 1 hint' : ` with ${hints} hints`
   return (
-    <View style={[styles.screen, gameShell]}>
-      <ScreenHeader icon='arrow-left' label='Back' onPress={safeBack} title={board.packLabel} trailing={<IconButton icon='refresh' iconColor={colors.onSurface} size={24} hitSlop={4} onPress={newPuzzle} accessibilityLabel='New puzzle' />} />
+    <PuzzleBoardFrame difficultyTier={board.difficultyTier} packLabel={board.packLabel} hint={board.hint} hintRevealed={clueShown} onRevealHint={showClue}>
       <View style={[styles.body, { paddingBottom: insets.bottom + 8 }]}>
         <CryptogramBoardView key={startedAt} board={board} frozen={elapsedMs !== null} onSolved={handleSolved} onHint={handleHint} />
       </View>
       {elapsedMs !== null ? <PuzzleSolvedCelebration message={`${board.answer}, cracked${help} in ${formatElapsed(elapsedMs)}.`} onNext={newPuzzle} /> : null}
-    </View>
+    </PuzzleBoardFrame>
   )
 }
 
@@ -202,7 +201,6 @@ const styles = StyleSheet.create({
   guess: { alignItems: 'center', borderBottomWidth: 1.5, justifyContent: 'center' },
   phrase: { flexGrow: 1, gap: 16, justifyContent: 'center', paddingVertical: 8 },
   phraseScroll: { flex: 1 },
-  screen: { flex: 1 },
   status: { minHeight: 20 },
   word: { flexDirection: 'row', gap: CELL_GAP },
   words: { columnGap: 14, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', rowGap: 10 }

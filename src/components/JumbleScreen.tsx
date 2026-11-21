@@ -1,5 +1,5 @@
 import { useAutoPaperTheme } from '@rific/auto-paper'
-import { Button, IconButton, Pressable } from '@rific/feedback-press'
+import { Button, Pressable } from '@rific/feedback-press'
 import { WELL_SHADOW } from '@tastic/hud/chrome'
 import { useIsFocused } from 'expo-router'
 import { JSX, memo, useCallback, useEffect, useMemo, useState } from 'react'
@@ -14,11 +14,8 @@ import { usePhysicalKeys } from '@/hooks/usePhysicalKeys'
 import { usePuzzleOptions } from '@/hooks/usePuzzleOptions'
 import { useSoundEffects } from '@/hooks/useSoundEffects'
 import { clearJumbleSlot, clearJumbleSlots, drawJumbleRound, emptyJumbleSlots, isJumbleFull, isJumbleSolved, type JumblePuzzle, type JumbleRound, type JumbleSlots, placeJumbleTile, revealJumbleLetter } from '@/utils/jumble'
-import { safeBack } from '@/utils/navigation'
-import { gameShell } from '@/utils/webLayout'
 
-import { formatElapsed, PuzzleSolvedCelebration, PuzzleUnavailable } from './PuzzleScreenParts'
-import { ScreenHeader } from './ScreenHeader'
+import { formatElapsed, PuzzleBoardFrame, PuzzleSolvedCelebration, PuzzleUnavailable, usePuzzleSettingsOpen } from './PuzzleScreenParts'
 import { SketchGlyph } from './SketchGlyph'
 
 const COLUMN_MAX_WIDTH = 480
@@ -69,6 +66,7 @@ const JumbleBoard = ({ puzzle, frozen, onSolved, onHint }: JumbleBoardProps): JS
   const { colors } = useAutoPaperTheme()
   const window = useWindowDimensions()
   const focused = useIsFocused()
+  const settingsOpen = usePuzzleSettingsOpen()
   const { wrongGuess } = useGameHaptics()
   const { playWrong } = useSoundEffects()
   const [slots, setSlots] = useState<JumbleSlots>(() => emptyJumbleSlots(puzzle))
@@ -109,7 +107,7 @@ const JumbleBoard = ({ puzzle, frozen, onSolved, onHint }: JumbleBoardProps): JS
     const index = slots.findLastIndex((slot, i) => slot !== null && !locked.includes(i))
     if (index >= 0) setSlots(clearJumbleSlot(slots, index))
   }, [slots, locked])
-  usePhysicalKeys(focused && !disabled, handleLetter, handleBackspace)
+  usePhysicalKeys(focused && !settingsOpen && !disabled, handleLetter, handleBackspace)
 
   const handleHint = () => {
     const reveal = revealJumbleLetter(puzzle, slots)
@@ -134,11 +132,6 @@ const JumbleBoard = ({ puzzle, frozen, onSolved, onHint }: JumbleBoardProps): JS
 
   return (
     <View style={styles.board}>
-      {puzzle.hint ? (
-        <Text testID='jumble-clue' variant='bodyMedium' style={[styles.centerText, { color: colors.onSurfaceVariant }]}>
-          {puzzle.hint}
-        </Text>
-      ) : null}
       <View style={styles.answer}>
         {puzzle.words.map((word, wordIndex) => (
           <View key={wordStarts[wordIndex]} style={styles.tileRow}>
@@ -154,8 +147,8 @@ const JumbleBoard = ({ puzzle, frozen, onSolved, onHint }: JumbleBoardProps): JS
       </Text>
       <View style={styles.pool}>{puzzle.tiles.map((tile) => (slots.includes(tile.id) ? <View key={tile.id} style={{ width: size, height: size }} /> : <PoolTile key={tile.id} id={tile.id} letter={tile.letter} size={size} disabled={disabled} onPress={handleTile} />))}</View>
       <View style={styles.actions}>
-        <Button mode='outlined' icon='lightbulb-outline' onPress={handleHint} disabled={disabled}>
-          Hint
+        <Button mode='outlined' icon='format-letter-case' onPress={handleHint} disabled={disabled}>
+          Reveal Letter
         </Button>
         <Button mode='outlined' icon='backspace-outline' onPress={() => setSlots(clearJumbleSlots(slots, locked))} disabled={disabled || slots.every((slot, i) => slot === null || locked.includes(i))}>
           Clear
@@ -180,6 +173,8 @@ export const JumbleScreen = (): JSX.Element => {
   const [game, setGame] = useState(draw)
   const [index, setIndex] = useState(0)
   const [hints, setHints] = useState(0)
+  // Hangman's Hint pill: the pack, then each answer's clue, once pressed (it stays open for the round).
+  const [clueShown, setClueShown] = useState(false)
   const [advancing, setAdvancing] = useState(false)
   const [elapsedMs, setElapsedMs] = useState<number | null>(null)
   const { round, startedAt } = game
@@ -198,6 +193,7 @@ export const JumbleScreen = (): JSX.Element => {
     setGame(draw())
     setIndex(0)
     setHints(0)
+    setClueShown(false)
     setAdvancing(false)
     setElapsedMs(null)
   }, [draw])
@@ -214,17 +210,21 @@ export const JumbleScreen = (): JSX.Element => {
     setElapsedMs(Date.now() - startedAt)
   }, [index, total, startedAt, correctGuess, playCorrect, win, playWin])
   const handleHint = useCallback(() => setHints((count) => count + 1), [])
+  // Opening the clue is a hint too, as Hangman's is.
+  const showClue = useCallback(() => {
+    setClueShown(true)
+    setHints((count) => count + 1)
+  }, [])
   const message = useMemo(() => {
     const help = hints === 0 ? '' : hints === 1 ? ' with 1 hint' : ` with ${hints} hints`
     return `You unscrambled all ${total}${help} in ${formatElapsed(elapsedMs ?? 0)}.`
   }, [hints, total, elapsedMs])
 
-  if (!round) return <PuzzleUnavailable title='Jumble' message='None of your selected packs has enough answers of the right length.' />
+  if (!round) return <PuzzleUnavailable message='None of your selected packs has enough answers of the right length.' />
 
   const puzzle = round.puzzles[index]
   return (
-    <View style={[styles.screen, gameShell]}>
-      <ScreenHeader icon='arrow-left' label='Back' onPress={safeBack} title={round.packLabel} trailing={<IconButton icon='refresh' iconColor={colors.onSurface} size={24} hitSlop={4} onPress={newRound} accessibilityLabel='New puzzle' />} />
+    <PuzzleBoardFrame difficultyTier={puzzle.difficultyTier} packLabel={round.packLabel} hint={puzzle.hint} hintRevealed={clueShown} onRevealHint={showClue}>
       <View style={[styles.body, { paddingBottom: insets.bottom + GUTTER }]}>
         <Text testID='jumble-progress' variant='labelLarge' style={[styles.centerText, { color: colors.onSurfaceVariant }]}>
           Answer {index + 1} of {total}
@@ -232,7 +232,7 @@ export const JumbleScreen = (): JSX.Element => {
         <JumbleBoard key={`${startedAt}:${puzzle.id}`} puzzle={puzzle} frozen={advancing || elapsedMs !== null} onSolved={handleSolved} onHint={handleHint} />
       </View>
       {elapsedMs !== null ? <PuzzleSolvedCelebration message={message} onNext={newRound} /> : null}
-    </View>
+    </PuzzleBoardFrame>
   )
 }
 
@@ -243,7 +243,6 @@ const styles = StyleSheet.create({
   body: { flex: 1, gap: 12, justifyContent: 'center', paddingHorizontal: GUTTER },
   centerText: { textAlign: 'center' },
   pool: { flexDirection: 'row', flexWrap: 'wrap', gap: TILE_GAP, justifyContent: 'center' },
-  screen: { flex: 1 },
   slot: { alignItems: 'center', borderRadius: 8, borderWidth: 2, justifyContent: 'center' },
   status: { minHeight: 20 },
   tile: { alignItems: 'center', borderRadius: 8, boxShadow: WELL_SHADOW, justifyContent: 'center' },

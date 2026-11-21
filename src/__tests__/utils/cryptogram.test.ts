@@ -11,7 +11,7 @@ const seeded = (seed: number) => () => {
 
 const PACK = { key: 'test', label: 'Test Pack', categories: ['Thing'] }
 const ANSWERS = ['The Quick Brown Fox', 'Jumping Over Dogs', 'Pack My Box With Jugs', 'Bright Vixens Jump', 'Sphinx Of Black Quartz', 'Short', 'One Two', 'A Name With Averyveryverylongword Inside']
-const puzzles = ANSWERS.map((answer, i) => ({ id: `p${i}`, answer, category: 'Thing' }))
+const puzzles = ANSWERS.map((answer, i) => ({ id: `p${i}`, answer, category: 'Thing', difficultyTier: 'easy' as const }))
 
 // CAB in code XYZ.
 const board: Pick<CryptogramBoard, 'cipherLetters' | 'plainByCipher' | 'given'> = { cipherLetters: ['X', 'Y', 'Z'], plainByCipher: { X: 'C', Y: 'A', Z: 'B' }, given: ['Z'] }

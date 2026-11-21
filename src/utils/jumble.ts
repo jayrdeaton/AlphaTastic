@@ -1,6 +1,6 @@
 import type { Puzzle } from '@/types/puzzle'
 import { spellsBlockedWord } from '@/utils/blockedWords'
-import type { PuzzleManifestItem } from '@/utils/puzzleCatalog'
+import type { PuzzleDifficultyTier, PuzzleManifestItem } from '@/utils/puzzleCatalog'
 import type { JumbleOptions, PuzzleLength } from '@/utils/puzzleOptions'
 import { buildHint } from '@/utils/puzzlePicker'
 
@@ -10,7 +10,7 @@ import { type Rng, shuffled } from './random'
 type JumbleLengthRules = { maxWords: number; minLetters: number; maxLetters: number; maxWordLetters: number }
 export type JumbleRules = JumbleLengthRules & { answers: number }
 export type JumbleTile = { id: number; letter: string }
-export type JumblePuzzle = { id: string; answer: string; hint?: string; words: string[]; letters: string; tiles: JumbleTile[] }
+export type JumblePuzzle = { id: string; answer: string; hint?: string; difficultyTier: PuzzleDifficultyTier; words: string[]; letters: string; tiles: JumbleTile[] }
 export type JumbleRound = { packKey: string; packLabel: string; puzzles: JumblePuzzle[] }
 // Which tile sits in each answer position, null while it's empty.
 export type JumbleSlots = (number | null)[]
@@ -52,7 +52,7 @@ export const scrambleTiles = (letters: string, rng: Rng): JumbleTile[] => {
   return best
 }
 
-export const buildJumbleRound = (pack: Pick<PuzzleManifestItem, 'key' | 'label' | 'categories'>, puzzles: readonly Pick<Puzzle, 'id' | 'answer' | 'category' | 'metadata'>[], rules: JumbleRules, rng: Rng): JumbleRound | null => {
+export const buildJumbleRound = (pack: Pick<PuzzleManifestItem, 'key' | 'label' | 'categories'>, puzzles: readonly Pick<Puzzle, 'id' | 'answer' | 'category' | 'metadata' | 'difficultyTier'>[], rules: JumbleRules, rng: Rng): JumbleRound | null => {
   const seen = new Set<string>()
   const chosen: JumblePuzzle[] = []
   for (const puzzle of shuffled(puzzles, rng)) {
@@ -61,7 +61,7 @@ export const buildJumbleRound = (pack: Pick<PuzzleManifestItem, 'key' | 'label' 
     const letters = words.join('')
     if (seen.has(letters) || !fitsRules(words, letters, rules)) continue
     seen.add(letters)
-    chosen.push({ id: puzzle.id, answer: puzzle.answer, hint: buildHint(puzzle, pack), words, letters, tiles: scrambleTiles(letters, rng) })
+    chosen.push({ id: puzzle.id, answer: puzzle.answer, hint: buildHint(puzzle, pack), difficultyTier: puzzle.difficultyTier, words, letters, tiles: scrambleTiles(letters, rng) })
   }
   return chosen.length === rules.answers ? { packKey: pack.key, packLabel: pack.label, puzzles: chosen } : null
 }

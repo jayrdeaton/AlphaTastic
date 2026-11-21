@@ -1,4 +1,3 @@
-import { IconButton } from '@rific/feedback-press'
 import { JSX, useCallback, useState } from 'react'
 import { type LayoutChangeEvent, StyleSheet, useWindowDimensions, View } from 'react-native'
 import { Text, useTheme } from 'react-native-paper'
@@ -9,17 +8,13 @@ import { useGameHaptics } from '@/hooks/useGameHaptics'
 import { usePackSelection } from '@/hooks/usePackSelection'
 import { usePuzzleOptions } from '@/hooks/usePuzzleOptions'
 import { useSoundEffects } from '@/hooks/useSoundEffects'
-import { safeBack } from '@/utils/navigation'
-import { gameShell } from '@/utils/webLayout'
 import { drawWordSearch, findSelectedWord, type GridCell, type WordSearchBoard } from '@/utils/wordSearch'
 
-import { formatElapsed, PuzzleSolvedCelebration, PuzzleUnavailable } from './PuzzleScreenParts'
-import { ScreenHeader } from './ScreenHeader'
+import { formatElapsed, PUZZLE_TOP_HEIGHT, PuzzleBoardFrame, PuzzleSolvedCelebration, PuzzleUnavailable } from './PuzzleScreenParts'
 import { type FoundWord, WordSearchGrid } from './WordSearchGrid'
 
 const COLUMN_MAX_WIDTH = 480
 const GUTTER = 16
-const HEADER_HEIGHT = 64
 const WORD_ROW_HEIGHT = 26
 const WORD_COLUMNS = 2
 const PROGRESS_HEIGHT = 36
@@ -79,20 +74,21 @@ export const WordSearchScreen = (): JSX.Element => {
 
   const handleLayout = useCallback(({ nativeEvent: { layout } }: LayoutChangeEvent) => setMeasured({ width: layout.width, height: layout.height }), [])
 
-  if (!board) return <PuzzleUnavailable title='Word Search' message='None of your selected packs has enough short answers for a grid.' />
+  if (!board) return <PuzzleUnavailable message='None of your selected packs has enough short answers for a grid.' />
 
   // The list keeps its full height, and the grid takes what's left, in whole points per cell so its
   // letters and bands stay crisp. Until the body has been measured, the window stands in for it.
   const { size, words } = board
   const width = measured?.width ?? Math.min(window.width, COLUMN_MAX_WIDTH)
-  const height = measured?.height ?? window.height - insets.top - insets.bottom - HEADER_HEIGHT
+  const height = measured?.height ?? window.height - insets.top - insets.bottom - PUZZLE_TOP_HEIGHT
   const listHeight = Math.ceil(words.length / WORD_COLUMNS) * WORD_ROW_HEIGHT + PROGRESS_HEIGHT
   const cellSize = Math.max(16, Math.floor(Math.min(width - GUTTER * 2, height - listHeight) / size))
   const foundIds = new Set(found.map(({ id }) => id))
 
   return (
-    <View style={[styles.screen, gameShell]}>
-      <ScreenHeader icon='arrow-left' label='Back' onPress={safeBack} title={board.packLabel} trailing={<IconButton icon='refresh' iconColor={theme.colors.onSurface} size={24} hitSlop={4} onPress={newPuzzle} accessibilityLabel='New puzzle' />} />
+    // The grid's theme is its pack, shown in Hangman's Hint pill already open: the word list gives it
+    // away anyway.
+    <PuzzleBoardFrame packLabel={board.packLabel} hintRevealed>
       <View style={[styles.body, { paddingBottom: insets.bottom }]}>
         <View style={styles.fill} onLayout={handleLayout}>
           <View style={styles.centered}>
@@ -115,7 +111,7 @@ export const WordSearchScreen = (): JSX.Element => {
       </View>
 
       {elapsedMs !== null ? <PuzzleSolvedCelebration message={`You found all ${words.length} in ${formatElapsed(elapsedMs)}.`} onNext={newPuzzle} /> : null}
-    </View>
+    </PuzzleBoardFrame>
   )
 }
 
@@ -124,7 +120,6 @@ const styles = StyleSheet.create({
   centered: { alignItems: 'center' },
   fill: { flex: 1, justifyContent: 'center' },
   progress: { lineHeight: PROGRESS_HEIGHT },
-  screen: { flex: 1 },
   word: { lineHeight: WORD_ROW_HEIGHT, paddingRight: 8, width: `${100 / WORD_COLUMNS}%` },
   wordFound: { opacity: 0.6, textDecorationLine: 'line-through' },
   words: { flexDirection: 'row', flexWrap: 'wrap' }

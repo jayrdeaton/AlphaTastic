@@ -53,7 +53,7 @@ export const PackToaster = (): JSX.Element => {
   const insets = useSafeAreaInsets()
   return (
     <>
-      <Toaster position='top' wrapperStyle={toastStackFrame(width, insets)} clearButton={null} historyButton={null} limit={3} />
+      <Toaster position='top' wrapperStyle={toastStackFrame(width, insets)} clearButton={null} historyButton={null} limit={1} />
       <IncomingFileImport />
     </>
   )

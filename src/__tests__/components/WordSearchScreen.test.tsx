@@ -132,14 +132,14 @@ describe('WordSearchScreen', () => {
     expect(getByTestId('word-search-progress')).toHaveTextContent(`0 of ${mockGrid.board.words.length} found`)
   })
 
-  it('starts over from the refresh button, and leaves from Back', async () => {
-    const { getByLabelText, getByTestId } = await renderScreen()
-    const first = mockGrid.board
-    await findWord(0)
+  // Hangman's corners (Jay, 2026-11-19): Back to the setup screen, whose Ready deals a new grid, and the
+  // Settings cog, where a New puzzle button used to be.
+  it('leaves from Back and opens Settings from the cog, with no New puzzle button', async () => {
+    const { getByLabelText, queryByLabelText, queryByTestId } = await renderScreen()
+    expect(queryByLabelText('New puzzle')).toBeNull()
 
-    await fireEvent.press(getByLabelText('New puzzle'))
-    expect(mockGrid.board).not.toBe(first)
-    expect(getByTestId('word-search-progress')).toHaveTextContent(`0 of ${mockGrid.board.words.length} found`)
+    await fireEvent.press(getByLabelText('Settings'))
+    expect(queryByTestId('dialog')).toBeTruthy()
 
     await fireEvent.press(getByLabelText('Back'))
     expect(safeBack).toHaveBeenCalledTimes(1)

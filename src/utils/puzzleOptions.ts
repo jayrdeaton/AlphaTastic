@@ -9,7 +9,9 @@ export type PuzzleOptionsByGame = { [WORD_SEARCH_GAME_ID]: WordSearchOptions; [J
 export type PlayerPuzzleOptions = { [G in PuzzleGameId]?: Partial<PuzzleOptionsByGame[G]> }
 
 export type PuzzleSettingChoice = { value: string; label: string; icon: string }
-export type PuzzleSetting = { key: string; label: string; choices: PuzzleSettingChoice[] }
+// `caption` is the short name over the pill's pick (Jay, 2026-11-19, as Difficulty's), where `label`
+// is the setting's whole name.
+export type PuzzleSetting = { key: string; label: string; caption: string; choices: PuzzleSettingChoice[] }
 export type PuzzleGameSetup = { title: string; settings: PuzzleSetting[]; defaults: Record<string, string> }
 
 const LENGTH_CHOICES: PuzzleSettingChoice[] = [
@@ -26,6 +28,7 @@ export const PUZZLE_GAME_SETUP: Record<PuzzleGameId, PuzzleGameSetup> = {
       {
         key: 'grid',
         label: 'Grid size',
+        caption: 'Grid',
         choices: [
           { value: 'small', label: 'Small', icon: 'grid-large' },
           { value: 'medium', label: 'Medium', icon: 'grid' },
@@ -35,6 +38,7 @@ export const PUZZLE_GAME_SETUP: Record<PuzzleGameId, PuzzleGameSetup> = {
       {
         key: 'directions',
         label: 'Directions',
+        caption: 'Directions',
         choices: [
           { value: 'straight', label: 'Straight', icon: 'arrow-right' },
           { value: 'diagonal', label: 'Diagonal', icon: 'arrow-top-right' },
@@ -50,23 +54,26 @@ export const PUZZLE_GAME_SETUP: Record<PuzzleGameId, PuzzleGameSetup> = {
       {
         key: 'answers',
         label: 'Answers',
+        // Its picks already say answers.
+        caption: 'Round',
         choices: [
           { value: '3', label: '3 answers', icon: 'numeric-3-circle-outline' },
           { value: '5', label: '5 answers', icon: 'numeric-5-circle-outline' },
           { value: '10', label: '10 answers', icon: 'numeric-10-circle-outline' }
         ]
       },
-      { key: 'length', label: 'Answer length', choices: LENGTH_CHOICES }
+      { key: 'length', label: 'Answer length', caption: 'Length', choices: LENGTH_CHOICES }
     ],
     defaults: { answers: '5', length: 'medium' }
   },
   [CRYPTOGRAM_GAME_ID]: {
     title: 'Cryptogram',
     settings: [
-      { key: 'length', label: 'Answer length', choices: LENGTH_CHOICES },
+      { key: 'length', label: 'Answer length', caption: 'Length', choices: LENGTH_CHOICES },
       {
         key: 'headStart',
         label: 'Letters solved at the start',
+        caption: 'Head start',
         choices: [
           { value: '1', label: '1 letter', icon: 'numeric-1-circle-outline' },
           { value: '3', label: '3 letters', icon: 'numeric-3-circle-outline' },

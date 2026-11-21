@@ -10,7 +10,7 @@ const seeded = (seed: number) => () => {
 }
 
 const PACK = { key: 'test', label: 'Test Pack', categories: ['Thing'] }
-const entry = (answer: string, i: number) => ({ id: `p${i}`, answer, category: 'Thing' })
+const entry = (answer: string, i: number) => ({ id: `p${i}`, answer, category: 'Thing', difficultyTier: 'easy' as const })
 const ANSWERS = ['Lion', 'Tiger', 'Zebra', 'Monkey', 'Parrot', 'Rabbit', 'Red Panda', 'Polar Bear', 'Sea Otter', 'Blue Whale Shark', 'Ox', 'Aaaa']
 const puzzles = ANSWERS.map(entry)
 

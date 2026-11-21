@@ -88,7 +88,7 @@ const PnpWordPromptCard = ({ writerName, writerProfile, guessers, guesserId, onG
   // Warns when a keystroke gets rejected: anything but letters and spaces is stripped from `answer`
   // as you type (see handleAnswerChange) rather than silently dropped only at normalize-time, so
   // what's on screen never gets ahead of what the real board behind the card is showing.
-  // @rific/toaster's <Toaster/> (mounted once in Providers.tsx) is keyboard-aware, unlike Paper's own
+  // @rific/toaster's <Toaster limit={1} /> (mounted once in Providers.tsx) is keyboard-aware, unlike Paper's own
   // Snackbar, which this card needs since the keyboard is up for the entire time this can fire.
   const { warning } = useToast()
 

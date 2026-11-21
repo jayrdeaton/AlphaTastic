@@ -1,6 +1,6 @@
 import type { Puzzle } from '@/types/puzzle'
 import { spellsBlockedWord } from '@/utils/blockedWords'
-import type { PuzzleManifestItem } from '@/utils/puzzleCatalog'
+import type { PuzzleDifficultyTier, PuzzleManifestItem } from '@/utils/puzzleCatalog'
 import type { CryptogramOptions, PuzzleLength } from '@/utils/puzzleOptions'
 import { buildHint } from '@/utils/puzzlePicker'
 
@@ -12,6 +12,7 @@ export type CryptogramBoard = {
   id: string
   answer: string
   hint?: string
+  difficultyTier: PuzzleDifficultyTier
   packKey: string
   packLabel: string
   // The answer, and the same words as they're shown, letter for letter.
@@ -59,7 +60,7 @@ const fitsRules = (words: string[], rules: CryptogramRules): boolean => {
 
 const encode = (words: string[], cipher: Record<string, string>): string[] => words.map((word) => [...word].map((letter) => cipher[letter]).join(''))
 
-export const buildCryptogram = (pack: Pick<PuzzleManifestItem, 'key' | 'label' | 'categories'>, puzzles: readonly Pick<Puzzle, 'id' | 'answer' | 'category' | 'metadata'>[], rules: CryptogramRules, rng: Rng): CryptogramBoard | null => {
+export const buildCryptogram = (pack: Pick<PuzzleManifestItem, 'key' | 'label' | 'categories'>, puzzles: readonly Pick<Puzzle, 'id' | 'answer' | 'category' | 'metadata' | 'difficultyTier'>[], rules: CryptogramRules, rng: Rng): CryptogramBoard | null => {
   const candidates = shuffled(puzzles, rng).filter((puzzle) => fitsRules(answerWords(puzzle.answer), rules))
   if (candidates.length < MINIMUM_ANSWERS) return null
   const puzzle = pickFrom(candidates, rng)
@@ -69,7 +70,7 @@ export const buildCryptogram = (pack: Pick<PuzzleManifestItem, 'key' | 'label' |
   const cipherWords = encode(words, cipher)
   const cipherLetters = [...new Set(cipherWords.join(''))]
   const plainByCipher = Object.fromEntries(Object.entries(cipher).map(([plain, code]) => [code, plain]))
-  return { id: puzzle.id, answer: puzzle.answer, hint: buildHint(puzzle, pack), packKey: pack.key, packLabel: pack.label, words, cipherWords, plainByCipher, cipherLetters, given: shuffled(cipherLetters, rng).slice(0, rules.givenLetters) }
+  return { id: puzzle.id, answer: puzzle.answer, hint: buildHint(puzzle, pack), difficultyTier: puzzle.difficultyTier, packKey: pack.key, packLabel: pack.label, words, cipherWords, plainByCipher, cipherLetters, given: shuffled(cipherLetters, rng).slice(0, rules.givenLetters) }
 }
 
 export const drawCryptogram = (packKeys: readonly string[], options: CryptogramOptions, rng: Rng = Math.random): CryptogramBoard | null => {

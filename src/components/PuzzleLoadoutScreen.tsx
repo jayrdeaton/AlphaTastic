@@ -7,7 +7,7 @@ import { Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { JUMBLE_GAME_ID, type PuzzleGameId, WORD_SEARCH_GAME_ID } from '@/constants/games'
-import { actionType, titleType } from '@/constants/typography'
+import { actionType } from '@/constants/typography'
 import { useCatalogActions, useCatalogVersions } from '@/hooks/useCatalog'
 import { usePackSelection } from '@/hooks/usePackSelection'
 import { usePuzzleDefaults } from '@/hooks/usePuzzleDefaults'
@@ -39,17 +39,6 @@ const describe = (game: PuzzleGameId, options: unknown): string => {
 }
 
 const isSettingOpen = (openId: string | null) => openId?.startsWith(SETTING_PICKER_PREFIX) ?? false
-
-const GameTitle = ({ title }: { title: string }): JSX.Element => {
-  const theme = useTheme()
-  return (
-    <View style={styles.title}>
-      <Text variant='titleLarge' accessibilityRole='header' numberOfLines={1} style={[styles.titleText, { color: theme.colors.onSurface }, titleType]}>
-        {title}
-      </Text>
-    </View>
-  )
-}
 
 // A group lifted over the page's tap catcher while a popover it holds is open, so the popover takes its
 // own taps (zIndex only orders one parent's children).
@@ -91,8 +80,9 @@ const PuzzleLoadoutPage = ({ game, onOpenPacks, coveredPacks }: { game: PuzzleGa
   )
 }
 
-// A puzzle game's own setup screen, from its card on Home: its name, who's playing, a picture of the
-// game, its settings (each player's own), the packs its puzzles come from and Ready.
+// A puzzle game's own setup screen, from its card on Home: who's playing, a picture of the game, its
+// settings (each player's own), the packs its puzzles come from and Ready. No title, as Hangman's page
+// has none (Jay, 2026-11-19): the picture and the pills say which game it is.
 export const PuzzleLoadoutScreen = ({ game }: { game: PuzzleGameId }): JSX.Element => {
   const focused = useIsFocused()
   const { selectedPackKeys, setSelectedPackKeys } = usePackSelection()
@@ -114,7 +104,7 @@ export const PuzzleLoadoutScreen = ({ game }: { game: PuzzleGameId }): JSX.Eleme
   }, [packsVisible, hasPacks])
 
   return (
-    <LoadoutShell closeOverlay={closeOverlay} closeAllOverlays={closePacks} centerAction={<GameTitle title={PUZZLE_GAME_SETUP[game].title} />} overlays={<PacksScreen ref={packsRef} visible={packsVisible} onDismiss={closePacks} selectedKeys={selectedPackKeys} onChangeSelectedKeys={setSelectedPackKeys} packsVersion={packsVersion} onPacksChanged={refreshCustomPacks} mode={mode} difficulty={difficulty} />}>
+    <LoadoutShell closeOverlay={closeOverlay} closeAllOverlays={closePacks} overlays={<PacksScreen ref={packsRef} visible={packsVisible} onDismiss={closePacks} selectedKeys={selectedPackKeys} onChangeSelectedKeys={setSelectedPackKeys} packsVersion={packsVersion} onPacksChanged={refreshCustomPacks} mode={mode} difficulty={difficulty} />}>
       <PuzzleLoadoutPage game={game} onOpenPacks={openPacks} coveredPacks={packs} />
     </LoadoutShell>
   )
@@ -130,7 +120,5 @@ const styles = StyleSheet.create({
   ready: { alignSelf: 'stretch' },
   readyContent: { height: 48 },
   summary: { flex: 1, textAlign: 'center' },
-  summaryRow: { alignItems: 'center', alignSelf: 'stretch', flexDirection: 'row', gap: 8, marginTop: 4 },
-  title: { height: 48, justifyContent: 'center', maxWidth: 240 },
-  titleText: { fontWeight: '700' }
+  summaryRow: { alignItems: 'center', alignSelf: 'stretch', flexDirection: 'row', gap: 8, marginTop: 4 }
 })
