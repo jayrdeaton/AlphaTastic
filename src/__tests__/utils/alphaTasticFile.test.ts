@@ -20,7 +20,7 @@ const setPlatform = (os: string) => {
 
 // A minimal in-memory stand-in for expo-file-system's File class - write() stores by uri, text()
 // reads it back, matching the real class closely enough to exercise shareCustomPackFile's native
-// write-then-share path and the native read paths in pickHangmanFile/readHangmanFileFromUri.
+// write-then-share path and the native read paths in pickAlphaTasticFile/readAlphaTasticFileFromUri.
 const mockFileStore = new Map<string, string>()
 
 jest.mock('expo-file-system', () => {
@@ -84,7 +84,7 @@ describe('hangmanFile', () => {
       const { exportCustomPack } = require('@/utils/customPacks')
       exportCustomPack.mockResolvedValue(null)
       const Sharing = require('expo-sharing')
-      const { shareCustomPackFile } = require('@/utils/hangmanFile')
+      const { shareCustomPackFile } = require('@/utils/alphaTasticFile')
 
       const result = await shareCustomPackFile('custom:missing', 'Missing Pack')
 
@@ -92,7 +92,7 @@ describe('hangmanFile', () => {
       expect(Sharing.shareAsync).not.toHaveBeenCalled()
     })
 
-    it('web: downloads a .hangman file via a Blob/anchor click rather than using expo-sharing', async () => {
+    it('web: downloads a .alphatastic file via a Blob/anchor click rather than using expo-sharing', async () => {
       setPlatform('web')
       const { exportCustomPack } = require('@/utils/customPacks')
       exportCustomPack.mockResolvedValue('{"pack":"payload"}')
@@ -109,7 +109,7 @@ describe('hangmanFile', () => {
       const revokeObjectURL = jest.fn()
       stubGlobalURL(createObjectURL, revokeObjectURL)
 
-      const { shareCustomPackFile } = require('@/utils/hangmanFile')
+      const { shareCustomPackFile } = require('@/utils/alphaTasticFile')
       const result = await shareCustomPackFile('custom:abc', 'My Trip!')
 
       expect(result).toBe(true)
@@ -117,7 +117,7 @@ describe('hangmanFile', () => {
       // Punctuation stripped, extension appended - same rule a real OS filesystem would otherwise
       // reject or mangle characters for.
       const anchor = createElementSpy.mock.results.find((r) => r.value.tagName === 'A')?.value
-      expect(anchor.download).toBe('My Trip.hangman')
+      expect(anchor.download).toBe('My Trip.alphatastic')
       expect(clickSpy).toHaveBeenCalledTimes(1)
       expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url')
       expect(Sharing.shareAsync).not.toHaveBeenCalled()
@@ -130,12 +130,12 @@ describe('hangmanFile', () => {
       Sharing.isAvailableAsync.mockResolvedValue(true)
       Sharing.shareAsync.mockResolvedValue(undefined)
 
-      const { shareCustomPackFile } = require('@/utils/hangmanFile')
+      const { shareCustomPackFile } = require('@/utils/alphaTasticFile')
       const result = await shareCustomPackFile('custom:abc', 'My Trip')
 
       expect(result).toBe(true)
-      expect(mockFileStore.get('mock-cache/My Trip.hangman')).toBe('{"pack":"payload"}')
-      expect(Sharing.shareAsync).toHaveBeenCalledWith('mock-cache/My Trip.hangman', expect.objectContaining({ mimeType: 'application/x-hangman', dialogTitle: 'Share "My Trip"' }))
+      expect(mockFileStore.get('mock-cache/My Trip.alphatastic')).toBe('{"pack":"payload"}')
+      expect(Sharing.shareAsync).toHaveBeenCalledWith('mock-cache/My Trip.alphatastic', expect.objectContaining({ mimeType: 'application/x-alphatastic', dialogTitle: 'Share "My Trip"' }))
     })
 
     it('native: returns false without sharing when the share sheet is unavailable on this device', async () => {
@@ -144,7 +144,7 @@ describe('hangmanFile', () => {
       const Sharing = require('expo-sharing')
       Sharing.isAvailableAsync.mockResolvedValue(false)
 
-      const { shareCustomPackFile } = require('@/utils/hangmanFile')
+      const { shareCustomPackFile } = require('@/utils/alphaTasticFile')
       const result = await shareCustomPackFile('custom:abc', 'My Trip')
 
       expect(result).toBe(false)
@@ -166,16 +166,16 @@ describe('hangmanFile', () => {
         () => {}
       )
 
-      const { shareCustomPackFile } = require('@/utils/hangmanFile')
+      const { shareCustomPackFile } = require('@/utils/alphaTasticFile')
       await shareCustomPackFile('custom:abc', '!!!')
 
       const anchor = createElementSpy.mock.results.find((r) => r.value.tagName === 'A')?.value
-      expect(anchor.download).toBe('pack.hangman')
+      expect(anchor.download).toBe('pack.alphatastic')
     })
   })
 
   describe('shareProgressBackupFile', () => {
-    it('web: downloads a .hangman file with a fixed filename via a Blob/anchor click', async () => {
+    it('web: downloads a .alphatastic file with a fixed filename via a Blob/anchor click', async () => {
       setPlatform('web')
       const { exportPuzzleUnlocks } = require('@/utils/unlocks')
       exportPuzzleUnlocks.mockResolvedValue('{"unlocks":{}}')
@@ -192,12 +192,12 @@ describe('hangmanFile', () => {
         () => {}
       )
 
-      const { shareProgressBackupFile } = require('@/utils/hangmanFile')
+      const { shareProgressBackupFile } = require('@/utils/alphaTasticFile')
       const result = await shareProgressBackupFile('guest')
 
       expect(result).toBe(true)
       const anchor = createElementSpy.mock.results.find((r) => r.value.tagName === 'A')?.value
-      expect(anchor.download).toBe('hangman-progress-backup.hangman')
+      expect(anchor.download).toBe('alphatastic-progress-backup.alphatastic')
       expect(clickSpy).toHaveBeenCalledTimes(1)
     })
 
@@ -208,14 +208,14 @@ describe('hangmanFile', () => {
       Sharing.isAvailableAsync.mockResolvedValue(true)
       Sharing.shareAsync.mockResolvedValue(undefined)
 
-      const { shareProgressBackupFile } = require('@/utils/hangmanFile')
+      const { shareProgressBackupFile } = require('@/utils/alphaTasticFile')
       const result = await shareProgressBackupFile('guest')
 
       expect(result).toBe(true)
       // The backup is one player's own unlocked puzzles.
       expect(exportPuzzleUnlocks).toHaveBeenCalledWith('guest')
-      expect(mockFileStore.get('mock-cache/hangman-progress-backup.hangman')).toBe('{"unlocks":{}}')
-      expect(Sharing.shareAsync).toHaveBeenCalledWith('mock-cache/hangman-progress-backup.hangman', expect.objectContaining({ mimeType: 'application/x-hangman', dialogTitle: 'Share Progress Backup' }))
+      expect(mockFileStore.get('mock-cache/alphatastic-progress-backup.alphatastic')).toBe('{"unlocks":{}}')
+      expect(Sharing.shareAsync).toHaveBeenCalledWith('mock-cache/alphatastic-progress-backup.alphatastic', expect.objectContaining({ mimeType: 'application/x-alphatastic', dialogTitle: 'Share Progress Backup' }))
     })
 
     it('native: returns false without sharing when the share sheet is unavailable on this device', async () => {
@@ -224,7 +224,7 @@ describe('hangmanFile', () => {
       const Sharing = require('expo-sharing')
       Sharing.isAvailableAsync.mockResolvedValue(false)
 
-      const { shareProgressBackupFile } = require('@/utils/hangmanFile')
+      const { shareProgressBackupFile } = require('@/utils/alphaTasticFile')
       const result = await shareProgressBackupFile('guest')
 
       expect(result).toBe(false)
@@ -232,24 +232,24 @@ describe('hangmanFile', () => {
     })
   })
 
-  describe('pickHangmanFile', () => {
+  describe('pickAlphaTasticFile', () => {
     it('returns null when the player cancels the picker', async () => {
       const DocumentPicker = require('expo-document-picker')
       DocumentPicker.getDocumentAsync.mockResolvedValue({ canceled: true, assets: null })
 
-      const { pickHangmanFile } = require('@/utils/hangmanFile')
-      const result = await pickHangmanFile()
+      const { pickAlphaTasticFile } = require('@/utils/alphaTasticFile')
+      const result = await pickAlphaTasticFile()
 
       expect(result).toBeNull()
     })
 
     it('native: reads the picked file via its uri', async () => {
       const DocumentPicker = require('expo-document-picker')
-      DocumentPicker.getDocumentAsync.mockResolvedValue({ canceled: false, assets: [{ uri: 'mock-cache/picked.hangman', name: 'picked.hangman' }] })
-      mockFileStore.set('mock-cache/picked.hangman', '{"pack":"picked"}')
+      DocumentPicker.getDocumentAsync.mockResolvedValue({ canceled: false, assets: [{ uri: 'mock-cache/picked.alphatastic', name: 'picked.alphatastic' }] })
+      mockFileStore.set('mock-cache/picked.alphatastic', '{"pack":"picked"}')
 
-      const { pickHangmanFile } = require('@/utils/hangmanFile')
-      const result = await pickHangmanFile()
+      const { pickAlphaTasticFile } = require('@/utils/alphaTasticFile')
+      const result = await pickAlphaTasticFile()
 
       expect(result).toBe('{"pack":"picked"}')
     })
@@ -258,10 +258,10 @@ describe('hangmanFile', () => {
       setPlatform('web')
       const DocumentPicker = require('expo-document-picker')
       const webFile = { text: jest.fn().mockResolvedValue('{"pack":"web-picked"}') }
-      DocumentPicker.getDocumentAsync.mockResolvedValue({ canceled: false, assets: [{ uri: 'blob:whatever', name: 'picked.hangman', file: webFile }] })
+      DocumentPicker.getDocumentAsync.mockResolvedValue({ canceled: false, assets: [{ uri: 'blob:whatever', name: 'picked.alphatastic', file: webFile }] })
 
-      const { pickHangmanFile } = require('@/utils/hangmanFile')
-      const result = await pickHangmanFile()
+      const { pickAlphaTasticFile } = require('@/utils/alphaTasticFile')
+      const result = await pickAlphaTasticFile()
 
       expect(result).toBe('{"pack":"web-picked"}')
     })
@@ -269,21 +269,21 @@ describe('hangmanFile', () => {
     it('web: returns null if the picked asset carries no File object', async () => {
       setPlatform('web')
       const DocumentPicker = require('expo-document-picker')
-      DocumentPicker.getDocumentAsync.mockResolvedValue({ canceled: false, assets: [{ uri: 'blob:whatever', name: 'picked.hangman' }] })
+      DocumentPicker.getDocumentAsync.mockResolvedValue({ canceled: false, assets: [{ uri: 'blob:whatever', name: 'picked.alphatastic' }] })
 
-      const { pickHangmanFile } = require('@/utils/hangmanFile')
-      const result = await pickHangmanFile()
+      const { pickAlphaTasticFile } = require('@/utils/alphaTasticFile')
+      const result = await pickAlphaTasticFile()
 
       expect(result).toBeNull()
     })
   })
 
-  describe('readHangmanFileFromUri', () => {
+  describe('readAlphaTasticFileFromUri', () => {
     it('reads whatever content is at the given uri', async () => {
-      mockFileStore.set('mock-cache/incoming.hangman', '{"pack":"incoming"}')
+      mockFileStore.set('mock-cache/incoming.alphatastic', '{"pack":"incoming"}')
 
-      const { readHangmanFileFromUri } = require('@/utils/hangmanFile')
-      const result = await readHangmanFileFromUri('mock-cache/incoming.hangman')
+      const { readAlphaTasticFileFromUri } = require('@/utils/alphaTasticFile')
+      const result = await readAlphaTasticFileFromUri('mock-cache/incoming.alphatastic')
 
       expect(result).toBe('{"pack":"incoming"}')
     })

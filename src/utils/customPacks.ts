@@ -206,7 +206,7 @@ export type ParsedCustomPackImport = { key: string | undefined; label: string; e
 // Split out from importCustomPack below so a caller can preview what a backup/file actually
 // contains (label, word count) before committing to saveCustomPack - the incoming-file-share flow
 // shows the player a confirm dialog with that preview rather than importing sight-unseen the
-// moment a .hangman file is opened.
+// moment a .alphatastic file is opened.
 //
 // Reuses the incoming key when it's a valid custom-pack key, rather than always minting a fresh
 // one -- this is what makes re-importing an UPDATED export of a pack you already have (e.g. the

@@ -1,15 +1,15 @@
 import { redirectSystemPath } from '@/app/+native-intent'
 
 // expo-router hands every incoming native URL through redirectSystemPath before it routes it. A
-// .hangman file opened from another app (a file: or content: URL) must never reach the router, or it
+// .alphatastic file opened from another app (a file: or content: URL) must never reach the router, or it
 // would land on the not-found route; IncomingFileImport reads it instead. Everything else, share links
 // included, has to reach the router exactly as it came in.
 describe('redirectSystemPath', () => {
   it.each([
-    ['an iOS file: URL', 'file:///private/var/mobile/Containers/Data/Application/ABC/Documents/Inbox/Animals.hangman'],
-    ['a short file: URL', 'file:///x.hangman'],
-    ['an upper-case FILE: URL', 'FILE:///x.hangman'],
-    ['a mixed-case File: URL', 'File:///x.hangman'],
+    ['an iOS file: URL', 'file:///private/var/mobile/Containers/Data/Application/ABC/Documents/Inbox/Animals.alphatastic'],
+    ['a short file: URL', 'file:///x.alphatastic'],
+    ['an upper-case FILE: URL', 'FILE:///x.alphatastic'],
+    ['a mixed-case File: URL', 'File:///x.alphatastic'],
     ['an Android content: URL', 'content://com.android.providers.downloads.documents/document/msf%3A1000000123'],
     ['an upper-case CONTENT: URL', 'CONTENT://media/external/file/42']
   ])('keeps %s away from the router', (_label, path) => {
@@ -19,14 +19,14 @@ describe('redirectSystemPath', () => {
   })
 
   it.each([
-    ['a share link', 'hangman://play?phrase=HELLO%20WORLD&hint=A%20greeting&mode=robot'],
-    ['a share link with no query', 'hangman://play'],
+    ['a share link', 'alphatastic://play?phrase=HELLO%20WORLD&hint=A%20greeting&mode=robot'],
+    ['a share link with no query', 'alphatastic://play'],
     ['a plain route path', '/play?phrase=HELLO'],
     ['the root path', '/'],
     ['a game path', '/game?mode=solo'],
-    ['a web URL', 'https://hangman.example/play?phrase=HELLO'],
+    ['a web URL', 'https://alphatastic.example/play?phrase=HELLO'],
     // Only the scheme counts: a link that merely mentions file: further along is still a link.
-    ['a link carrying file: in its query', 'hangman://play?phrase=file:x'],
+    ['a link carrying file: in its query', 'alphatastic://play?phrase=file:x'],
     ['an empty path', '']
   ])('passes %s through untouched', (_label, path) => {
     expect(redirectSystemPath({ path, initial: false })).toBe(path)

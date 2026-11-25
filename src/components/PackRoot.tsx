@@ -45,7 +45,7 @@ export const toastStackFrame = (width: number, insets: { left: number; right: nu
   return { left, marginTop: TOAST_TOP, right: width - left - stackWidth }
 }
 
-// The pack's Toaster, which the shell lays over the whole app. A .hangman file opened from another app
+// The pack's Toaster, which the shell lays over the whole app. A .alphatastic file opened from another app
 // is handled here too: its import card can come up over any screen, and it toasts when it's done, so
 // it has to sit under the toast provider, which the pack's Provider is above.
 export const PackToaster = (): JSX.Element => {

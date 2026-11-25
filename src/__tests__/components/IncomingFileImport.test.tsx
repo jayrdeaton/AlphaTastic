@@ -12,8 +12,8 @@ import { playerSettingsActions } from '@/redux/playerSettingsSlice'
 import { store } from '@/redux/store'
 import { Providers } from '@/testUtils/Providers'
 import { alert } from '@/utils/alert'
+import { readAlphaTasticFileFromUri } from '@/utils/alphaTasticFile'
 import { buildCustomPuzzle, getCustomPacks, importCustomPack, loadCustomPacksCache } from '@/utils/customPacks'
-import { readHangmanFileFromUri } from '@/utils/hangmanFile'
 import { GUEST_PLAYER_KEY } from '@/utils/players'
 import { getPuzzleManifest } from '@/utils/puzzleCatalog'
 import { mergePuzzleUnlocks } from '@/utils/unlocks'
@@ -28,8 +28,8 @@ jest.mock('expo-linking', () => ({
 }))
 
 // Reading the file is expo-file-system's job (see hangmanFile.test), so the tests hand over its text.
-jest.mock('@/utils/hangmanFile', () => ({
-  readHangmanFileFromUri: jest.fn()
+jest.mock('@/utils/alphaTasticFile', () => ({
+  readAlphaTasticFileFromUri: jest.fn()
 }))
 jest.mock('@/utils/alert', () => ({
   alert: jest.fn().mockResolvedValue(undefined)
@@ -48,13 +48,13 @@ jest.mock('@/utils/unlocks', () => {
 
 const mockUseLinkingURL = jest.mocked(Linking.useLinkingURL)
 const mockClearInitialURL = jest.mocked(Linking.clearInitialURL)
-const mockReadHangmanFileFromUri = jest.mocked(readHangmanFileFromUri)
+const mockReadAlphaTasticFileFromUri = jest.mocked(readAlphaTasticFileFromUri)
 const mockAlert = jest.mocked(alert)
 const mockImportCustomPack = jest.mocked(importCustomPack)
 const mockMergePuzzleUnlocks = jest.mocked(mergePuzzleUnlocks)
 
 // What iOS hands the app for a file opened from Messages, Mail or Files, and Android's equivalent.
-const FILE_URL = 'file:///private/var/mobile/Containers/Data/Application/ABC/Documents/Inbox/My%20Words.hangman'
+const FILE_URL = 'file:///private/var/mobile/Containers/Data/Application/ABC/Documents/Inbox/My%20Words.alphatastic'
 const CONTENT_URL = 'content://com.android.providers.downloads.documents/document/42'
 
 // A pack file as shareCustomPackFile writes it (customPacks' CustomPackExportPayload).
@@ -101,7 +101,7 @@ const tree = () => (
 // has landed (packsVersion 1), as it has long before a player can tap Import.
 const renderImport = async (url: string | null, file?: string) => {
   mockUseLinkingURL.mockReturnValue(url)
-  if (file !== undefined) mockReadHangmanFileFromUri.mockResolvedValue(file)
+  if (file !== undefined) mockReadAlphaTasticFileFromUri.mockResolvedValue(file)
   const screen = await render(tree())
   await waitFor(() => expect(probe.versions.packsVersion).toBe(1))
   return screen
@@ -126,7 +126,7 @@ describe('IncomingFileImport', () => {
   beforeEach(async () => {
     jest.clearAllMocks()
     mockUseLinkingURL.mockReset().mockReturnValue(null)
-    mockReadHangmanFileFromUri.mockReset()
+    mockReadAlphaTasticFileFromUri.mockReset()
     // Back to the stub storage's empty custom-pack list, so a pack imported by one test is gone in the next.
     await loadCustomPacksCache()
     probe = { selectedPackKeys: [], versions: { unlockVersion: 0, packsVersion: 0 } }
@@ -149,7 +149,7 @@ describe('IncomingFileImport', () => {
       expect(screen.getByText('Adds 3 words as a new pack you can play.')).toBeTruthy()
       expect(screen.getByText('Import')).toBeTruthy()
       expect(screen.getByText('Cancel')).toBeTruthy()
-      expect(mockReadHangmanFileFromUri).toHaveBeenCalledWith(FILE_URL)
+      expect(mockReadAlphaTasticFileFromUri).toHaveBeenCalledWith(FILE_URL)
       // Preview only: nothing is saved until the player says so.
       expectNothingImported(screen)
     })
@@ -176,7 +176,7 @@ describe('IncomingFileImport', () => {
       const screen = await renderImport(CONTENT_URL, PACK_FILE)
 
       expect(await screen.findByText('Import "My Words"?')).toBeTruthy()
-      expect(mockReadHangmanFileFromUri).toHaveBeenCalledWith(CONTENT_URL)
+      expect(mockReadAlphaTasticFileFromUri).toHaveBeenCalledWith(CONTENT_URL)
     })
   })
 
@@ -255,8 +255,8 @@ describe('IncomingFileImport', () => {
     // Only the import this file runs is made to fail: clearAllMocks leaves a queued once-value in place,
     // so a rejection queued on the other one would fail the next test that imports that kind of file.
     it.each([
-      ['pack', PACK_FILE, 'Import "My Words"?', 'Could not import that Hangman pack file.', () => mockImportCustomPack.mockRejectedValueOnce(new Error('disk full'))],
-      ['progress backup', BACKUP_FILE, 'Import Progress Backup?', 'Could not import that Hangman progress backup file.', () => mockMergePuzzleUnlocks.mockRejectedValueOnce(new Error('disk full'))]
+      ['pack', PACK_FILE, 'Import "My Words"?', 'Could not import that AlphaTastic pack file.', () => mockImportCustomPack.mockRejectedValueOnce(new Error('disk full'))],
+      ['progress backup', BACKUP_FILE, 'Import Progress Backup?', 'Could not import that AlphaTastic progress backup file.', () => mockMergePuzzleUnlocks.mockRejectedValueOnce(new Error('disk full'))]
     ])('alerts Invalid File and closes the card when the %s fails to import', async (_kind, file, title, message, failImport) => {
       failImport()
       const screen = await renderImport(FILE_URL, file)
@@ -314,25 +314,25 @@ describe('IncomingFileImport', () => {
 
       await screen.rerender(tree())
       expect(screen.queryByText('Import "My Words"?')).toBeNull()
-      expect(mockReadHangmanFileFromUri).toHaveBeenCalledTimes(1)
+      expect(mockReadAlphaTasticFileFromUri).toHaveBeenCalledTimes(1)
 
       const nextUrl = FILE_URL.replace('My%20Words', 'Backup')
       mockUseLinkingURL.mockReturnValue(nextUrl)
-      mockReadHangmanFileFromUri.mockResolvedValue(BACKUP_FILE)
+      mockReadAlphaTasticFileFromUri.mockResolvedValue(BACKUP_FILE)
       await screen.rerender(tree())
 
       expect(await screen.findByText('Import Progress Backup?')).toBeTruthy()
-      expect(mockReadHangmanFileFromUri).toHaveBeenCalledTimes(2)
-      expect(mockReadHangmanFileFromUri).toHaveBeenLastCalledWith(nextUrl)
+      expect(mockReadAlphaTasticFileFromUri).toHaveBeenCalledTimes(2)
+      expect(mockReadAlphaTasticFileFromUri).toHaveBeenLastCalledWith(nextUrl)
     })
   })
 
   describe('bad files', () => {
     it("alerts Invalid File when the file can't be read", async () => {
-      mockReadHangmanFileFromUri.mockRejectedValue(new Error('no such file'))
+      mockReadAlphaTasticFileFromUri.mockRejectedValue(new Error('no such file'))
       const screen = await renderImport(FILE_URL)
 
-      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('Invalid File', 'Could not read that as a Hangman pack or progress backup file.'))
+      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('Invalid File', 'Could not read that as an AlphaTastic pack or progress backup file.'))
       expect(screen.queryByText('Import')).toBeNull()
       expectNothingImported(screen)
     })
@@ -343,14 +343,14 @@ describe('IncomingFileImport', () => {
     ])('alerts Invalid File for a file that is %s', async (_kind, file) => {
       const screen = await renderImport(FILE_URL, file)
 
-      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('Invalid File', 'Could not read that as a Hangman pack or progress backup file.'))
+      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('Invalid File', 'Could not read that as an AlphaTastic pack or progress backup file.'))
       expect(screen.queryByText('Import')).toBeNull()
       expectNothingImported(screen)
     })
 
     it('says nothing about a read that finishes after it unmounts', async () => {
       let fail!: (error: Error) => void
-      mockReadHangmanFileFromUri.mockImplementation(() => new Promise<string>((_resolve, reject) => (fail = reject)))
+      mockReadAlphaTasticFileFromUri.mockImplementation(() => new Promise<string>((_resolve, reject) => (fail = reject)))
       const screen = await renderImport(FILE_URL)
 
       await screen.unmount()
@@ -361,15 +361,15 @@ describe('IncomingFileImport', () => {
   })
 
   describe('ignores', () => {
-    // Share links (hangman://play?...) and web links belong to the router (see +native-intent).
+    // Share links (alphatastic://play?...) and web links belong to the router (see +native-intent).
     it.each([
-      ['a share link', 'hangman://play?phrase=HELLO&mode=classic'],
-      ['a web link', 'https://hangman.example/play?phrase=HELLO'],
+      ['a share link', 'alphatastic://play?phrase=HELLO&mode=classic'],
+      ['a web link', 'https://alphatastic.example/play?phrase=HELLO'],
       ['no link at all', null]
     ])('%s', async (_kind, url) => {
       const screen = await renderImport(url, PACK_FILE)
 
-      expect(mockReadHangmanFileFromUri).not.toHaveBeenCalled()
+      expect(mockReadAlphaTasticFileFromUri).not.toHaveBeenCalled()
       expect(screen.queryByText('Import "My Words"?')).toBeNull()
       expect(mockAlert).not.toHaveBeenCalled()
     })
@@ -379,7 +379,7 @@ describe('IncomingFileImport', () => {
       Object.defineProperty(Platform, 'OS', { configurable: true, value: 'web' })
       const screen = await renderImport(FILE_URL, PACK_FILE)
 
-      expect(mockReadHangmanFileFromUri).not.toHaveBeenCalled()
+      expect(mockReadAlphaTasticFileFromUri).not.toHaveBeenCalled()
       expect(screen.queryByText('Import "My Words"?')).toBeNull()
     })
   })
@@ -391,8 +391,8 @@ describe('IncomingFileImport', () => {
       ['a file: URL', FILE_URL],
       ['a content: URL', CONTENT_URL],
       // Not this component's to handle, but still the URL that opened the app.
-      ['a share link', 'hangman://play?phrase=HELLO&mode=classic'],
-      ['a web link', 'https://hangman.example/play?phrase=HELLO']
+      ['a share link', 'alphatastic://play?phrase=HELLO&mode=classic'],
+      ['a web link', 'https://alphatastic.example/play?phrase=HELLO']
     ])('is cleared on native for %s', async (_kind, url) => {
       const screen = await renderImport(url, PACK_FILE)
       // A file goes on to its card; let the read land before the test ends.
@@ -406,7 +406,7 @@ describe('IncomingFileImport', () => {
       const screen = await renderImport(FILE_URL, PACK_FILE)
       await screen.findByText('Import "My Words"?')
 
-      expect(mockClearInitialURL.mock.invocationCallOrder[0]).toBeLessThan(mockReadHangmanFileFromUri.mock.invocationCallOrder[0])
+      expect(mockClearInitialURL.mock.invocationCallOrder[0]).toBeLessThan(mockReadAlphaTasticFileFromUri.mock.invocationCallOrder[0])
     })
 
     it('is cleared once per URL, and again when another arrives', async () => {
@@ -417,7 +417,7 @@ describe('IncomingFileImport', () => {
       await screen.rerender(tree())
       expect(mockClearInitialURL).toHaveBeenCalledTimes(1)
 
-      mockUseLinkingURL.mockReturnValue('hangman://play?phrase=HELLO&mode=classic')
+      mockUseLinkingURL.mockReturnValue('alphatastic://play?phrase=HELLO&mode=classic')
       await screen.rerender(tree())
       expect(mockClearInitialURL).toHaveBeenCalledTimes(2)
     })
@@ -431,7 +431,7 @@ describe('IncomingFileImport', () => {
     // The web has no initial URL singleton to clear: the page's own address is the link.
     it.each([
       ['a file: URL', FILE_URL],
-      ['a share link', 'hangman://play?phrase=HELLO&mode=classic']
+      ['a share link', 'alphatastic://play?phrase=HELLO&mode=classic']
     ])('is never cleared on the web, even for %s', async (_kind, url) => {
       Object.defineProperty(Platform, 'OS', { configurable: true, value: 'web' })
       await renderImport(url, PACK_FILE)

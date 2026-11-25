@@ -1,14 +1,14 @@
 {
-  "name": "hangman",
+  "name": "alphatastic",
   "version": "1.0.2",
   "private": true,
-  "description": "Ad-free hangman word-guessing game built with Expo.",
+  "description": "AlphaTastic: an ad-free pack of word games (Hangman, Word Search, Jumble and Cryptogram) built with Expo.",
   "type": "module",
   "main": "index.js",
   "scripts": {
     "android": "expo run:android",
     "build": "eas build",
-    "build:web": "npm run verify && WEB_BASE_URL=/hangman expo export -p web --output-dir web-build/hangman",
+    "build:web": "npm run verify && WEB_BASE_URL=/alphatastic expo export -p web --output-dir web-build/alphatastic",
     "client": "expo start --dev-client",
     "doctor": "expo install --fix && npx expo-doctor@latest",
     "fingerprint:compare": "eas fingerprint:compare",

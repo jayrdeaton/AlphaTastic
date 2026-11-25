@@ -11,7 +11,7 @@ import { store } from '@/redux/store'
 import { Providers } from '@/testUtils/Providers'
 import { GUEST_PLAYER_KEY, guestSeatKey } from '@/utils/players'
 
-// /play is where a share link lands (hangman://play?phrase=...&hint=...&mode=...). It draws nothing
+// /play is where a share link lands (alphatastic://play?phrase=...&hint=...&mode=...). It draws nothing
 // of its own: it puts the shared puzzle on the solo board and hands off to the game screen. Its
 // params come from the shared expo-router mock's useLocalSearchParams, set per test, and where it
 // sends the player is read off that mock's `router`, which safeBack (see utils/navigation.ts) was

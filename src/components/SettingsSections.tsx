@@ -8,7 +8,7 @@ import { useActivePlayer } from '@/hooks/useActivePlayer'
 import { useCatalogActions } from '@/hooks/useCatalog'
 import { useKeyboardLayout } from '@/hooks/useKeyboardLayout'
 import { alert } from '@/utils/alert'
-import { pickHangmanFile, shareProgressBackupFile } from '@/utils/hangmanFile'
+import { pickAlphaTasticFile, shareProgressBackupFile } from '@/utils/alphaTasticFile'
 import { mergePuzzleUnlocks, parseProgressBackup } from '@/utils/unlocks'
 
 import { SettingsSection } from './SettingsSection'
@@ -38,7 +38,7 @@ export const SettingsSections = (): JSX.Element => {
   }
 
   const handleImport = async () => {
-    const raw = await pickHangmanFile()
+    const raw = await pickAlphaTasticFile()
     if (!raw) return
 
     try {
@@ -47,7 +47,7 @@ export const SettingsSections = (): JSX.Element => {
       refreshUnlocks()
       void alert('Import Complete', `Merged ${result.importedCount} entries. Added ${result.addedCount} new unlocks.`)
     } catch {
-      void alert('Invalid Backup', 'Could not read that as a Hangman progress backup file.')
+      void alert('Invalid Backup', 'Could not read that as an AlphaTastic progress backup file.')
     }
   }
 

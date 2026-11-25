@@ -170,7 +170,7 @@ describe('HangmanStats', () => {
     expect(rowValue(screen, 'Achievements Earned')).toBe(`2 / ${ACHIEVEMENT_CATALOG.length}`)
   })
 
-  // The counters are app-wide (a .hangman backup opened from another app imports over whatever screen
+  // The counters are app-wide (a .alphatastic backup opened from another app imports over whatever screen
   // is showing), so the rows follow them while this page is open.
   it('reads the unlock map again whenever the unlocks change elsewhere', async () => {
     const [pack] = MANIFEST

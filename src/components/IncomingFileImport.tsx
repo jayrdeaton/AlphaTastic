@@ -8,15 +8,15 @@ import { useActivePlayer } from '@/hooks/useActivePlayer'
 import { useCatalogActions } from '@/hooks/useCatalog'
 import { usePackSelection } from '@/hooks/usePackSelection'
 import { alert } from '@/utils/alert'
+import { readAlphaTasticFileFromUri } from '@/utils/alphaTasticFile'
 import { commaString } from '@/utils/commaString'
 import { importCustomPack, parseCustomPackImport } from '@/utils/customPacks'
-import { readHangmanFileFromUri } from '@/utils/hangmanFile'
 import { getTotalUnlockedCount, mergePuzzleUnlocks, parseProgressBackup } from '@/utils/unlocks'
 
 type FilePreview = { kind: 'pack'; raw: string; label: string; wordCount: number } | { kind: 'progress'; raw: string; unlockCount: number }
 
-// A pack or progress backup shared as a real .hangman file (see hangmanFile.ts), opened through the
-// OS "Open in Hangman" flow (Messages, Mail, Files, AirDrop). It arrives as a file: or content: URL,
+// A pack or progress backup shared as a real .alphatastic file (see alphaTasticFile.ts), opened through the
+// OS "Open in AlphaTastic" flow (Messages, Mail, Files, AirDrop). It arrives as a file: or content: URL,
 // which +native-intent.tsx keeps away from the router, so it's read here instead, over whichever
 // screen is showing. Preview-only until confirmed: parsing reads the label and word count (or the
 // unlock count) without saving anything, so a stray or malicious file can't change anything.
@@ -44,10 +44,10 @@ export const IncomingFileImport = (): JSX.Element => {
     if (scheme !== 'file' && scheme !== 'content') return
 
     let mounted = true
-    void readHangmanFileFromUri(incomingUrl)
+    void readAlphaTasticFileFromUri(incomingUrl)
       .then((raw) => {
         if (!mounted) return
-        // The two .hangman payload shapes are told apart by content (a `pack` key vs an `unlocks`
+        // The two .alphatastic payload shapes are told apart by content (a `pack` key vs an `unlocks`
         // key), not by filename, since both share the extension. parseProgressBackup is strict about
         // `unlocks`, so it never mistakes a pack for a backup; falling through to
         // parseCustomPackImport on failure reuses each parser's own validation.
@@ -62,7 +62,7 @@ export const IncomingFileImport = (): JSX.Element => {
         setPreview({ kind: 'pack', raw, label, wordCount: entries.length })
       })
       .catch(() => {
-        if (mounted) void alert('Invalid File', 'Could not read that as a Hangman pack or progress backup file.')
+        if (mounted) void alert('Invalid File', 'Could not read that as an AlphaTastic pack or progress backup file.')
       })
     return () => {
       mounted = false
@@ -85,7 +85,7 @@ export const IncomingFileImport = (): JSX.Element => {
         success('Pack Imported', `"${pack.label}" is in your packs`)
       }
     } catch {
-      void alert('Invalid File', preview.kind === 'progress' ? 'Could not import that Hangman progress backup file.' : 'Could not import that Hangman pack file.')
+      void alert('Invalid File', preview.kind === 'progress' ? 'Could not import that AlphaTastic progress backup file.' : 'Could not import that AlphaTastic pack file.')
     } finally {
       setPreview(null)
     }

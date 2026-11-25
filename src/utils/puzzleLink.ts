@@ -20,9 +20,9 @@ export const findMode = (id: string | string[] | undefined) => {
 }
 
 // The /play route's path for Linking.createURL. On the web the game is served under a base URL
-// (games.infinitetoken.com/hangman/, see app.config.ts), which createURL leaves out: it builds from the
+// (games.infinitetoken.com/alphatastic/, see app.config.ts), which createURL leaves out: it builds from the
 // page's origin alone, so a bare 'play' would point at the hub's /play. Expo inlines the base URL as
-// process.env.EXPO_BASE_URL in the web export; native links (hangman://play) never carry it.
+// process.env.EXPO_BASE_URL in the web export; native links (alphatastic://play) never carry it.
 const playPath = (): string => (Platform.OS === 'web' ? `${(process.env.EXPO_BASE_URL ?? '').replace(/\/+$/, '')}/play` : 'play')
 
 // Built from an already-resolved payload (not raw draft state) so a shared link always carries a

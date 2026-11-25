@@ -11,13 +11,13 @@ import { exportPuzzleUnlocks } from './unlocks'
 // customPacks.ts's CustomPackExportPayload and unlocks.ts's PuzzleUnlockExportPayload) - sharing
 // one extension/MIME type/UTI means one native file-type registration (app.json) covers both,
 // rather than needing a second one just to add progress backups to this same mechanism.
-export const HANGMAN_FILE_EXTENSION = '.hangman'
+export const ALPHATASTIC_FILE_EXTENSION = '.alphatastic'
 // A conventional unregistered vendor MIME type (the `x-` prefix), matched by the Android
 // intentFilter in app.json. iOS doesn't check this - Sharing.shareAsync's own `UTI` option and the
-// app's registered CFBundleDocumentTypes (also app.json) are what make "Open in Hangman" show up
+// app's registered CFBundleDocumentTypes (also app.json) are what make "Open in AlphaTastic" show up
 // there instead.
-export const HANGMAN_FILE_MIME_TYPE = 'application/x-hangman'
-const HANGMAN_FILE_UTI = 'public.json'
+export const ALPHATASTIC_FILE_MIME_TYPE = 'application/x-alphatastic'
+const ALPHATASTIC_FILE_UTI = 'public.json'
 
 // A blank/symbol-only pack name would otherwise produce an unusable or hidden (leading-dot)
 // filename - falls back to a generic one rather than exporting something the OS can't display
@@ -27,7 +27,7 @@ const sanitizeFilename = (label: string): string => {
     .trim()
     .replace(/[^A-Za-z0-9 _-]/g, '')
     .trim()
-  return `${cleaned.length > 0 ? cleaned : 'pack'}${HANGMAN_FILE_EXTENSION}`
+  return `${cleaned.length > 0 ? cleaned : 'pack'}${ALPHATASTIC_FILE_EXTENSION}`
 }
 
 // Writes any payload to a real file and hands it to the OS share sheet (Messages, Mail, AirDrop,
@@ -52,7 +52,7 @@ const writeAndShareFile = async (payload: string, filename: string, dialogTitle:
   file.write(payload)
 
   if (!(await Sharing.isAvailableAsync())) return false
-  await Sharing.shareAsync(file.uri, { mimeType: HANGMAN_FILE_MIME_TYPE, UTI: HANGMAN_FILE_UTI, dialogTitle })
+  await Sharing.shareAsync(file.uri, { mimeType: ALPHATASTIC_FILE_MIME_TYPE, UTI: ALPHATASTIC_FILE_UTI, dialogTitle })
   return true
 }
 
@@ -65,7 +65,7 @@ export const shareCustomPackFile = async (key: string, label: string): Promise<b
 // One player's unlocked puzzles (Settings' Export, for whoever is playing).
 export const shareProgressBackupFile = async (playerKey: PlayerKey): Promise<boolean> => {
   const payload = await exportPuzzleUnlocks(playerKey)
-  return writeAndShareFile(payload, `hangman-progress-backup${HANGMAN_FILE_EXTENSION}`, 'Share Progress Backup')
+  return writeAndShareFile(payload, `alphatastic-progress-backup${ALPHATASTIC_FILE_EXTENSION}`, 'Share Progress Backup')
 }
 
 // Cross-platform, unlike the share functions above - expo-document-picker supports web too (a
@@ -74,12 +74,12 @@ export const shareProgressBackupFile = async (playerKey: PlayerKey): Promise<boo
 // "something went wrong". Content-agnostic - the caller decides what kind of file it's expecting
 // (a pack, via parseCustomPackImport, or a progress backup, via parseProgressBackup) and validates
 // accordingly; this just gets the raw bytes off the device.
-export const pickHangmanFile = async (): Promise<string | null> => {
+export const pickAlphaTasticFile = async (): Promise<string | null> => {
   const result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true })
   if (result.canceled || result.assets.length === 0) return null
 
   const asset = result.assets[0]
-  // .hangman has no registered MIME type for the picker to filter on, so type filtering happens
+  // .alphatastic has no registered MIME type for the picker to filter on, so type filtering happens
   // after the fact (parseCustomPackImport/parseProgressBackup's own JSON/shape validation), not here.
   if (Platform.OS === 'web') {
     return asset.file ? asset.file.text() : null
@@ -87,7 +87,7 @@ export const pickHangmanFile = async (): Promise<string | null> => {
   return new File(asset.uri).text()
 }
 
-// Reads a file the OS handed the app directly (an incoming "Open in Hangman" launch) - the same
-// underlying read pickHangmanFile's native branch does, just starting from a URI Linking already
+// Reads a file the OS handed the app directly (an incoming "Open in AlphaTastic" launch) - the same
+// underlying read pickAlphaTasticFile's native branch does, just starting from a URI Linking already
 // resolved rather than one the player just picked through the system UI.
-export const readHangmanFileFromUri = (uri: string): Promise<string> => new File(uri).text()
+export const readAlphaTasticFileFromUri = (uri: string): Promise<string> => new File(uri).text()

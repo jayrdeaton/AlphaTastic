@@ -17,15 +17,15 @@ import { playerSettingsActions } from '@/redux/playerSettingsSlice'
 import { roundActions } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
 import { alert } from '@/utils/alert'
-import { pickHangmanFile, shareProgressBackupFile } from '@/utils/hangmanFile'
+import { pickAlphaTasticFile, shareProgressBackupFile } from '@/utils/alphaTasticFile'
 import { GUEST_PLAYER_KEY } from '@/utils/players'
 import { mergePuzzleUnlocks } from '@/utils/unlocks'
 
-// The backup's only ways out to the device: the share sheet / file picker (hangmanFile.ts, not
+// The backup's only ways out to the device: the share sheet / file picker (alphaTasticFile.ts, not
 // meaningfully unit-testable here), the alert, and AsyncStorage through mergePuzzleUnlocks.
 // parseProgressBackup stays real, since its shape check is what the invalid-backup tests exercise.
-jest.mock('@/utils/hangmanFile', () => ({
-  pickHangmanFile: jest.fn(),
+jest.mock('@/utils/alphaTasticFile', () => ({
+  pickAlphaTasticFile: jest.fn(),
   shareProgressBackupFile: jest.fn()
 }))
 jest.mock('@/utils/alert', () => ({
@@ -37,7 +37,7 @@ jest.mock('@/utils/unlocks', () => ({
 }))
 const mockRefreshUnlocks = jest.fn()
 jest.mock('@/hooks/useCatalog', () => ({ ...jest.requireActual('@/hooks/useCatalog'), useCatalogActions: () => ({ refreshUnlocks: mockRefreshUnlocks, refreshCustomPacks: jest.fn() }) }))
-const mockPickHangmanFile = jest.mocked(pickHangmanFile)
+const mockPickAlphaTasticFile = jest.mocked(pickAlphaTasticFile)
 const mockShareProgressBackupFile = jest.mocked(shareProgressBackupFile)
 const mockAlert = jest.mocked(alert)
 const mockMergePuzzleUnlocks = jest.mocked(mergePuzzleUnlocks)
@@ -84,7 +84,7 @@ describe("SettingsSections, in the shell's Settings sheet", () => {
     store.dispatch(roundActions.reset())
     mockSetLayout.mockClear()
     mockRefreshUnlocks.mockClear()
-    mockPickHangmanFile.mockReset()
+    mockPickAlphaTasticFile.mockReset()
     mockShareProgressBackupFile.mockReset()
     mockAlert.mockClear()
     mockMergePuzzleUnlocks.mockReset()
@@ -172,7 +172,7 @@ describe("SettingsSections, in the shell's Settings sheet", () => {
       store.dispatch(activePlayerActions.setActivePlayer('profile-a'))
       const payload = JSON.stringify({ unlocks: { animals: ['lion'] } })
       mockShareProgressBackupFile.mockResolvedValue(true)
-      mockPickHangmanFile.mockResolvedValue(payload)
+      mockPickAlphaTasticFile.mockResolvedValue(payload)
       mockMergePuzzleUnlocks.mockResolvedValue({ importedCount: 1, addedCount: 1 })
       const { getByText } = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
 
@@ -194,19 +194,19 @@ describe("SettingsSections, in the shell's Settings sheet", () => {
     })
 
     it('does nothing when the file picker is canceled', async () => {
-      mockPickHangmanFile.mockResolvedValue(null)
+      mockPickAlphaTasticFile.mockResolvedValue(null)
       const { getByText } = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
 
       await fireEvent.press(getByText('Import'))
 
-      await waitFor(() => expect(mockPickHangmanFile).toHaveBeenCalled())
+      await waitFor(() => expect(mockPickAlphaTasticFile).toHaveBeenCalled())
       expect(mockMergePuzzleUnlocks).not.toHaveBeenCalled()
       expect(mockRefreshUnlocks).not.toHaveBeenCalled()
     })
 
     it('merges a picked backup, tells its screen, and reports the counts', async () => {
       const payload = JSON.stringify({ unlocks: { animals: ['lion'] } })
-      mockPickHangmanFile.mockResolvedValue(payload)
+      mockPickAlphaTasticFile.mockResolvedValue(payload)
       mockMergePuzzleUnlocks.mockResolvedValue({ importedCount: 3, addedCount: 2 })
       const { getByText } = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
 
@@ -223,7 +223,7 @@ describe("SettingsSections, in the shell's Settings sheet", () => {
       ['not JSON', 'not valid json'],
       ['a custom pack, not a backup', JSON.stringify({ pack: { key: 'custom:abc', label: 'My Pack', puzzles: [] } })]
     ])('rejects a picked file that is %s, without merging', async (_kind, raw) => {
-      mockPickHangmanFile.mockResolvedValue(raw)
+      mockPickAlphaTasticFile.mockResolvedValue(raw)
       const { getByText } = await render(<SettingsDialog visible onDismiss={jest.fn()} />)
 
       await fireEvent.press(getByText('Import'))

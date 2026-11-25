@@ -10,9 +10,9 @@ import { usePuzzleUnlocks } from '@/hooks/usePuzzleUnlocks'
 import type { GameMode } from '@/types/gameModes'
 import type { GameStartPayload } from '@/types/gameSession'
 import { alert } from '@/utils/alert'
+import { pickAlphaTasticFile, shareCustomPackFile } from '@/utils/alphaTasticFile'
 import { commaString } from '@/utils/commaString'
 import { type CustomPack, deleteCustomPack, importCustomPack, isCustomPackKey } from '@/utils/customPacks'
-import { pickHangmanFile, shareCustomPackFile } from '@/utils/hangmanFile'
 import { getPuzzleManifest, type PuzzleDifficultyTier, type PuzzleManifestItem } from '@/utils/puzzleCatalog'
 import { getUnlockedCountForPack } from '@/utils/unlocks'
 
@@ -271,11 +271,11 @@ export const PacksScreen = memo(({ visible, onDismiss, selectedKeys, onChangeSel
   }, [closePagePopover])
   const handleCloseEditor = useCallback(() => setEditorVisible(false), [])
 
-  // Reads a file straight off the device (a real "pick a .hangman file" flow) rather than a
-  // paste-text box - see hangmanFile.ts's own doc comments for why: the old clipboard-and-paste
+  // Reads a file straight off the device (a real "pick a .alphatastic file" flow) rather than a
+  // paste-text box - see alphaTasticFile.ts's own doc comments for why: the old clipboard-and-paste
   // round trip also depended on alert() to tell the player it worked, which isn't reliable on web.
   const handleImportFile = useCallback(async () => {
-    const raw = await pickHangmanFile()
+    const raw = await pickAlphaTasticFile()
     if (!raw) return
 
     try {
@@ -284,7 +284,7 @@ export const PacksScreen = memo(({ visible, onDismiss, selectedKeys, onChangeSel
       onPacksChanged()
       void alert('Pack Imported', `Added "${pack.label}" (${commaString(pack.puzzles.length)} puzzle${pack.puzzles.length === 1 ? '' : 's'}) to your packs.`)
     } catch {
-      void alert('Invalid Pack', 'Could not read that as a Hangman pack file.')
+      void alert('Invalid Pack', 'Could not read that as an AlphaTastic pack file.')
     }
   }, [selectKey, onPacksChanged])
 

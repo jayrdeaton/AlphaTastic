@@ -6,7 +6,7 @@ import { loadCustomPacksCache } from '@/utils/customPacks'
 // puzzles (a win, a backup import, a stats reset) and custom packs (created, edited, deleted,
 // imported). Screens that show either re-read it when its counter moves. Lives above the navigator
 // because every screen can change one: Settings' Backup, the loadout's pack editor, the game's wins,
-// a .hangman file opened from another app.
+// a .alphatastic file opened from another app.
 export type CatalogVersions = { unlockVersion: number; packsVersion: number }
 export type CatalogActions = { refreshUnlocks: () => void; refreshCustomPacks: () => void }
 

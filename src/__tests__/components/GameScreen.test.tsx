@@ -74,7 +74,7 @@ const storeSettings = ({ selectedPackKeys, modeId, difficulty }: StoredSettings,
   if (difficulty) store.dispatch(playerSettingsActions.setDifficulty({ playerKey, difficulty }))
 }
 
-// The app-level setters the loadout and a .hangman import use, captured so a test can change the
+// The app-level setters the loadout and a .alphatastic import use, captured so a test can change the
 // player's choices while the game screen is up.
 type Handles = { setSelectedPackKeys: PackSelectionContextType['setSelectedPackKeys']; setDifficulty: PuzzleDefaultsContextType['setDifficulty']; setMode: PuzzleDefaultsContextType['setMode'] }
 let handles: Handles | null = null
@@ -345,7 +345,7 @@ describe('GameScreen (solo)', () => {
     // The round is decided (and no longer playable) the moment it ends, so the screen's one-time
     // "anything to play?" check must not come round again while the card is up: here the unlock map
     // reloads (the win marks the puzzle unlocked) and the player's selection and difficulty change
-    // underneath it (a .hangman pack import adds to the selection from any screen).
+    // underneath it (a .alphatastic pack import adds to the selection from any screen).
     it('is never swapped out from under its own round: a win stays on the board with its card until Next', async () => {
       seedRound(savedPuzzle())
       const screen = await renderScreen()

@@ -1,8 +1,8 @@
-# Hangman
+# AlphaTastic
 
-The classic word-guessing game: over 19,000 puzzles across 58 packs, hand-drawn art, and Pass & Play with friends.
+Four word games in one: Hangman, Word Search, Jumble and Cryptogram, drawing on over 19,000 puzzles across 58 packs, with hand-drawn art and Pass & Play with friends.
 
-Hangman is an ad-free word-guessing game for iOS, Android, and web. Built with Expo, React Native, React Native SVG, and Reanimated, it's part of a family of games built on my open-source `@tastic` game-engine and `@rific` Expo utility packages. App Store and Google Play release in progress.
+AlphaTastic (Hangman until November 2026) is an ad-free pack of word games for iOS, Android, and web. Built with Expo, React Native, React Native SVG, and Reanimated on `@tastic/shell`, it's part of a family of games built on my open-source `@tastic` game-engine and `@rific` Expo utility packages. Hangman is the full game; Word Search, Jumble and Cryptogram are early versions that don't save progress or count toward stats yet. App Store and Google Play release in progress.
 
 <!-- TODO: add gameplay GIF/screenshot here -->
 
@@ -14,10 +14,10 @@ Hangman is an ad-free word-guessing game for iOS, Android, and web. Built with E
 - **58 built-in packs, over 19,000 puzzles:** grouped under Geography, Sports, Media, Language, Nature, Science, Games, Business, History, Mythology, Transportation, and Other, from Countries & Territories and football teams to Movies (8,199), TV Shows (2,866), Songs (1,747), and Video Games (1,316).
 - **Difficulty:** Any, Easy, Medium, or Hard (6,575, 7,970, and 4,498 puzzles). New puzzles favor ones you haven't solved yet.
 - **Choose Packs and browse:** the setup page's packs card says which packs you're playing ("All 58 packs", or "12 of 58 packs" and their names). Choose Packs picks them (with an All / Selected view to review a trimmed list) and shows every pack's progress, with a trophy once it's complete. Open a pack to see solved answers and blanks for the rest, filter by solved status and difficulty, and tap a puzzle to play it. Play This Pack keeps drawing from just that pack, and Only This Pack narrows the selection to it. (At a Pass & Play table taking turns from the packs, a pack is only browsed: every puzzle comes by turns.)
-- **Custom packs:** create packs of your own words with optional hints, then share them as a `.hangman` file through the share sheet (a download on web). Opening a `.hangman` file from Messages, Mail, Files, or AirDrop offers to import it.
+- **Custom packs:** create packs of your own words with optional hints, then share them as a `.alphatastic` file through the share sheet (a download on web). Opening a `.alphatastic` file from Messages, Mail, Files, or AirDrop offers to import it.
 - **Ten art styles:** Classic, Appearing, Disappearing, Robot, Candle, Balloons, Stars, Snowflakes, Hourglass, and Letters Only (no artwork, bigger letters), picked from a carousel on the setup page (or a grid in Settings), and the current one acts out a round on the title screen. Switching also applies to a puzzle left waiting. A win ends in fireworks.
 - **Stats and achievements:** a Stats & Achievements screen (the Tastic games' shared stats screen) with puzzles unlocked and packs completed, solo stats (played, won, lost, win rate, current and best streak, flawless and no-hint wins, modes won, letters guessed and correct), separate Pass & Play stats (written words; a turn from the packs counts as its player's own solo puzzle), days played, and 34 achievements on the Tastic games' shared bronze, silver and gold ladders: first games, solve milestones up to 2,500, win streaks, flawless and no-hint wins, winning in every art style, completing built-in packs, creating packs, Pass & Play rounds, and days played in a row. Choose Packs shows every pack's progress, selected or not.
-- **Progress backup:** Settings' Export writes your unlocked puzzles to a `.hangman` file and Import merges one back in. Reset All Stats, on the stats screen, clears the stats, achievements and unlocked puzzles together. Starting a different puzzle over one you've already guessed in asks first and counts it as a loss.
+- **Progress backup:** Settings' Export writes your unlocked puzzles to a `.alphatastic` file and Import merges one back in. Reset All Stats, on the stats screen, clears the stats, achievements and unlocked puzzles together. Starting a different puzzle over one you've already guessed in asks first and counts it as a loss.
 - **Settings:** Settings (the cog, on every screen) has Sound, Haptics, Keep Awake, System, Light, or Dark appearance (and Blur on iOS and web), the art style, a QWERTY or ABC keyboard layout, the backup, and Check for Updates. The theme color and color harmony are on the setup pages.
 - **A whiteboard to play on:** every screen sits on one board, a chalkboard in dark appearance and a whiteboard in light, with the faint smudges of old writing.
 
@@ -30,9 +30,9 @@ Hangman is an ad-free word-guessing game for iOS, Android, and web. Built with E
 - **Mode registry:** `ALL_MODES` holds 17 modes, and `VISIBLE_MODES` drops the seven marked `hidden`. Hidden modes still resolve from links and old progress, and Mode Master only requires wins in the visible ones. Every mode allows six wrong guesses, and the limit is frozen at round start.
 - **Puzzle selection:** `resolvePuzzle` picks a random pack from the current selection that has the chosen difficulty, then an unsolved puzzle from it, falling back to solved ones once a pack is complete. Answers are normalized at runtime, folding accents (Café becomes CAFE) so every letter is on the A-Z keyboard. Custom words get a difficulty tier from a heuristic based on letters absent from the answer and its length.
 - **Persistence:** Redux Toolkit with redux-persist covers the theme, haptic, and sound settings, the stats and achievements (`@tastic/achievements`' slice), and the rounds in progress (their own persist key, so a guess doesn't rewrite the stats). Unlocks and custom packs are each one versioned JSON blob in AsyncStorage (`puzzle_unlocks_v1`, `custom_packs_v1`), and small context providers save keyboard layout, pack selection, and the last mode and difficulty. `@rific/splash-gate` keeps the splash screen up until the theme, fonts, and those saved preferences have loaded.
-- **Files and links:** `app.json` registers the `.hangman` file type (an iOS document type and UTI, an Android intent filter). One format carries either a pack or a progress backup, told apart by content, and an incoming file is previewed and only imported after confirmation. A `hangman://play?phrase=...&hint=...&mode=...` link (or `/play?...` on the web) lands on the `/play` route, which opens straight into that puzzle, with the phrase and hint checked against the same length limits as the input fields.
+- **Files and links:** `app.json` registers the `.alphatastic` file type (an iOS document type and UTI, an Android intent filter). One format carries either a pack or a progress backup, told apart by content, and an incoming file is previewed and only imported after confirmation. A `alphatastic://play?phrase=...&hint=...&mode=...` link (or `/play?...` on the web) lands on the `/play` route, which opens straight into that puzzle, with the phrase and hint checked against the same length limits as the input fields.
 - **Platform details:** the `@tastic/core` config plugin owns the native portrait lock. On web the game column is capped at 480px wide, and file sharing falls back to a browser download. Over-the-air updates ship through `expo-updates` and `@rific/updater`.
-- **Tests:** 81 Jest suites with 1,451 tests covering the routes (Home, the setup page behind both doors, the game screen, shared links, the root layout), the resume, the per-player data and the saved rounds, Pass & Play sessions and turns from the packs, the abandon flow, Pass & Play, the keyboard, every drawer, the win celebration, achievements, unlock tracking, custom packs, `.hangman` file handling, and the puzzle picker. CI runs `npm run verify` on pushes and pull requests to `main`.
+- **Tests:** 81 Jest suites with 1,451 tests covering the routes (Home, the setup page behind both doors, the game screen, shared links, the root layout), the resume, the per-player data and the saved rounds, Pass & Play sessions and turns from the packs, the abandon flow, Pass & Play, the keyboard, every drawer, the win celebration, achievements, unlock tracking, custom packs, `.alphatastic` file handling, and the puzzle picker. CI runs `npm run verify` on pushes and pull requests to `main`.
 
 ## Built on
 
@@ -59,7 +59,7 @@ npm install
 npm run ios        # or: npm run android / npm start, then press w for web
 ```
 
-`npm run ios` and `npm run android` build a native development client (`expo-dev-client`). The app uses native code and config that Expo Go doesn't include (`react-native-keyboard-controller`, the `@tastic/core` config plugin, and the `.hangman` file type registration), so it won't run in Expo Go. Once a dev client is installed, `npm run client` starts Metro for it.
+`npm run ios` and `npm run android` build a native development client (`expo-dev-client`). The app uses native code and config that Expo Go doesn't include (`react-native-keyboard-controller`, the `@tastic/core` config plugin, and the `.alphatastic` file type registration), so it won't run in Expo Go. Once a dev client is installed, `npm run client` starts Metro for it.
 
 ### Checks
 
@@ -127,7 +127,7 @@ src/
   modes/        react-native-svg art styles and the shared sketch primitives they're drawn with
   redux/        store with persisted theme, haptic, and sound settings, stats, and the rounds in progress
   types/        shared TypeScript types (Puzzle, GameMode, game session)
-  utils/        puzzle picker and catalog, normalization, unlocks, stats engine, custom packs, .hangman files, links
+  utils/        puzzle picker and catalog, normalization, unlocks, stats engine, custom packs, .alphatastic files, links
   __tests__/    Jest suites
   __mocks__/    manual mocks for native and Expo modules
 ```

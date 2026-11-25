@@ -5,8 +5,8 @@ import { join } from 'node:path'
 // link and link preview, which search engines and link previews read before any JavaScript runs.
 
 const html = readFileSync(join(__dirname, '..', '..', 'public', 'index.html'), 'utf8')
-const TITLE = 'Hangman | Infinite Token Games'
-const URL = 'https://games.infinitetoken.com/hangman/'
+const TITLE = 'AlphaTastic | Infinite Token Games'
+const URL = 'https://games.infinitetoken.com/alphatastic/'
 const IMAGE = 'https://games.infinitetoken.com/images/og.png'
 
 const meta = (attribute: 'name' | 'property', key: string) => html.match(new RegExp(`<meta ${attribute}="${key}" content="([^"]*)"`))?.[1]
@@ -17,9 +17,9 @@ describe('the web page', () => {
     expect(html).toContain('<html lang="en">')
   })
 
-  it('describes the game the same way everywhere', () => {
+  it('describes the games the same way everywhere', () => {
     const description = meta('name', 'description')
-    expect(description).toMatch(/^The classic word-guessing game/)
+    expect(description).toMatch(/^Hangman, Word Search, Jumble and Cryptogram, /)
     expect(meta('property', 'og:description')).toBe(description)
     expect(meta('name', 'twitter:description')).toBe(description)
   })

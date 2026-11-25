@@ -85,13 +85,13 @@ describe('buildPuzzleLink + parseSharedPuzzle round trip', () => {
       else process.env.EXPO_BASE_URL = originalBaseUrl
     })
 
-    it.each(['/hangman', '/hangman/'])('puts the play path under the base URL %s, so the link reaches the game rather than the hub', (baseUrl) => {
+    it.each(['/alphatastic', '/alphatastic/'])('puts the play path under the base URL %s, so the link reaches the game rather than the hub', (baseUrl) => {
       Object.defineProperty(Platform, 'OS', { configurable: true, value: 'web' })
       process.env.EXPO_BASE_URL = baseUrl
 
       const link = buildPuzzleLink({ phrase: 'HELLO', hint: 'A hint', mode: robotMode })
 
-      expect(new URL(link).pathname).toBe('/hangman/play')
+      expect(new URL(link).pathname).toBe('/alphatastic/play')
       expect(parseSharedPuzzle(link)?.customPhrase).toBe('HELLO')
     })
 

@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "Hangman",
+    "name": "AlphaTastic",
     "slug": "Hangman",
     "version": "1.0.2",
-    "scheme": "hangman",
+    "scheme": "alphatastic",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/images/icon-dark.png",
     "ios": {
       "supportsTablet": true,
       "requireFullScreen": true,
-      "bundleIdentifier": "com.infinitetoken.Hangman",
+      "bundleIdentifier": "com.infinitetoken.AlphaTastic",
       "entitlements": {
         "com.apple.security.application-groups": [
           "group.com.infinitetoken.tastic"
@@ -22,26 +22,26 @@
         "UISupportedInterfaceOrientations~ipad": ["UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown"],
         "UTExportedTypeDeclarations": [
           {
-            "UTTypeIdentifier": "com.infinitetoken.hangman.pack",
-            "UTTypeDescription": "Hangman Puzzle Pack",
+            "UTTypeIdentifier": "com.infinitetoken.alphatastic.pack",
+            "UTTypeDescription": "AlphaTastic Puzzle Pack",
             "UTTypeConformsTo": [
               "public.json"
             ],
             "UTTypeTagSpecification": {
               "public.filename-extension": [
-                "hangman"
+                "alphatastic"
               ],
-              "public.mime-type": "application/x-hangman"
+              "public.mime-type": "application/x-alphatastic"
             }
           }
         ],
         "CFBundleDocumentTypes": [
           {
-            "CFBundleTypeName": "Hangman Puzzle Pack",
+            "CFBundleTypeName": "AlphaTastic Puzzle Pack",
             "CFBundleTypeRole": "Editor",
             "LSHandlerRank": "Owner",
             "LSItemContentTypes": [
-              "com.infinitetoken.hangman.pack"
+              "com.infinitetoken.alphatastic.pack"
             ]
           }
         ]
@@ -52,23 +52,23 @@
       }
     },
     "android": {
-      "package": "com.infinitetoken.Hangman",
+      "package": "com.infinitetoken.alphatastic",
       "intentFilters": [
         {
           "action": "VIEW",
           "data": [
             {
-              "mimeType": "application/x-hangman"
+              "mimeType": "application/x-alphatastic"
             },
             {
               "scheme": "file",
               "host": "*",
-              "pathPattern": ".*\\.hangman"
+              "pathPattern": ".*\\.alphatastic"
             },
             {
               "scheme": "content",
               "host": "*",
-              "pathPattern": ".*\\.hangman"
+              "pathPattern": ".*\\.alphatastic"
             }
           ],
           "category": [

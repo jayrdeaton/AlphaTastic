@@ -9,7 +9,7 @@ import { gameHref, safeBack } from '@/utils/navigation'
 import { parseSharedPuzzleParams } from '@/utils/puzzleLink'
 import { resolvePuzzle } from '@/utils/puzzlePicker'
 
-// The /play route, where a shared puzzle link lands (hangman://play?phrase=...&hint=...&mode=..., or
+// The /play route, where a shared puzzle link lands (alphatastic://play?phrase=...&hint=...&mode=..., or
 // the same path on the web). It draws nothing itself: it puts the shared puzzle on the solo board and
 // hands off to the game screen, asking first if that would abandon a round with guesses on it.
 //

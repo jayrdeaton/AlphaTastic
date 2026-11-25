@@ -14,17 +14,17 @@ import { GameStatsProvider } from '@/hooks/useGameStats'
 import { DEFAULT_MODE } from '@/modes/registry'
 import { activePlayerActions } from '@/redux/activePlayerSlice'
 import { store } from '@/redux/store'
+import { pickAlphaTasticFile, shareCustomPackFile } from '@/utils/alphaTasticFile'
 import { loadCustomPacksCache, saveCustomPack } from '@/utils/customPacks'
-import { pickHangmanFile, shareCustomPackFile } from '@/utils/hangmanFile'
 import { getPuzzleManifest, getPuzzlesForCategory } from '@/utils/puzzleCatalog'
 
 // PacksScreen only ever talks to the real device/OS through this module (see its own doc
 // comments for why: file pickers and share sheets aren't meaningfully unit-testable, and web's
 // share path in particular depends on browser globals this test environment doesn't provide) - so
-// the boundary mocked here is hangmanFile.ts itself, not expo-document-picker/expo-sharing
+// the boundary mocked here is alphaTasticFile.ts itself, not expo-document-picker/expo-sharing
 // underneath it. Those have their own dedicated coverage in hangmanFile.test.ts.
-jest.mock('@/utils/hangmanFile', () => ({
-  pickHangmanFile: jest.fn(),
+jest.mock('@/utils/alphaTasticFile', () => ({
+  pickAlphaTasticFile: jest.fn(),
   shareCustomPackFile: jest.fn()
 }))
 
@@ -35,7 +35,7 @@ jest.mock('@/components/PackRow', () => {
   return { PackRow: jest.fn((props) => createElement(actual.PackRow, props)) }
 })
 
-const mockPickHangmanFile = jest.mocked(pickHangmanFile)
+const mockPickAlphaTasticFile = jest.mocked(pickAlphaTasticFile)
 const mockShareCustomPackFile = jest.mocked(shareCustomPackFile)
 const mockPackRow = jest.mocked(PackRow)
 
@@ -91,7 +91,7 @@ describe('PacksScreen', () => {
     // Resets customPacks.ts's module-level cache to empty via the always-null AsyncStorage mock -
     // otherwise a pack created in one test would leak into the next within this file.
     await loadCustomPacksCache()
-    mockPickHangmanFile.mockReset()
+    mockPickAlphaTasticFile.mockReset()
     mockShareCustomPackFile.mockReset()
   })
 
@@ -185,7 +185,7 @@ describe('PacksScreen', () => {
     expect(queryByLabelText('Delete pack')).toBeNull()
   })
 
-  it('shares the pack as a real file via hangmanFile.ts when Share pack is pressed', async () => {
+  it('shares the pack as a real file via alphaTasticFile.ts when Share pack is pressed', async () => {
     mockShareCustomPackFile.mockResolvedValue(true)
     const pack = await saveCustomPack({ label: 'My Pack', entries: [{ answer: 'FOO', hint: '' }] })
     const { getByLabelText } = await renderScreen()
@@ -291,11 +291,11 @@ describe('PacksScreen', () => {
     expect(secondRealRemoveButton.props.accessibilityState?.disabled ?? secondRealRemoveButton.props.disabled).toBe(false)
   })
 
-  // Import picks a real file (see hangmanFile.ts) rather than pasting text into a box now -
-  // pickHangmanFile is the only thing PacksScreen itself talks to for that.
+  // Import picks a real file (see alphaTasticFile.ts) rather than pasting text into a box now -
+  // pickAlphaTasticFile is the only thing PacksScreen itself talks to for that.
   it('imports a pack from a picked file and selects it', async () => {
     const payload = JSON.stringify({ pack: { key: 'custom:imported', label: 'Imported Pack', puzzles: [{ answer: 'FOO' }] } })
-    mockPickHangmanFile.mockResolvedValue(payload)
+    mockPickAlphaTasticFile.mockResolvedValue(payload)
     const onChangeSelectedKeys = jest.fn()
     const onPacksChanged = jest.fn()
     const { getByText } = await renderScreen({ onChangeSelectedKeys, onPacksChanged })
@@ -310,7 +310,7 @@ describe('PacksScreen', () => {
   })
 
   it('does nothing when the file picker is canceled', async () => {
-    mockPickHangmanFile.mockResolvedValue(null)
+    mockPickAlphaTasticFile.mockResolvedValue(null)
     const onPacksChanged = jest.fn()
     const { getByText } = await renderScreen({ onPacksChanged })
 
@@ -320,13 +320,13 @@ describe('PacksScreen', () => {
   })
 
   it('shows an alert and does not change anything when the picked file is not a valid pack', async () => {
-    mockPickHangmanFile.mockResolvedValue('not valid json')
+    mockPickAlphaTasticFile.mockResolvedValue('not valid json')
     const onPacksChanged = jest.fn()
     const { getByText } = await renderScreen({ onPacksChanged })
 
     await fireEvent.press(getByText('Import'))
 
-    await waitFor(() => expect(mockPickHangmanFile).toHaveBeenCalled())
+    await waitFor(() => expect(mockPickAlphaTasticFile).toHaveBeenCalled())
     expect(onPacksChanged).not.toHaveBeenCalled()
   })
 

@@ -27,7 +27,7 @@
   "submit": {
     "production": {
       "ios": {
-        "appName": "HangmanTastic"
+        "appName": "AlphaTastic"
       }
     },
     "preview": {}

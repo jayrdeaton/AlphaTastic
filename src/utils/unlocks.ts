@@ -87,8 +87,8 @@ export const exportPuzzleUnlocks = async (playerKey: PlayerKey): Promise<string>
 
 // Stricter than importPuzzleUnlocks/mergePuzzleUnlocks below on purpose: those two accept a bare
 // unlocks-map with no wrapper (a deliberate leniency for the old paste-a-blob flow, still relied on
-// by their own tests), but this one is for disambiguating an incoming .hangman file from a custom
-// pack file (see hangmanFile.ts) - requiring the `unlocks` key is what lets a caller tell "this is
+// by their own tests), but this one is for disambiguating an incoming .alphatastic file from a custom
+// pack file (see alphaTasticFile.ts) - requiring the `unlocks` key is what lets a caller tell "this is
 // a progress backup" apart from "this is a pack" (which has a `pack` key instead) before deciding
 // which import path to run.
 export const parseProgressBackup = (raw: string): PuzzleUnlockMap => {
@@ -119,7 +119,7 @@ export const importPuzzleUnlocks = async (playerKey: PlayerKey, raw: string): Pr
   return { importedCount }
 }
 
-// Adds a backup's unlocked puzzles to one player's own (Settings' Import, a .hangman file opened from
+// Adds a backup's unlocked puzzles to one player's own (Settings' Import, a .alphatastic file opened from
 // another app).
 export const mergePuzzleUnlocks = async (playerKey: PlayerKey, raw: string): Promise<{ importedCount: number; addedCount: number }> => {
   const parsed: unknown = JSON.parse(raw)

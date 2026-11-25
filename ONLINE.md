@@ -31,7 +31,7 @@ Friends screen is for.
   round with guesses on it. Hangman only.
 - Custom packs already travel as `.hangman` files: a custom pack's editor page in Choose Packs shares one (`PackEditorPage`'s
   Share, `shareCustomPackFile`) and `IncomingFileImport` opens one behind a confirm card ("Import "Dinosaurs"?").
-- The web build at `games.infinitetoken.com/hangman/` plays a `/hangman/play?...` link with nothing installed (checked on a local
+- The web build at `games.infinitetoken.com/alphatastic/` plays a `/alphatastic/play?...` link with nothing installed (checked on a local
   serve of the export, 2026-10-19).
 
 **What links alone can do:** carry a puzzle one way, to anyone, through whatever they already message with, and play in a browser
@@ -93,7 +93,7 @@ players too.
 - **Three lists exist today, none of them right as they stand:**
   - `src/utils/blockedWords.ts` matches anywhere in a string, read both ways. That's right for random letters (filler, a scramble,
     a cipher) but would refuse CLASS, GRASS and SCRAP if used on written words.
-  - Hangman-Scrapers' `scripts/contentFilter.ts` matches whole words (profanity and slurs, sexual words, drug words) after folding
+  - AlphaTastic-Scrapers' `scripts/contentFilter.ts` matches whole words (profanity and slurs, sexual words, drug words) after folding
     accents. That's the packs' own rule, and the right model for written words, but it lives in a Node script the app can't import.
   - Tastic-Server's `src/tags.ts` reads look-alikes (A55 is ASS) for leaderboard tags only. The server's player names have no
     filter at all: `checkName` in `src/matches.ts` only checks 1 to 24 characters.
@@ -112,7 +112,7 @@ players too.
 The filter and the item checks live in a package both sides import (decision 3), the way HexFleet's rules are
 `@tastic/hexfleet-engine` and CardTastic's are `@tastic/cardtastic-engine`: `AlphaTastic-Engine`, publishing
 `@tastic/alphatastic-engine`. It holds the item types and `checkItem`, `normalizePhrase`, the per-game fit rules above (the checks,
-not the board generators), the filter, the link encoding and `RULES_VERSION`. Hangman-Scrapers could import the filter too, so the
+not the board generators), the filter, the link encoding and `RULES_VERSION`. AlphaTastic-Scrapers could import the filter too, so the
 packs and the players share one list; that part is optional.
 
 ## 4. The server: a third kind of module
@@ -241,7 +241,7 @@ Caddy at play.infinitetoken.com), the Supabase database and its migrations, and 
     progress today, so one left halfway waits to be played again from the start.
 - **Stats (decision 14):** a received Hangman word counts in the receiver's Pass & Play record (it's a word a person wrote for them),
   and nothing counts for the sender. The puzzle games have no stats yet (`NoStats`).
-- **Web:** the same screen in the browser at `/hangman/`, a player per profile in the site's storage, no pushes: it fetches when the
+- **Web:** the same screen in the browser at `/alphatastic/`, a player per profile in the site's storage, no pushes: it fetches when the
   tab comes back. That's what lets someone with no app take an invite (section 8).
 
 ## 7. Sending from the setup pages
@@ -280,24 +280,24 @@ it (a friend picker, then Send). The pack arrives as a preview the friend adds o
 
 HexFleet's setup, with AlphaTastic as a second game on it.
 
-- **The link:** `https://games.infinitetoken.com/hangman/join/K7Q2PX`. The web path stays `/hangman` (the app's identity is still
-  Hangman's, Jay's call), so it sits where the hub's other invites do (`invitePath`, Games-Web's `src/utils/appLinks.ts`).
+- **The link:** `https://games.infinitetoken.com/alphatastic/join/K7Q2PX`, under the app's web path (`/hangman` until the rename
+  finished, 2026-11-25), so it sits where the hub's other invites do (`invitePath`, Games-Web's `src/utils/appLinks.ts`).
 - **The share:** "Jay sent you a puzzle in AlphaTastic. Code K7Q2PX" and the link. The message names the person, so the page
   can be the same for everyone.
-- **The page,** on Games-Web, as HexFleet's: the code with Copy, Play in Your Browser (`/hangman/friends?code=K7Q2PX`), the store
-  buttons, and Open in AlphaTastic (`hangman://join/K7Q2PX`). The same preview for every invite.
+- **The page,** on Games-Web, as HexFleet's: the code with Copy, Play in Your Browser (`/alphatastic/friends?code=K7Q2PX`), the store
+  buttons, and Open in AlphaTastic (`alphatastic://join/K7Q2PX`). The same preview for every invite.
 - **Tying the domain to the app:** AlphaTastic joins Games-Web's online games list (`OnlineGame` in `src/constants/site.ts`), from
-  which the `apple-app-site-association` and `assetlinks.json` files are built (`appleAppSiteAssociation`, `assetLinks`): app ID
-  `com.infinitetoken.Hangman` on both platforms (`app.json`). In the app: `ios.associatedDomains`, an Android intent filter
-  (https, `games.infinitetoken.com`, `/hangman/join`, `autoVerify`) beside the file and content filters already there, and
-  `+native-intent` turning `/hangman/join/<code>` into the app's own route, as it already keeps `file:` and `content:` URLs away
+  which the `apple-app-site-association` and `assetlinks.json` files are built (`appleAppSiteAssociation`, `assetLinks`): app IDs
+  `com.infinitetoken.AlphaTastic` on iOS and `com.infinitetoken.alphatastic` on Android (`app.json`, since 2026-11-25). In the app: `ios.associatedDomains`, an Android intent filter
+  (https, `games.infinitetoken.com`, `/alphatastic/join`, `autoVerify`) beside the file and content filters already there, and
+  `+native-intent` turning `/alphatastic/join/<code>` into the app's own route, as it already keeps `file:` and `content:` URLs away
   from the router. All native config, so a native build you run.
 - **After installing from the page:** iOS doesn't carry a link through an install, so with no friends yet the Friends screen leads
   with Have a Code?, and Paste takes the code or the whole link.
 - **Making a profile on the way in:** someone taking an invite with no profile makes one there (a name and a color), with online
   turned on for it.
-- **Slice 0's links** (`/hangman/play?...`) open the web build until the native build with the associated domain is out; the page
-  offers Open in AlphaTastic (`hangman://play?...`) for someone who has the app.
+- **Slice 0's links** (`/alphatastic/play?...`) open the web build until the native build with the associated domain is out; the page
+  offers Open in AlphaTastic (`alphatastic://play?...`) for someone who has the app.
 
 ## 9. Moderation (guideline 1.2), kept small
 
