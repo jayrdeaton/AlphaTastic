@@ -5,6 +5,7 @@ import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated'
 import Svg, { Rect } from 'react-native-svg'
 
+import { keyType } from '@/constants/typography'
 import type { KeyboardLayout } from '@/hooks/useKeyboardLayout'
 import { KEYBOARD_SWEEP_DELAY_MS } from '@/modes/shared/sceneReveal'
 import { SketchFill } from '@/modes/shared/sketchShapes'
@@ -327,7 +328,7 @@ const KeyboardKey = ({ letter, isGuessed, isWrong, disabled, width, rippleDistan
           and substitutes its own flat colors regardless, which is why only a style/labelStyle
           override (applied after that internal color) can override a disabled key's color at all,
           same reasoning as styles.key's own transparent background below. */}
-      <Button mode='contained' soundDisabled disabled={isGuessed || disabled} style={[styles.key, width ? { width } : null]} onPress={onPress} hitSlop={KEY_HIT_SLOP} labelStyle={[styles.text, { color: fillTextColor }]}>
+      <Button mode='contained' soundDisabled disabled={isGuessed || disabled} style={[styles.key, width ? { width } : null]} onPress={onPress} hitSlop={KEY_HIT_SLOP} labelStyle={[styles.text, keyType, { color: fillTextColor }]}>
         {letter}
       </Button>
     </Animated.View>

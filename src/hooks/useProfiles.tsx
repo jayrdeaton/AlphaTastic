@@ -36,6 +36,21 @@ export const useProfilesActions = (): ProfilesActions => {
   )
 }
 
+// The shell's seat 1 is whoever is playing here. Its Settings' Profile row (Home's and the setup pages')
+// names seat 1's profile and opens their Edit Profile, or Profiles while a guest plays; AlphaTastic keeps
+// who's playing in its own activePlayer slice (a profile or one of several guests), so the profile is
+// mirrored into the shell's selection, and any guest is its Guest (null). Nothing else of the shell's
+// reads it here: Home's seat colors come back through the pack's seatTheme, which keeps what's on screen.
+export const ShellSeatOne = (): null => {
+  const { lastSelected, selectProfile: selectShellProfile } = useShellProfiles()
+  const profileId = useSelector((state: RootState) => state.activePlayer.profileId)
+  const seatOne = lastSelected[1]
+  useEffect(() => {
+    if (seatOne !== profileId) selectShellProfile(1, profileId)
+  }, [profileId, seatOne, selectShellProfile])
+  return null
+}
+
 // Everything kept per player follows the roster. A profile that leaves it, deleted on the Profiles
 // screen here or in another game, is forgotten: their settings, colors, waiting round, stats and
 // unlocked puzzles go, and any Pass & Play seat they held becomes a guest's. Waits for the shell's

@@ -743,6 +743,53 @@ describe('LoadoutScreen (Single Player)', () => {
     })
   })
 
+  // Settings' Profile row (@tastic/shell 0.16): the active profile's own Edit Profile, "Profile" over their
+  // name, or Profiles while a guest plays. The shell reads its seat 1, which ShellSeatOne keeps on whoever
+  // is playing here.
+  describe("Settings' Profile row", () => {
+    beforeEach(() => {
+      store.dispatch(profilesActions.setAll([ALICE, BOB]))
+    })
+
+    it('opens Profiles while a guest plays', async () => {
+      const screen = await renderLoadout()
+
+      await fireEvent.press(screen.getByLabelText('Settings'))
+      expect(screen.getByText('Add or edit players')).toBeTruthy()
+      await fireEvent.press(screen.getByText('Profiles'))
+
+      expect(router.push).toHaveBeenCalledWith('/profiles')
+      expect(store.getState().profileSelection[1]).toBeNull()
+    })
+
+    it('names the active profile and opens their own Edit Profile', async () => {
+      store.dispatch(activePlayerActions.setActivePlayer(ALICE.id))
+      const screen = await renderLoadout()
+
+      await waitFor(() => expect(store.getState().profileSelection[1]).toBe(ALICE.id))
+      await fireEvent.press(screen.getByLabelText('Settings'))
+      expect(screen.getByText('Profile')).toBeTruthy()
+      await fireEvent.press(screen.getByText('Alice'))
+
+      expect(router.push).toHaveBeenCalledWith({ pathname: '/profile/[id]', params: { id: ALICE.id } })
+    })
+
+    it('follows the active player as they change', async () => {
+      store.dispatch(activePlayerActions.setActivePlayer(ALICE.id))
+      await renderLoadout()
+      await waitFor(() => expect(store.getState().profileSelection[1]).toBe(ALICE.id))
+
+      await act(async () => {
+        store.dispatch(activePlayerActions.setActivePlayer(BOB.id))
+      })
+      await waitFor(() => expect(store.getState().profileSelection[1]).toBe(BOB.id))
+      await act(async () => {
+        store.dispatch(activePlayerActions.setActivePlayer(null))
+      })
+      await waitFor(() => expect(store.getState().profileSelection[1]).toBeNull())
+    })
+  })
+
   // Who plays, and their colors, as one control (PlayerPicker): Guest, every profile, Manage, and the
   // Color row's page of swatches.
   describe('the player picker', () => {
@@ -755,6 +802,18 @@ describe('LoadoutScreen (Single Player)', () => {
 
     const open = (screen: Screen, trigger = 'PLAYER 1') => fireEvent.press(screen.getByLabelText(trigger))
     const live = () => store.getState().theme
+
+    // On the web every view stacks its own children, so the menu's own z-index can't reach past the seats'
+    // row, and the art row after it in the same group drew over the open menu (seen 2026-11-25).
+    it("lifts the seats over the art row while a seat's menu is open", async () => {
+      const screen = await renderLoadout()
+      const rowZIndex = () => StyleSheet.flatten(screen.getByTestId('seats-row').props.style).zIndex
+
+      expect(rowZIndex()).toBeUndefined()
+      await open(screen)
+      expect(screen.getByText('Manage')).toBeTruthy()
+      expect(rowZIndex()).toBe(1)
+    })
 
     it('lists the guest and every profile by name, then Manage', async () => {
       const screen = await renderLoadout()

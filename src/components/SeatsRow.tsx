@@ -204,7 +204,7 @@ export type SeatsRowProps = {
 export const SeatsRow = memo(({ players, focusedId, standings, showStandings, onFocus, onPick, onRemove, onReorder, removingId = null, onNewSession }: SeatsRowProps): JSX.Element => {
   const theme = useTheme()
   const ink = inkFor(theme.dark)
-  const { close: closePopover } = useLoadoutPopoverHost()
+  const { close: closePopover, openId } = useLoadoutPopoverHost()
   const motion = useLoadoutMotion()
   const { pickUp } = useGameHaptics()
   const canRemove = players.length > MIN_PNP_PLAYERS
@@ -236,10 +236,12 @@ export const SeatsRow = memo(({ players, focusedId, standings, showStandings, on
 
   // react-native-sortables lays the pills out itself, centered and wrapping, and glides them as seats
   // come, go and move. Earlier seats draw over later ones (stackingOrder 'desc'), so a seat's picker,
-  // dropping down, opens over the seats after it.
+  // dropping down, opens over the seats after it. While one is open the row is lifted over the art row
+  // below it, in the same page group: on the web every view stacks its own children (react-native-web's
+  // z-index 0), so the popover's own z-index can't reach past the row, and the later art row drew over it.
   return (
     <LayoutAnimationConfig skipEntering>
-      <View style={styles.row}>
+      <View testID='seats-row' style={[styles.row, isSeatPickerOpen(openId) && styles.rowOpen]}>
         <Sortable.Flex customHandle sortEnabled={players.length > 1} width='fill' alignContent='center' alignItems='center' justifyContent='center' columnGap={10} rowGap={12} dragActivationDelay={LIFT_MS} dropAnimationDuration={REFLOW_MS} activeItemScale={1.08} inactiveItemOpacity={1} autoScrollEnabled={false} stackingOrder='desc' itemEntering={motion ? SEAT_ENTERING : null} itemExiting={motion ? SEAT_EXITING : null} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           {players.map((seat) => (
             <View key={seat.id} testID={`seat-slot-${seat.id}`} style={styles.slot}>
@@ -274,6 +276,7 @@ const styles = StyleSheet.create({
   ring: { borderColor: 'transparent', borderRadius: 999, borderWidth: 2, padding: 2 },
   // The page's width inside its gutters, for the pills to center and wrap in.
   row: { alignSelf: 'stretch' },
+  rowOpen: { zIndex: 1 },
   // Never wider than the row, so a long name shrinks the pill rather than overflowing the gutters.
   seat: { maxWidth: '100%' },
   slot: { maxWidth: '100%' }

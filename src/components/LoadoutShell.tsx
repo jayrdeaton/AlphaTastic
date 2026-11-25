@@ -154,7 +154,8 @@ export const LoadoutShell = ({ children, closeOverlay, closeAllOverlays, overlay
         ) : null}
       </View>
       {overlays}
-      <SettingsDialog visible={settingsOpen} onDismiss={() => setSettingsOpen(false)} />
+      {/* showProfile: Settings' Profile row, the active profile's Edit Profile (or Profiles for a guest), as on Home (ShellSeatOne). */}
+      <SettingsDialog visible={settingsOpen} onDismiss={() => setSettingsOpen(false)} showProfile />
     </Portal.Host>
   )
 }

@@ -21,6 +21,11 @@ export const TITLE_FONTS: Record<string, FontSource> = { [TITLE_FONT]: require('
 // synthesized one would thicken the pen unevenly. Screen readers still read the title as written.
 export const titleType: TextStyle = { fontFamily: TITLE_FONT, fontWeight: 'normal', textTransform: 'uppercase', letterSpacing: TITLE_LETTER_SPACING }
 
+// A small title (Jay, 2026-11-25: "anything that's a title"): an art tile's name, a toast's title. The title's
+// capitals in the heavier pen, since the title's thin one reads poorly this small (as with the Stats cards'
+// headings below), at the caller's own size.
+export const smallTitleType: TextStyle = { ...titleType, fontFamily: LABEL_FONT }
+
 // A small label's lettering (Jay, 2026-11-19: the Stats screen and the pickers too): the picker pills,
 // the Stats tabs and section headings, the Settings sheet's sections. Laid over each label's own type:
 // - the heavier pen, since in the title's the Stats cards' 12pt headings looked thin beside their bold
@@ -35,6 +40,15 @@ export const labelType: TextStyle = { fontFamily: LABEL_FONT, fontWeight: 'norma
 // last of the setup page in the system font): the labels' lettering, a size up for the page's main
 // action, as their 16pt was before.
 export const actionType: TextStyle = { ...labelType, fontSize: 16, lineHeight: 22 }
+
+// The keyboards' key letters (Jay, 2026-11-25: the same strokes as the blanks above them, a size up from
+// the labels so the heavier pen reads on a key), in Hangman's and Cryptogram's keys. Line height 20, as the
+// system font's label had, so a key stays its height. A capital's ink (pen included) runs from -62 to 762
+// of the font's 1000 units, its middle 350 up, while a line box (ascender 900, descender 300) centers 300
+// up: centered by its box, a capital sits 0.05em high, so it's dropped by that much to sit mid-key.
+const KEY_FONT_SIZE = 18
+const CAP_LIFT_EM = 0.05
+export const keyType: TextStyle = { fontFamily: LABEL_FONT, fontWeight: 'normal', fontSize: KEY_FONT_SIZE, lineHeight: 20, letterSpacing: 0, transform: [{ translateY: KEY_FONT_SIZE * CAP_LIFT_EM }] }
 
 // A character the font doesn't have is drawn in the fallback font, about this wide.
 const FALLBACK_ADVANCE = 600

@@ -10,6 +10,7 @@ import { Provider as ReduxProvider, shallowEqual, useDispatch, useSelector } fro
 import { PersistGate } from 'redux-persist/integration/react'
 
 import { PackProviders, toastStackFrame } from '@/components/PackRoot'
+import { smallTitleType } from '@/constants/typography'
 import { pack } from '@/games/pack'
 import { persistor, type RootState, store } from '@/redux/store'
 
@@ -54,7 +55,7 @@ export const Providers = ({ children }: { children: ReactNode }): JSX.Element =>
                   <Gate>
                     <ToastProvider paper={RNPaper}>
                       {children}
-                      <Toaster position='top' wrapperStyle={toastStackFrame(375, { left: 0, right: 0 })} clearButton={null} historyButton={null} limit={1} />
+                      <Toaster position='top' wrapperStyle={toastStackFrame(375, { left: 0, right: 0 })} clearButton={null} historyButton={null} limit={1} labelStyle={smallTitleType} />
                     </ToastProvider>
                   </Gate>
                 </PackProviders>

@@ -3,6 +3,7 @@ import { JSX, memo, useCallback, useMemo, useRef } from 'react'
 import { type LayoutChangeEvent, Platform, ScrollView, StyleSheet, View } from 'react-native'
 import { Text, useTheme } from 'react-native-paper'
 
+import { smallTitleType } from '@/constants/typography'
 import { VISIBLE_MODES } from '@/modes/registry'
 import type { GameMode } from '@/types/gameModes'
 
@@ -53,7 +54,7 @@ export const ArtRow = memo(({ selected, onSelect, paused }: ArtRowProps): JSX.El
     return (
       <View key={mode.id} style={styles.choice}>
         <ArtThumbnail mode={mode} selected={active} color={color} colors={colors} onSelect={onSelect} paused={paused} style={styles.tile} />
-        <Text variant='labelSmall' numberOfLines={1} accessibilityElementsHidden importantForAccessibility='no' style={[styles.name, { color: active ? theme.colors.onSurface : theme.colors.onSurfaceVariant }, active && styles.nameActive]}>
+        <Text numberOfLines={2} accessibilityElementsHidden importantForAccessibility='no' style={[styles.name, { color: active ? theme.colors.onSurface : theme.colors.onSurfaceVariant }]}>
           {mode.label}
         </Text>
       </View>
@@ -76,8 +77,10 @@ ArtRow.displayName = 'ArtRow'
 
 const styles = StyleSheet.create({
   choice: { alignItems: 'center', gap: 6, width: TILE },
-  name: { textAlign: 'center' },
-  nameActive: { fontWeight: '700' },
+  // Each art's name is its tile's title (Jay, 2026-11-25), in the lettering's capitals. Those are wide: at the
+  // tile's own 72 SNOWFLAKES fits only at about 9, so a name may use the gap beside its tile too, and a two-word
+  // name wraps. The picked art's name is in the full ink, its ring saying the rest.
+  name: { ...smallTitleType, flexShrink: 0, fontSize: 11, letterSpacing: 0.5, lineHeight: 14, marginHorizontal: -GAP / 2, maxWidth: TILE + GAP, textAlign: 'center', width: TILE + GAP },
   row: { gap: GAP, paddingHorizontal: BLEED, paddingVertical: 4 },
   scroll: { alignSelf: 'stretch', flexGrow: 0, marginHorizontal: -BLEED },
   // Raised off the board like the pills and cards around it.

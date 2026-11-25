@@ -4,6 +4,7 @@ import { JSX, memo, useState } from 'react'
 import { type LayoutChangeEvent, StyleSheet, View } from 'react-native'
 import { Icon, Text } from 'react-native-paper'
 
+import { keyType } from '@/constants/typography'
 import { useKeyboardLayout } from '@/hooks/useKeyboardLayout'
 
 import { KEY_MARGIN, KeyFill, LAYOUT_ROWS } from './Keyboard'
@@ -26,7 +27,7 @@ const PuzzleKey = ({ label, width, used, disabled, onPress, icon }: PuzzleKeyPro
         {icon ? (
           <Icon source={icon} size={20} color={ink} />
         ) : (
-          <Text variant='titleSmall' style={[styles.keyText, { color: ink }]}>
+          <Text variant='titleSmall' style={[keyType, { color: ink }]}>
             {label}
           </Text>
         )}
@@ -72,7 +73,6 @@ PuzzleKeyboard.displayName = 'PuzzleKeyboard'
 const styles = StyleSheet.create({
   key: { alignItems: 'center', height: KEY_HEIGHT, justifyContent: 'center', marginHorizontal: KEY_MARGIN, minWidth: 24 },
   keyOff: { opacity: 0.45 },
-  keyText: { fontWeight: '700' },
   keyboard: { width: '100%' },
   row: { flexDirection: 'row', justifyContent: 'center', marginVertical: ROW_MARGIN }
 })

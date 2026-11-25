@@ -1,7 +1,7 @@
 import { Provider, type ThemeSettings, useThemeSettings } from '@rific/auto-paper'
 import { FeedbackPressProvider } from '@rific/feedback-press'
 import { ToastProvider } from '@rific/toaster'
-import { PackProvider, SettingsDialog } from '@tastic/shell'
+import { PackProvider, ProfilesProvider, SettingsDialog } from '@tastic/shell'
 import { fireEvent, render as rtlRender, waitFor } from '@testing-library/react-native'
 import { type ReactElement, type ReactNode, useEffect } from 'react'
 import * as RNPaper from 'react-native-paper'
@@ -52,26 +52,29 @@ const ThemeCapture = () => {
   return null
 }
 
-// The app's nesting: the pack, whose sections the shell's sheet shows, the store (the backup is the active player's),
+// The app's nesting: the pack, whose sections the shell's sheet shows, the store (the backup is the active player's), the
+// shell's roster (the sheet's Profile row reads it),
 // FeedbackPressProvider outside auto-paper's Provider (its Portal.Host and theme), a ToastProvider for
 // the update-error toast, and the player's puzzle defaults for the art.
 const mockSetLayout = jest.fn()
 const Wrapper = ({ children }: { children: ReactNode }) => (
   <PackProvider pack={pack}>
     <ReduxProvider store={store}>
-      <FeedbackPressProvider paper={RNPaper}>
-        <Provider statusBar={false} initialValue={{ appearance: 'light' }}>
-          <ToastProvider>
-            <KeyboardLayoutContext.Provider value={{ layout: 'qwerty', setLayout: mockSetLayout }}>
-              <PuzzleDefaultsProvider>
-                <ThemeCapture />
-                {/* As every route has: the sheet is a Portal, and its sections read these providers. */}
-                <Portal.Host>{children}</Portal.Host>
-              </PuzzleDefaultsProvider>
-            </KeyboardLayoutContext.Provider>
-          </ToastProvider>
-        </Provider>
-      </FeedbackPressProvider>
+      <ProfilesProvider>
+        <FeedbackPressProvider paper={RNPaper}>
+          <Provider statusBar={false} initialValue={{ appearance: 'light' }}>
+            <ToastProvider>
+              <KeyboardLayoutContext.Provider value={{ layout: 'qwerty', setLayout: mockSetLayout }}>
+                <PuzzleDefaultsProvider>
+                  <ThemeCapture />
+                  {/* As every route has: the sheet is a Portal, and its sections read these providers. */}
+                  <Portal.Host>{children}</Portal.Host>
+                </PuzzleDefaultsProvider>
+              </KeyboardLayoutContext.Provider>
+            </ToastProvider>
+          </Provider>
+        </FeedbackPressProvider>
+      </ProfilesProvider>
     </ReduxProvider>
   </PackProvider>
 )

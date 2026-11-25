@@ -9,12 +9,13 @@ import { ThemeProvider } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 
+import { smallTitleType } from '@/constants/typography'
 import { ActiveGameProvider } from '@/hooks/useActiveGame'
 import { useActivePlayer } from '@/hooks/useActivePlayer'
 import { CatalogProvider } from '@/hooks/useCatalog'
 import { useClickSound } from '@/hooks/useClickSound'
 import { GameStatsProvider } from '@/hooks/useGameStats'
-import { PlayerRoster } from '@/hooks/useProfiles'
+import { PlayerRoster, ShellSeatOne } from '@/hooks/useProfiles'
 import { isSamePlayerTheme, isSamePlayerThemeEntry, playerThemeActions, resolvePlayerTheme, sameColor } from '@/redux/playerThemeSlice'
 import type { RootState } from '@/redux/store'
 import { setLiveTheme } from '@/utils/liveTheme'
@@ -53,7 +54,7 @@ export const PackToaster = (): JSX.Element => {
   const insets = useSafeAreaInsets()
   return (
     <>
-      <Toaster position='top' wrapperStyle={toastStackFrame(width, insets)} clearButton={null} historyButton={null} limit={1} />
+      <Toaster position='top' wrapperStyle={toastStackFrame(width, insets)} clearButton={null} historyButton={null} limit={1} labelStyle={smallTitleType} />
       <IncomingFileImport />
     </>
   )
@@ -153,6 +154,7 @@ export const PackProviders = ({ children }: { children: ReactNode }): JSX.Elemen
                 <GameStatsProvider>
                   <ActiveGameProvider>
                     <PlayerRoster />
+                    <ShellSeatOne />
                     {children}
                   </ActiveGameProvider>
                 </GameStatsProvider>

@@ -248,7 +248,7 @@ const RoundEndCard = ({ visible, outcome, phrase, guessedLetters, categoryProgre
                 one column, or two for a table of more than four. */}
             {passAndPlay && standingsCount > 0 ? (
               <View style={styles.standings}>
-                <Text variant='titleMedium' style={[styles.blockHeading, { color: fg }]}>
+                <Text variant='titleMedium' accessibilityRole='header' style={[styles.blockHeading, { color: fg }, titleType]}>
                   Standings
                 </Text>
                 <PnpStandingsList rows={passAndPlay.standings} columns={standingsColumns} color={fg} mutedColor={fgMuted} highlightId={passAndPlay.playerId} />
