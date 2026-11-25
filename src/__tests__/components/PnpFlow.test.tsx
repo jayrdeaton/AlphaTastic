@@ -20,6 +20,7 @@ import roundReducer, { initialRoundState, type PnpPhase, roundActions, type Save
 import { store } from '@/redux/store'
 import { Providers } from '@/testUtils/Providers'
 import { seatTwoWriting } from '@/testUtils/table'
+import { sentToasts, ToastLog } from '@/testUtils/toastLog'
 import { alert } from '@/utils/alert'
 import { addCustomPuzzle } from '@/utils/customPacks'
 import { GUEST_PLAYER_KEY, guestSeatKey } from '@/utils/players'
@@ -126,6 +127,7 @@ describe('GameScreen - pass and play', () => {
   const renderGame = () =>
     render(
       <Providers>
+        <ToastLog />
         <GameScreen mode='pnp' />
       </Providers>
     )
@@ -744,7 +746,7 @@ describe('GameScreen - pass and play', () => {
         const yesterday = previousDateString(localDateString(new Date()))
         store.dispatch(achievementsActions.update({ stats: { ...createDefaultStats(), profiles: { [ALICE.id]: { ...createDefaultProfileStats(), distinctDaysPlayed: 2, currentDayStreak: 2, bestDayStreak: 2, lastPlayedDate: yesterday } } }, unlocked: {} }))
         const utils = await renderGame()
-        const { getByText, getAllByText, queryByText } = utils
+        const { getByText, queryByText } = utils
 
         await playThroughToRound(utils, 'CAT')
         await winWithCat(utils)
@@ -752,9 +754,17 @@ describe('GameScreen - pass and play', () => {
         expect(getByText("Bob solved Alice's word.")).toBeTruthy()
         expect(getByText('Bob writes next')).toBeTruthy()
         expect(queryByText(/Unlocked$/)).toBeNull()
-        expect(getAllByText('Bob unlocked').length).toBeGreaterThan(0)
+        // The guesser's unlocks are toasted first, then the writer's, each named for them. One toast shows at a
+        // time (the Toaster's limit is 1), so only the newest, Alice's, is on screen.
+        const sent = sentToasts()
+        const lastBob = sent.map((t) => t.caption).lastIndexOf('Bob unlocked')
+        const firstAlice = sent.findIndex((t) => t.caption === 'Alice unlocked')
+        expect(lastBob).toBeGreaterThanOrEqual(0)
+        expect(firstAlice).toBeGreaterThan(lastBob)
+        expect(sent).toContainEqual({ title: 'Regular Visitor', caption: 'Alice unlocked' })
+        expect(getByText(sent[sent.length - 1].title)).toBeTruthy()
         expect(getByText('Alice unlocked')).toBeTruthy()
-        expect(getByText('Regular Visitor')).toBeTruthy()
+        expect(queryByText('Bob unlocked')).toBeNull()
         expect(stats().profiles[BOB.id].pnp).toEqual({ played: 1, wins: 1, losses: 0, draws: 0 })
         expect(stats().profiles[ALICE.id].bestDayStreak).toBe(3)
 

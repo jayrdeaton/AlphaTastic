@@ -16,6 +16,7 @@ import { type DifficultyFilter, playerSettingsActions } from '@/redux/playerSett
 import { roundActions, type RoundProgress, type SavedPuzzle, selectSoloRound } from '@/redux/roundSlice'
 import { store } from '@/redux/store'
 import { Providers } from '@/testUtils/Providers'
+import { sentToasts, ToastLog } from '@/testUtils/toastLog'
 import type { GameStartPayload } from '@/types/gameSession'
 import { GUEST_PLAYER_KEY, type PlayerKey } from '@/utils/players'
 import { findMode } from '@/utils/puzzleLink'
@@ -91,6 +92,7 @@ const renderScreen = () =>
   render(
     <Providers>
       <HandlesCapture />
+      <ToastLog />
       <GameScreen mode='solo' />
     </Providers>
   )
@@ -478,9 +480,13 @@ describe('GameScreen (solo)', () => {
       // Recorded and toasted, while the card itself waits WIN_DIALOG_DELAY_MS.
       expect(screen.queryByText('You Won!')).toBeNull()
       expect(stats().solo).toEqual({ played: 1, wins: 1, losses: 0, draws: 0 })
-      expect(screen.getByText('Flawless Victory')).toBeTruthy()
-      expect(screen.getByText("Beginner's Luck")).toBeTruthy()
-      expect(screen.getAllByText('Achievement unlocked').length).toBeGreaterThan(0)
+      // Every unlock is toasted, as the guest's, but one toast shows at a time (the Toaster's limit is 1):
+      // only the newest is on screen.
+      const sent = sentToasts()
+      expect(sent.map((t) => t.title)).toEqual(expect.arrayContaining(['Flawless Victory', "Beginner's Luck"]))
+      expect(sent.every((t) => t.caption === 'Achievement unlocked')).toBe(true)
+      expect(screen.getByText(sent[sent.length - 1].title)).toBeTruthy()
+      expect(screen.getAllByText('Achievement unlocked')).toHaveLength(1)
 
       await openRoundEndCard()
       expect(screen.getByText('You Won!')).toBeTruthy()
